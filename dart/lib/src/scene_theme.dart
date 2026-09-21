@@ -30,13 +30,13 @@ class SceneColor {
 /// Domain-facing interface for scene visualization theme data.
 ///
 /// Contains generic line-weight properties and color resolution for
-/// technical visualization. Domain-specific extensions (e.g.
-/// `CncSceneTheme` in `cnc_scene_description`) narrow the
-/// [lineCategory] parameter type and add properties like toolpath
-/// line weights.
+/// technical visualization. Domain-specific extensions in a domain
+/// package narrow the [lineCategory] parameter type and add properties
+/// like line weights for the consumer's own line categories.
 ///
 /// Colors are resolved via semantic types — the concrete type of
-/// [lineCategory] is domain-specific (e.g. `LineCategory` for CNC).
+/// [lineCategory] is domain-specific (e.g. a semantic line category enum
+/// defined by the consumer).
 abstract interface class SceneTheme {
   /// Line thickness for coordinate axes.
   double get axisLineThickness;
@@ -46,7 +46,7 @@ abstract interface class SceneTheme {
 
   /// Resolve a semantic line category to a Flutter-free RGBA color.
   ///
-  /// The [lineCategory] type is domain-specific — CNC implementations
-  /// expect [LineCategory] from `cnc_scene_description`.
+  /// The [lineCategory] type is domain-specific — an implementation
+  /// expects the category type its domain package defines.
   SceneColor resolveLineColor(Object lineCategory);
 }
