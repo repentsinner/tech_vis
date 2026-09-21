@@ -42,11 +42,10 @@ void main() {
       expect(ctx.devicePixelRatio, 2.0);
     });
 
-    test('is generic — no CNC-specific fields', () {
+    test('is generic — no domain-specific fields', () {
       // FrameContext contains only viewport and DPR.
-      // CNC-specific fields (machinePosition, workPosition, wcsLabel,
-      // executionTimeSeconds, lookaheadEndProgress) live in
-      // CncFrameContext (cnc_scene_description package).
+      // Domain-specific fields (tracked positions, playback progress)
+      // live in a domain-specific subclass in the consumer's package.
       const ctx = FrameContext(
         viewportSize: ViewportSize(800, 600),
         devicePixelRatio: 1.0,
@@ -126,7 +125,7 @@ void main() {
       expect(SceneLayoutConstants.calloutLeaderLineWidth, greaterThan(0));
     });
 
-    test('contains only generic constants — no CNC-specific members', () {
+    test('contains only generic constants — no domain-specific members', () {
       // Verify axis settings exist
       expect(SceneLayoutConstants.defaultAxisLineThickness, greaterThan(0));
       expect(SceneLayoutConstants.defaultAxisLabelSize, greaterThan(0));
@@ -140,8 +139,8 @@ void main() {
   group('SceneTheme', () {
     test('is generic — requires axisLineThickness and resolveLineColor', () {
       // SceneTheme requires axisLineThickness, axisLabelSize, and
-      // resolveLineColor. CNC-specific line weights (rapid, cutting,
-      // arc) live in CncSceneTheme (cnc_scene_description package).
+      // resolveLineColor. Line weights for a consumer's own line
+      // categories live in a domain-specific theme in its package.
       final theme = _TestSceneTheme();
       expect(theme.axisLineThickness, 0.5);
       expect(theme.axisLabelSize, 24.0);

@@ -1,7 +1,7 @@
 /// Unit system for technical visualization dimensions and measurements.
 ///
 /// Provides conversions between metric (mm) and imperial (in) systems,
-/// along with step sequences for interactive controls (jog increments,
+/// along with step sequences for interactive controls (move increments,
 /// grid subdivisions, scale bar ticks).
 enum UnitSystem {
   /// Metric system — base unit is millimeters.
@@ -53,7 +53,8 @@ enum UnitSystem {
     return mm / target._toMmFactor;
   }
 
-  /// Coarse step increments for interactive controls (jog, grid major lines).
+  /// Coarse step increments for interactive controls (coarse moves, grid
+  /// major lines).
   ///
   /// Sorted ascending. Values are in this system's base unit.
   List<double> get coarseSteps => switch (this) {
@@ -61,7 +62,8 @@ enum UnitSystem {
     imperial => const [0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
   };
 
-  /// Fine step increments for precision controls (fine jog, grid minor lines).
+  /// Fine step increments for precision controls (fine moves, grid minor
+  /// lines).
   ///
   /// Sorted ascending. Values are in this system's base unit.
   List<double> get fineSteps => switch (this) {

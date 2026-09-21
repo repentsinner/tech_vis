@@ -6,8 +6,8 @@ import 'scene_object.dart';
 /// updated. Each category is nullable — null means that category has no
 /// content.
 ///
-/// Generic base class. Domain-specific subclasses (e.g.
-/// `CncSceneDescription`) add domain-specific category slots.
+/// Generic base class. Domain-specific subclasses add domain-specific
+/// category slots.
 class SceneDescription {
   final SceneCategory? staticCategory;
   final SceneCategory? backgroundCategory;
@@ -34,9 +34,8 @@ class SceneDescription {
 
 /// A named category of scene objects.
 ///
-/// Generic base class. Domain-specific subclasses (e.g.
-/// `CncSceneCategory`) add domain-specific properties like route segment
-/// data or dimming state.
+/// Generic base class. Domain-specific subclasses add domain-specific
+/// properties like per-segment data or dimming state.
 class SceneCategory {
   final String name;
   final List<SceneObject> objects;

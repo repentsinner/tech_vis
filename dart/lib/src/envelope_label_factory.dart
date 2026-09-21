@@ -11,13 +11,13 @@ import 'scene_object.dart';
 /// selected corner or edge of the top face of a bounding box.
 ///
 /// The [lineCategory] and [labelType] parameters accept domain-specific
-/// semantic types (e.g. `LineCategory` for CNC). Infrastructure resolvers
+/// semantic types defined by the consumer. Infrastructure resolvers
 /// cast to the expected type for color/style resolution.
 class EnvelopeLabelFactory {
   /// Creates a text billboard [SceneObject] positioned at a corner of the
   /// given bounding box top face.
   ///
-  /// - [text]: Label content (e.g., machine name or filename).
+  /// - [text]: Label content (e.g., a device name or filename).
   /// - [bounds]: The bounding box whose corner hosts the label.
   /// - [corner]: Which corner of the top face to use.
   /// - [lineCategory]: Semantic category for background color resolution.
