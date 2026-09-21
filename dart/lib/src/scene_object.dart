@@ -76,7 +76,7 @@ class SceneObject {
   final vm.Vector3? billboardAnchorDirection;
   final double? billboardOffsetPixels;
 
-  // Machine position properties (for SceneObjectType.machinePosition)
+  // World position (for SceneObjectType.model and SceneObjectType.marker)
   final vm.Vector3? position;
 
   // 3D Model properties (for SceneObjectType.model)
@@ -128,11 +128,9 @@ class SceneObject {
 
 enum SceneObjectType {
   line,
-  toolpathLine,
   cube,
   filledRectangle,
   textBillboard,
-  machinePosition,
   model,
   marker,
   proceduralMesh,
