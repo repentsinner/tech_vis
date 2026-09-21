@@ -6,7 +6,9 @@
 #
 # `auto_merge` lists the conventional-commit types that merge without
 # review. `feat`, `fix`, `perf` and every `!` variant bump the version, so
-# they gate on a human: every publish to pub.dev and PyPI stays reviewed.
+# they gate on a human: a reviewed PR cuts every release. The auto-merged
+# changes since the last release ship with it unreviewed. To gate the
+# publish itself, require reviewers on the `pub.dev` and `pypi` environments.
 flywheel:
   streams:
     - name: main-line

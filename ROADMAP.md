@@ -9,7 +9,9 @@ Closes §spec:release.
 Both registries need a first step that automation cannot take.
 
 - Push a baseline `v0.1.0` tag before the tag ruleset exists. With no tag,
-  the first release computes `1.0.0`.
+  the first release computes `1.0.0`. Push it before registering either
+  publisher: the tag matches the publish trigger, and both manifests
+  already say `0.1.0`.
 - Publish `dart/` to pub.dev by hand once. Automated publishing can be
   enabled only on a package that exists.
 - Register the PyPI pending publisher for `publish-pypi.yml`.
