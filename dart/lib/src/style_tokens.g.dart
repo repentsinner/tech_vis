@@ -14,7 +14,7 @@ abstract final class StyleTokens {
 
   /// Secondary-frame axis thickness relative to the world axis thickness.
   /// Unit: ratio.
-  static const double workpieceAxisThicknessScale = 0.8;
+  static const double secondaryAxisThicknessScale = 0.8;
 
   /// Default axis label size. The fallback where no theme supplies one. Unit:
   /// px.
@@ -65,7 +65,7 @@ abstract final class StyleTokens {
   static const Map<String, double> all = {
     'axisLength': axisLength,
     'defaultAxisLineThickness': defaultAxisLineThickness,
-    'workpieceAxisThicknessScale': workpieceAxisThicknessScale,
+    'secondaryAxisThicknessScale': secondaryAxisThicknessScale,
     'defaultAxisLabelSize': defaultAxisLabelSize,
     'axisLabelOffsetPixels': axisLabelOffsetPixels,
     'worldAlignedLabelHeightMm': worldAlignedLabelHeightMm,
