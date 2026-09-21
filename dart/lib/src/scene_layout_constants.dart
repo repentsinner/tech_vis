@@ -20,9 +20,10 @@ class SceneLayoutConstants {
   static const double defaultAxisLineThickness =
       StyleTokens.defaultAxisLineThickness;
 
-  /// Workpiece axis thickness scale factor relative to world axis thickness.
-  static const double workpieceAxisThicknessScale =
-      StyleTokens.workpieceAxisThicknessScale;
+  /// Secondary-frame axis thickness scale factor relative to world axis
+  /// thickness.
+  static const double secondaryAxisThicknessScale =
+      StyleTokens.secondaryAxisThicknessScale;
 
   /// Default axis label size in world units (mm).
   ///
