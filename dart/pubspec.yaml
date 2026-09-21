@@ -1,0 +1,29 @@
+name: tech_vis
+description: >-
+  Technical visualization primitives for annotated 3D scenes: style tokens,
+  leader-line callouts, coordinate frames, and labeled bounding boxes.
+  Pure Dart, renderer-agnostic.
+# Written by Flywheel on release, in lockstep with python/pyproject.toml.
+# Do not edit by hand.
+version: 0.1.0
+
+homepage: https://github.com/repentsinner/tech_vis
+repository: https://github.com/repentsinner/tech_vis
+issue_tracker: https://github.com/repentsinner/tech_vis/issues
+topics:
+  - visualization
+  - annotation
+  - callout
+  - graphics
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  equatable: ^2.1.0
+  meta: ^1.17.0
+  vector_math: ^2.1.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.24.0
