@@ -62,15 +62,16 @@ tests its implementation against every fixture.
 
 ## Dart package §spec:dart-package
 
-*Status: in progress*
+*Status: complete*
 
 Pure Dart. No Flutter dependency, so it runs in any Dart program.
 It provides scene object types, coordinate frames, bounding boxes,
 leader-line callout geometry, and screen-space conversions.
 
-The public API still carries vocabulary from the application it was
-extracted from. A generic toolkit shall name nothing from a consumer's
-domain.
+A generic toolkit shall name nothing from a consumer's domain.
+`dart/test/generic_vocabulary_test.dart` enforces this: it fails when a
+source file under `dart/lib/` matches the vocabulary of the application
+the package was extracted from.
 
 ## Python package §spec:python-package
 

@@ -33,13 +33,3 @@ the opacity ramp. Test the Dart implementation against them.
 
 Port the leader-line functions to Python. Test them against the same
 fixtures. Depends on §road:leader-vectors.
-
-## Generic vocabulary §road:generic-vocabulary
-
-Closes §spec:dart-package.
-
-### Remove consumer vocabulary from the Dart API §road:dart-generic-api
-
-Enum values, fields, and doc comments still name concepts from the
-application the package came from. Replace them with generic terms, or
-move them to the consumer. Breaking: release as `feat!`.
