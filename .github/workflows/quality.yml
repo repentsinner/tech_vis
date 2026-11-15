@@ -62,7 +62,7 @@ jobs:
         uses: point-source/flywheel/classify@59758d1940ebe054ce9fdd4b7a7dc79a0cf235e0 # v2.1.0
       - uses: actions/checkout@v7
         if: steps.classify.outputs.derived_release_commit != 'true'
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         if: steps.classify.outputs.derived_release_commit != 'true'
       - name: Lint
         if: steps.classify.outputs.derived_release_commit != 'true'
