@@ -182,6 +182,120 @@ five-digit millimeter value (§req:user-stories).
 *Why one unit per label set*: a grid labeled `900`, `1 m`, `1100` reads
 as three different quantities.
 
+## Callout layout §spec:callout-layout
+
+*Status: not started*
+
+A leader-line callout sits at a world-space anchor and draws in screen
+space. When several crowd one area, their labels cover each other, and
+an operator cannot tell which matters (§req:success-criteria). Callout
+layout decides, every frame, where each callout's label goes, whether
+it shows, and how opaque it is.
+
+Layout is a pure function. Each frame the app passes in:
+
+- each callout's stable id, anchor, measured label size in pixels,
+  priority, and preferred quadrant;
+- the camera, the viewport size, the camera focus point, and the pointer
+  position when there is one;
+- the time elapsed since the previous frame;
+- the layout the function returned for the previous frame.
+
+It returns, per callout, the quadrant, the label position, and the
+opacity. A callout with zero opacity is hidden.
+
+### Relevance
+
+Each callout has a relevance score. The score is a weighted sum of the
+app's priority and three nearness terms (§req:user-stories):
+
+- nearness on screen to the camera focus point;
+- nearness in depth to the viewer;
+- nearness on screen to the pointer, when the app passes one.
+
+The weights are style tokens, and the app may override them.
+
+*Why a blend, not priority tiers*: a strict tier lets a far-off callout
+of higher priority hide one the operator is looking straight at. A blend
+lets attention outweigh a small priority difference.
+
+*Tradeoff accepted*: no callout is guaranteed to survive crowding. An
+app that needs a callout to win against any nearby one gives it a
+priority large enough to outweigh every nearness term.
+
+### Placement
+
+- Callouts place in descending relevance. Equal scores break by id, so
+  placement is the same in every language.
+- Each callout tries its quadrant from the previous frame first, then
+  its preferred quadrant, then the rest in a fixed order. It takes the
+  first whose label box overlaps no label already placed.
+- A callout that fits in no quadrant fades out. A less relevant callout
+  therefore never covers a more relevant one's text.
+- Layout runs every frame, including while the camera moves. A placed
+  callout keeps its quadrant until that quadrant is blocked. A hidden
+  callout returns only when its relevance exceeds the callout blocking it
+  by a token-set margin, so two callouts of near-equal relevance do not
+  trade places every frame (§req:quality-attributes).
+- Grouping crowded callouts into one marker or list is outside this
+  section until §req:open-questions settles what a group shows.
+
+*Why greedy by relevance*: it places the most relevant callout first,
+which is what guarantees no lesser callout covers it. Optimizing methods
+such as force fields or simulated annealing iterate floating-point
+math, so their results drift between Dart and Python, and the golden
+vectors of §spec:golden-vectors would not hold. About 20 callouts on
+screen, each trying four quadrants, is a small per-frame cost
+(§req:quality-attributes).
+
+*Why the previous quadrant first*: a callout that holds its position
+until forced to move reads as calm. Temporal stability matters more to
+the operator than the best position in any one frame
+(§req:quality-attributes).
+
+*Why continuous, not frozen during camera motion*: freezing lets labels
+overlap for the length of an orbit. Re-placing every frame with a dead
+band keeps text clear while the previous-quadrant rule keeps it calm.
+
+*Why the app measures labels*: text size depends on the renderer's font
+and metrics. The package never measures text.
+
+### Motion and fades
+
+- When the camera is still and an anchor moves, the label lags behind
+  its anchor with a time constant held as a style token. The leader's
+  anchor end stays exactly on the anchor, so the leader stretches and
+  the callout stays attached (§req:success-criteria).
+- While the camera moves, labels follow their anchors without lag.
+- A callout that appears, whether added by the app or uncovered, fades
+  in. One that disappears, whether removed by the app or crowded out,
+  fades out. The fade duration is a style token.
+- A callout's opacity is its fade level times the distance opacity of
+  the callout opacity ramp.
+- The camera counts as moving when its pose differs from the previous
+  frame's.
+
+*Why lag only the label*: the anchor is the fact. A lagging anchor end
+would point at where the object was. A lagging label end keeps the text
+still enough to read while the leader still points at the object.
+
+*Why no lag while the camera moves*: when the camera moves, every label
+moves on screen. A lag there makes the whole layout swim behind the
+scene.
+
+*Why the package computes fades and lag*: two engines animating the
+same transition differently would break the one-look promise. The app
+owns the clock and passes elapsed time, so each frame's result is still
+a function of its inputs and is testable from data
+(§req:constraints).
+
+### Verification
+
+Callout layout fixtures in §spec:golden-vectors are sequences of
+frames, not single frames, because stability, hysteresis, lag, and fades
+show only across frames. Each frame's expected output is the input to
+the next.
+
 ## Annotation primitives §spec:annotation-primitives
 
 *Status: not started*

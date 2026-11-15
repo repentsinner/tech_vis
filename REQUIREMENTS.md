@@ -35,6 +35,13 @@ geographic data or micron-scale specimens.
   scene faces them.
 - An app that adds a corner overlay gets the standard size, position, and
   padding without configuring them, and can override each one.
+- When callouts crowd one area, the operator can still tell which callouts
+  are nearest and most relevant, and no callout's text is covered by a
+  less relevant one.
+- With the camera still, a callout attached to a fast-moving object stays
+  readable while the object moves.
+- When the app switches mode and a set of callouts appears or disappears,
+  the change fades in or out instead of popping.
 
 ## User stories §req:user-stories
 
@@ -57,6 +64,29 @@ geographic data or micron-scale specimens.
 - As an app developer writing a Python renderer, I want the same
   annotations the Dart package offers, so that a scene reads the same in
   both. Python may trail Dart, but the two shall agree wherever both exist.
+- As an app developer, I want to mark some callouts as more important than
+  others, so that the ones my operator depends on survive when the view
+  gets crowded.
+- As an app developer, I want to show and hide whole sets of callouts as my
+  app changes mode, so that each mode shows only what matters to it.
+
+### Machine operator
+
+- As an operator watching a job, I want the toolhead's callout to follow
+  the toolhead smoothly enough to read, so that I can read its value
+  without stopping the machine.
+- As an operator, I want axis travel shown from the home position along
+  the machine's axes, updating as the toolhead moves, so that I see how
+  far each axis has traveled.
+- As an operator orbiting the view, I want callouts to stay attached and
+  recognizable while the camera moves, so that I keep my bearings, even if
+  I only read them once the camera stops.
+- As an operator, I want callouts near where I am looking or pointing to
+  come forward, and distant ones to recede, so that I bring an area into
+  focus by looking at it.
+- As an operator viewing a small part from across the machine, I want a
+  cluster of callouts to stay legible as a group, so that the view does
+  not turn into overlapping text.
 
 ### Scene reader
 
@@ -82,11 +112,18 @@ geographic data or micron-scale specimens.
   orientation, including oblique views of the ground plane.
 - **Engine-neutral.** Nothing in either package assumes a particular
   rendering engine, UI framework, or input system.
+- **Keeps up with motion.** Callout placement keeps pace with the app's
+  frame rate while the camera and anchors move, for up to about 20
+  callouts on screen at once.
+- **Calm, not jumpy.** A callout does not jump between positions frame to
+  frame. Stability matters more than the best position in every frame.
 
 ## Constraints §req:constraints
 
 - The library describes annotations as data. The consuming app renders
-  them, handles input, and owns any animation.
+  them, handles input, and owns the clock. The library computes
+  time-dependent values, such as how far a fade has progressed, from the
+  elapsed time the app passes in.
 - The Dart package runs in any Dart program, with no Flutter dependency.
 - The Python package carries no runtime dependencies.
 - Both packages share one style and one version, and release together.
@@ -111,6 +148,10 @@ displays a real-world measurement.
 - Color ramp legend.
 - Navigation cube as a passive orientation indicator: it shows labeled
   faces and edges and tracks the camera, but does not respond to clicks.
+- Callout crowding: relevance from app-set priority combined with
+  nearness to the camera focus, the viewer, and the pointer; hiding of
+  low-relevance callouts; readable motion for callouts on moving objects;
+  and fades when sets of callouts change.
 - Python versions of every primitive above, agreeing with Dart within
   tolerance.
 
@@ -131,3 +172,13 @@ displays a real-world measurement.
 - **Scales outside the first applications.** Geographic and micron-scale
   scenes may need units, label precision, and grid behavior that the
   supported range does not cover.
+- **Overlapping callouts.** Today the callout nearer the viewer reads
+  clearly and the farther one recedes behind it. Whether an overlapped
+  callout should instead move aside, or whether priority should outrank
+  nearness, needs a prototype and eyes on it.
+- **Grouped callouts.** Whether the operator has to tell which feature
+  each label in a group belongs to without zooming in is undecided. The
+  answer chooses between a single grouped marker and leaders that each
+  run to their own point.
+- **Motion damping.** How strongly a moving object's callout lags behind
+  it, to stay readable without seeming detached, needs tuning by eye.
