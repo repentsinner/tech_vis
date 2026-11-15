@@ -166,8 +166,9 @@ line is always also a minor line.
   the set decides whether the set promotes.
 - A label shows the fewest decimal places that represent its step
   exactly, with no trailing zeros.
-- The decimal marker and leading-zero rule come from
-  §spec:drafting-convention.
+- The app sets the decimal marker (point or comma) and whether a value
+  below one shows its leading zero. The defaults are a point and a
+  leading zero shown.
 
 *Why three formats, not two systems*: imperial readers split. Machinists
 read thousandths of an inch, and router and woodworking users read
@@ -201,29 +202,50 @@ release.
 
 ### Drafting convention §spec:drafting-convention
 
-The app selects one drafting convention for a scene, ISO 129 or
-ASME Y14.5 (§req:success-criteria). The convention sets defaults for
-three properties, and the app may override each one:
+The app selects one drafting convention for a scene
+(§req:success-criteria). A convention is a standard, ISO 129 or
+ASME Y14.5, and a style within it. The convention decides where a
+dimension's text sits and which way it reads:
 
-| Property | ISO 129 | ASME Y14.5 |
+| Convention | Text orientation on screen | Text placement |
 |---|---|---|
-| Dimension text orientation | Aligned: parallel to the dimension line on screen, turned to stay upright | Unidirectional: horizontal on screen |
-| Decimal marker | Comma | Point |
-| Leading zero below one | Shown (`0,5`) | Shown for metric, omitted for decimal inch (`.5`) |
+| ISO oriented | Parallel to the dimension line, turned to stay upright | Above the dimension line, offset by a token-set gap |
+| ISO referencing | Horizontal | On a reference line led off the dimension line |
+| ASME inlined | Horizontal | In a break in the dimension line |
+| ASME referencing | Horizontal | On a reference line led off the dimension line |
 
-The convention is independent of the display format of
-§spec:unit-system. A metric scene may follow ASME, and a decimal-inch
-scene may follow ISO.
+- A referencing style places its text on the side where the leader does
+  not cover it, preferring the outer side of the dimension line.
+- When a dimension's text does not fit between its witness lines on
+  screen, an oriented or inlined dimension falls back to its standard's
+  referencing style.
+- The gap between a measured point and the start of its witness line is
+  a style token per standard.
+- The convention is independent of the display format and number
+  formatting of §spec:unit-system. A metric scene may follow ASME, and a
+  decimal-inch scene may follow ISO.
+
+These four conventions follow FreeCAD TechDraw's "Standard and style"
+setting, which drafting users already know.
 
 *Why the app chooses*: the first applications serve audiences on both
 sides of the split, and one app's readers may follow either standard
 (§req:user-stories). Tying the convention to the unit system would
 force every metric reader onto ISO.
 
-*Why overridable defaults*: shops adopt a standard with local
-exceptions, such as ISO layout with a decimal point. Naming the
-standard sets every property at once, and an override changes one
-without abandoning the rest.
+*Why a style within the standard*: each standard permits more than one
+text placement, and the choice changes the geometry. Inlined text
+breaks the dimension line, oriented text sits above it, and referencing
+text adds a leader.
+
+*Why fall back to referencing*: a 3D dimension shrinks on screen as the
+camera pulls back, so text that fits at one zoom overlaps its arrows at
+another. A referencing leader keeps the value readable at any zoom
+without changing the standard the reader expects.
+
+*Why number formatting is not part of the convention*: the decimal
+marker and leading-zero rule vary by locale and shop more than by
+standard, and drafting tools set them separately.
 
 ### Viewport overlays §spec:viewport-overlays
 
@@ -323,9 +345,12 @@ dimension reads.
 - **Radial.** The radius or diameter of a circle or arc, given its
   center, radius, and plane.
 - Witness line gap and extension, arrowhead size, and text size are
-  style tokens, all in pixels.
-- Text orientation, decimal marker, and leading zero follow
-  §spec:drafting-convention.
+  style tokens, all in pixels. The witness line gap has one token per
+  standard.
+- Text orientation and placement follow §spec:drafting-convention. A
+  referencing dimension's leader uses the same geometry and style tokens
+  as a leader-line callout.
+- Number formatting follows §spec:unit-system.
 
 *Why detect axis alignment*: a reader of a technical drawing thinks in
 per-axis distances, such as X travel or Z depth. Showing the single
