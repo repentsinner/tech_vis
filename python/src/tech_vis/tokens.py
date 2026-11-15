@@ -12,7 +12,7 @@ AXIS_LENGTH: float = 50.0
 DEFAULT_AXIS_LINE_THICKNESS: float = 0.5
 
 # Secondary-frame axis thickness relative to the world axis thickness. Unit: ratio.
-WORKPIECE_AXIS_THICKNESS_SCALE: float = 0.8
+SECONDARY_AXIS_THICKNESS_SCALE: float = 0.8
 
 # Default axis label size. The fallback where no theme supplies one. Unit: px.
 DEFAULT_AXIS_LABEL_SIZE: float = 24.0
@@ -61,7 +61,7 @@ CALLOUT_OPACITY_MIN: float = 0.25
 ALL: dict[str, float] = {
     "axisLength": AXIS_LENGTH,
     "defaultAxisLineThickness": DEFAULT_AXIS_LINE_THICKNESS,
-    "workpieceAxisThicknessScale": WORKPIECE_AXIS_THICKNESS_SCALE,
+    "secondaryAxisThicknessScale": SECONDARY_AXIS_THICKNESS_SCALE,
     "defaultAxisLabelSize": DEFAULT_AXIS_LABEL_SIZE,
     "axisLabelOffsetPixels": AXIS_LABEL_OFFSET_PIXELS,
     "worldAlignedLabelHeightMm": WORLD_ALIGNED_LABEL_HEIGHT_MM,

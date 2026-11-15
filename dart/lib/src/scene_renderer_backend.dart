@@ -10,9 +10,8 @@ import 'scene_description.dart';
 /// framework dependencies in the domain layer. Infrastructure implementations
 /// bridge to Flutter's Widget/Canvas/Size types.
 ///
-/// Domain-specific subinterfaces (e.g. `CncSceneRendererBackend`) add
-/// methods for domain-specific concerns like machine limits and route
-/// segment management.
+/// Domain-specific subinterfaces add methods for domain-specific concerns
+/// like travel limits and segment management.
 abstract class SceneRendererBackend {
   /// Initialize the rendering backend.
   Future<bool> initialize();

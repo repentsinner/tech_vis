@@ -6,8 +6,7 @@ import 'scene_object.dart';
 ///
 /// Provides methods for creating rectangles in each cardinal plane (XY, XZ,
 /// YZ). The [lineCategory] parameter accepts any domain-specific semantic
-/// category type — CNC callers pass `LineCategory`, other domains pass their
-/// own category enum.
+/// category type — each consumer passes its own category enum.
 class FilledRectangleFactory {
   /// Create a filled rectangle in the XY plane.
   static SceneObject createXYFilledRectangle({

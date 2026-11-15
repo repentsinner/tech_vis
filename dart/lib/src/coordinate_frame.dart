@@ -59,8 +59,7 @@ class AxisLineDescriptor {
 /// with colored axis lines and labels).
 ///
 /// Produces [AxisLineDescriptor]s that the scene composition layer
-/// converts to renderer-specific primitives (e.g. [SceneObject] in
-/// `cnc_scene_description`).
+/// converts to renderer-specific primitives (e.g. [SceneObject]).
 class CoordinateFrameDescriptor {
   CoordinateFrameDescriptor({
     vm.Vector3? origin,

@@ -25,9 +25,9 @@ class ViewportSize {
 
 /// Per-frame context passed to the backend before rendering.
 ///
-/// Contains generic viewport information. Domain-specific subclasses
-/// (e.g. `CncFrameContext` in `cnc_scene_description`) add fields
-/// like machine position and execution progress.
+/// Contains generic viewport information. Domain-specific subclasses in
+/// a domain package add fields like a tracked position and playback
+/// progress.
 class FrameContext {
   final ViewportSize viewportSize;
   final double devicePixelRatio;

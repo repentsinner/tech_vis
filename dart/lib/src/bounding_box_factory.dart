@@ -8,8 +8,8 @@ import 'scene_object.dart';
 ///
 /// Produces axis-aligned wireframe cubes by composing [FilledRectangleFactory]
 /// rectangles for each face. The [lineCategory] parameter accepts any
-/// domain-specific semantic category type — CNC callers pass `LineCategory`,
-/// other domains pass their own category enum.
+/// domain-specific semantic category type — each consumer passes its own
+/// category enum.
 class BoundingBoxFactory {
   /// Create a cube from 6 filled rectangles using [FilledRectangleFactory].
   ///

@@ -25,14 +25,15 @@ enum TextLabelMode {
 /// object represents. The infrastructure rendering layer resolves semantic
 /// categories to visual properties (colors, line weights) via theme interfaces.
 ///
-/// Generic base class. Domain-specific subclasses (e.g. `CncSceneObject`)
-/// add properties like feedRate, spindleMode, and violation flags.
+/// Generic base class. Domain-specific subclasses add properties like
+/// per-segment measurements and violation flags.
 class SceneObject {
   final SceneObjectType type;
 
   /// Semantic category describing what this object represents.
   ///
-  /// The concrete type is domain-specific (e.g. `LineCategory` for CNC).
+  /// The concrete type is domain-specific (e.g. a semantic line category
+  /// enum defined by the consumer).
   /// Infrastructure resolvers cast to the expected type for color resolution.
   final Object? lineCategory;
 
@@ -57,7 +58,8 @@ class SceneObject {
 
   /// Semantic label type for theme resolution.
   ///
-  /// The concrete type is domain-specific (e.g. `LabelType` for CNC).
+  /// The concrete type is domain-specific (e.g. a label type enum defined
+  /// by the consumer).
   final Object? labelType;
   final double? worldSize;
 
@@ -76,7 +78,7 @@ class SceneObject {
   final vm.Vector3? billboardAnchorDirection;
   final double? billboardOffsetPixels;
 
-  // Machine position properties (for SceneObjectType.machinePosition)
+  // World position (for SceneObjectType.model and SceneObjectType.marker)
   final vm.Vector3? position;
 
   // 3D Model properties (for SceneObjectType.model)
@@ -90,8 +92,8 @@ class SceneObject {
   ///
   /// When set, the rendering backend uses this color directly instead of
   /// resolving from [lineCategory] via the theme. The composition layer
-  /// sets this after applying domain-specific color logic (violation
-  /// overrides, feedrate encoding, spindle opacity).
+  /// sets this after applying domain-specific color logic (e.g. violation
+  /// overrides, value-encoded color ramps, state-driven opacity).
   final SceneColor? resolvedColor;
 
   const SceneObject({
@@ -128,11 +130,9 @@ class SceneObject {
 
 enum SceneObjectType {
   line,
-  toolpathLine,
   cube,
   filledRectangle,
   textBillboard,
-  machinePosition,
   model,
   marker,
   proceduralMesh,
