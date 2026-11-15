@@ -20,7 +20,7 @@ This repo uses [Flywheel](https://github.com/point-source/flywheel) to orchestra
 
 **Auto-merge eligibility on `main`.** PRs whose title type is in `[chore, docs, style, test, ci, build, refactor]` get labeled `flywheel:auto-merge` and merge automatically once required checks pass. Any other type — `feat`, `fix`, `perf`, and every `!`-suffixed breaking variant — routes to human review and waits for an approval.
 
-**Required status checks.** Your PR must pass `tokens`, `dart`, `python`, and the governance lint before merging. Run them locally before pushing:
+**Required status checks.** Your PR must pass `quality / governance` and `quality / correctness` before merging. The first summarizes the governance lint; the second summarizes `tokens`, `dart`, `python` and `actionlint`. Run the correctness checks locally before pushing:
 
 ```bash
 python3 tools/gen_tokens.py --check
@@ -52,4 +52,4 @@ SPEC.md (declarative, the desired end state), ROADMAP.md (imperative, the
 work queue), and CHANGELOG.md (what shipped) follow the
 [symphonize notation contract](https://github.com/repentsinner/symphonize).
 Headings carry `§spec:`/`§road:` slugs; reference sections by slug, never
-by position. CI enforces this via the governance-lint workflow.
+by position. CI enforces this through the governance lint in `quality.yml`.
