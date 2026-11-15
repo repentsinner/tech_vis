@@ -33,3 +33,29 @@ the opacity ramp. Test the Dart implementation against them.
 
 Port the leader-line functions to Python. Test them against the same
 fixtures. Depends on §road:leader-vectors.
+
+## Annotation primitives §road:annotation-primitives
+
+Closes §spec:annotation-primitives.
+
+### Smart dimensions §road:smart-dimensions
+
+Point-to-point dimensions following ISO 129 / ASME Y14.5
+(§spec:smart-dimensions).
+
+### Ground plane §road:ground-plane
+
+Adaptive grid with a major/minor hierarchy (§spec:ground-plane).
+
+### Scale bar §road:scale-bar
+
+Screen-space ruler with adaptive subdivision (§spec:scale-bar).
+
+### Color ramp legend §road:color-ramp-legend
+
+Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
+
+### Navigation cube §road:nav-cube
+
+Orientation indicator with click-to-snap views
+(§spec:navigation-cube).
