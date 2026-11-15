@@ -121,7 +121,9 @@ geographic data or micron-scale specimens.
 ## Constraints §req:constraints
 
 - The library describes annotations as data. The consuming app renders
-  them, handles input, and owns any animation.
+  them, handles input, and owns the clock. The library computes
+  time-dependent values, such as how far a fade has progressed, from the
+  elapsed time the app passes in.
 - The Dart package runs in any Dart program, with no Flutter dependency.
 - The Python package carries no runtime dependencies.
 - Both packages share one style and one version, and release together.
