@@ -1,0 +1,78 @@
+# quality — PR + merge-queue compatible quality gate.
+#
+# GitHub names a required status check after the JOB, not the workflow.
+# The job ids `tokens`, `dart` and `python` are the check-run names to
+# register in the branch ruleset under "Required status checks".
+#
+# Each job classifies the triggering commit first so Flywheel-emitted
+# commits (chore(release):, back-merge) skip the suite. A step-level `if:`
+# that evaluates false still reports `success`, so the gate stays satisfied.
+name: quality
+on:
+  pull_request:
+  merge_group: # required for merge-queue compatibility
+
+permissions:
+  contents: read
+
+jobs:
+  tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - id: classify
+        uses: point-source/flywheel/classify@59758d1940ebe054ce9fdd4b7a7dc79a0cf235e0 # v2.1.0
+      - uses: actions/checkout@v7
+        if: steps.classify.outputs.derived_release_commit != 'true'
+      - name: Generated token modules match style/tokens.json
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: python3 tools/gen_tokens.py --check
+
+  dart:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dart
+    steps:
+      - id: classify
+        uses: point-source/flywheel/classify@59758d1940ebe054ce9fdd4b7a7dc79a0cf235e0 # v2.1.0
+      - uses: actions/checkout@v7
+        if: steps.classify.outputs.derived_release_commit != 'true'
+      - uses: dart-lang/setup-dart@v1
+        if: steps.classify.outputs.derived_release_commit != 'true'
+      - name: Analyze
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: |
+          dart pub get
+          dart format --output=none --set-exit-if-changed .
+          dart analyze --fatal-infos
+      - name: Test
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: dart test
+      - name: Publish dry run
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: dart pub publish --dry-run
+
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - id: classify
+        uses: point-source/flywheel/classify@59758d1940ebe054ce9fdd4b7a7dc79a0cf235e0 # v2.1.0
+      - uses: actions/checkout@v7
+        if: steps.classify.outputs.derived_release_commit != 'true'
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        if: steps.classify.outputs.derived_release_commit != 'true'
+      - name: Lint
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: |
+          uv sync --locked
+          uv run ruff format --check .
+          uv run ruff check .
+      - name: Test
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: uv run pytest
+      - name: Build
+        if: steps.classify.outputs.derived_release_commit != 'true'
+        run: uv build

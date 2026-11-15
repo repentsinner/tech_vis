@@ -1,0 +1,35 @@
+# Generated artifacts. None of these are source; `pub get`, `uv sync` and
+# the build tools reproduce all of them. Patterns without a leading slash
+# match at any depth.
+
+# Dart tool and build caches.
+.dart_tool/
+build/
+**/doc/api/
+
+# Dart library lockfile. tech_vis is a published package, not an app: it
+# resolves against a range of consumer versions, so pinning its own
+# lockfile gives false confidence and has no effect on consumers.
+# See https://dart.dev/tools/pub/private-files#pubspeclock.
+/dart/pubspec.lock
+
+# Python environments, caches and build output. python/uv.lock IS
+# committed: it pins the dev tools CI runs, not what consumers install.
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+/dist/
+/python/dist/
+
+# Agent worktrees.
+.claude/worktrees/
+
+# OS and editor noise.
+.DS_Store
+*.swp
+*.iml
+.idea/
+
+# Symphonize/conduct local progress scratch — never commit.
+*.local.md
