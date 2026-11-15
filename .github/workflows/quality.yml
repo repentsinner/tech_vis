@@ -42,7 +42,23 @@ jobs:
       - name: Generated token modules match style/tokens.json
         run: python3 tools/gen_tokens.py --check
 
+  # The shared Dart and Flutter check, on the SDK pinned here: the pinned
+  # leg, the floor leg on environment.sdk's lower bound, and the downgrade
+  # leg on the oldest dependency releases pubspec.yaml admits. A published
+  # library makes all three claims to the projects that depend on it.
   dart:
+    needs: classify
+    if: needs.classify.outputs.derived_release_commit != 'true' && needs.classify.outputs.promotion_pr != 'true'
+    uses: repentsinner/bug-free-happiness/.github/workflows/flutter-correctness.yml@659ecd9856a48c48f886ff06e5fd86911bb8003a # v0.10.0
+    with:
+      packages: dart
+      sdk-version: 3.14.0
+      floor: true
+      downgrade: true
+
+  # pub.dev's own checks on the package, which the shared check leaves to
+  # publishing projects.
+  dart-publish-dry-run:
     needs: classify
     if: needs.classify.outputs.derived_release_commit != 'true' && needs.classify.outputs.promotion_pr != 'true'
     runs-on: ubuntu-latest
@@ -54,16 +70,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
-      - name: Resolve dependencies
-        run: dart pub get
-      - name: Format
-        run: dart format --output=none --set-exit-if-changed .
-      - name: Analyze
-        run: dart analyze --fatal-infos
-      - name: Test
-        run: dart test
+        with:
+          sdk: 3.14.0
       - name: Publish dry run
-        run: dart pub publish --dry-run
+        run: |
+          dart pub get
+          dart pub publish --dry-run
 
   python:
     needs: classify
@@ -135,7 +147,7 @@ jobs:
 
   correctness:
     name: quality / correctness
-    needs: [classify, tokens, dart, python, actionlint]
+    needs: [classify, tokens, dart, dart-publish-dry-run, python, actionlint]
     if: always()
     runs-on: ubuntu-latest
     steps:
