@@ -58,7 +58,35 @@ repository. The generator never runs on a consumer's machine.
 Layout functions are ported by hand between languages. A shared set of
 language-neutral fixtures shall pin the ports to each other: each fixture
 records a function's inputs and its expected outputs, and each package
-tests its implementation against every fixture.
+tests its implementation against every fixture (§req:success-criteria).
+
+- Fixtures live in `vectors/` at the repository root, outside both
+  package roots. Each package's fixture tests skip where the directory
+  is absent, as it is in a published archive.
+- The Dart implementation is the reference. A tool in `tools/` runs it
+  over each fixture's inputs and writes the expected outputs. The
+  fixtures are committed, and a change to them is reviewed like code.
+- Every public layout function in either package has fixtures. A
+  function that exists in only one package still has fixtures, so the
+  port inherits a finished test suite.
+- Numeric outputs compare within an absolute tolerance of 1e-9 in the
+  function's own units. Label text compares exactly.
+- CI shall fail when a committed fixture differs from the tool's output.
+
+*Why Dart is the reference*: Dart is the first implementation of every
+primitive, and Python ports from it (§req:priorities). An independent
+third implementation would catch bugs in Dart too, but it triples the
+work for every primitive. Review of the committed fixtures is the check
+on the reference.
+
+*Why a tolerance on numbers but not on text*: two languages evaluating
+the same double-precision math can differ in the last bits of a
+trigonometric result. Label text is formatted from rounded values, so
+a mismatch there is a real defect.
+
+*Why compare numbers, not pictures*: matching geometry and text is
+testable from data alone, without a GPU (§req:quality-attributes).
+Comparing rendered output across engines is deferred.
 
 ## Dart package §spec:dart-package
 
@@ -111,117 +139,267 @@ geometry.
 
 ## Unit system §spec:unit-system
 
-*Status: complete*
+*Status: in progress*
 
-`UnitSystem` names the metric (mm) and imperial (in) systems. It
-converts between them, formats measurement labels, and supplies the step
-sequences that grid subdivisions and scale bar ticks snap to.
+`UnitSystem` names the metric (mm) and imperial (in) systems and
+converts between them. A measurement displays in one of three formats,
+which the app selects:
+
+- **Metric**: millimeters, promoted to meters at 10 m and above.
+- **Decimal inch**: inches with decimal places. No promotion to feet.
+- **Fractional inch**: inches with binary fractions down to 1/64,
+  promoted to feet and inches at 12 in and above (`3' 4 1/2"`).
+
+Each format supplies two ascending sequences of clean steps. The scale
+bar snaps to the fine sequence. The grid snaps to the coarse sequence,
+where each step is a whole multiple of the one before it, so a major
+line is always also a minor line.
+
+| Format | Scale bar steps | Grid steps |
+|---|---|---|
+| Metric | 1, 2, 5 × every power of ten | every power of ten |
+| Decimal inch | 1, 2, 5 × every power of ten | every power of ten |
+| Fractional inch | 1/64, 1/32, 1/16, 1/8, 1/4, 1/2, 1, 6, 12 in; then 1, 2, 5 × every power of ten ft | 1/16, 1/4, 1, 12 in; then every power of ten ft |
+
+- A set of labels displayed together, such as a grid's or a scale
+  bar's, uses one unit for every label in the set. The largest value in
+  the set decides whether the set promotes.
+- A label shows the fewest decimal places that represent its step
+  exactly, with no trailing zeros.
+- The decimal marker and leading-zero rule come from
+  §spec:drafting-convention.
+
+*Why three formats, not two systems*: imperial readers split. Machinists
+read thousandths of an inch, and router and woodworking users read
+fractions and feet (§req:user-stories). The conversion factor is the
+same; the display is not.
+
+*Why promote metric only at 10 m*: millimeters are the working unit on
+a machine up to room scale. Promotion exists so that no label carries a
+five-digit millimeter value (§req:user-stories).
+
+*Why one unit per label set*: a grid labeled `900`, `1 m`, `1100` reads
+as three different quantities.
 
 ## Annotation primitives §spec:annotation-primitives
 
 *Status: not started*
 
 The package provides annotation primitives for engineering 3D scenes.
-Each primitive produces `SceneObject` data, pure geometry and labels,
-without rendering it. Consumers map annotations to their renderer's
-scene graph.
+Each primitive produces data, pure geometry and labels, without
+rendering it. Consumers map annotations to their renderer's scene graph
+and handle all input and animation (§req:constraints).
 
 Every primitive that displays a real-world measurement formats its
-labels and subdivides through §spec:unit-system.
+labels and subdivides through §spec:unit-system, and follows the
+drafting convention of §spec:drafting-convention.
+
+Dart provides each primitive first. Python provides the same primitive
+later, and the two agree on every fixture of §spec:golden-vectors
+(§req:priorities). A primitive's Python port does not block its Dart
+release.
+
+### Drafting convention §spec:drafting-convention
+
+The app selects one drafting convention for a scene, ISO 129 or
+ASME Y14.5 (§req:success-criteria). The convention sets defaults for
+three properties, and the app may override each one:
+
+| Property | ISO 129 | ASME Y14.5 |
+|---|---|---|
+| Dimension text orientation | Aligned: parallel to the dimension line on screen, turned to stay upright | Unidirectional: horizontal on screen |
+| Decimal marker | Comma | Point |
+| Leading zero below one | Shown (`0,5`) | Shown for metric, omitted for decimal inch (`.5`) |
+
+The convention is independent of the display format of
+§spec:unit-system. A metric scene may follow ASME, and a decimal-inch
+scene may follow ISO.
+
+*Why the app chooses*: the first applications serve audiences on both
+sides of the split, and one app's readers may follow either standard
+(§req:user-stories). Tying the convention to the unit system would
+force every metric reader onto ISO.
+
+*Why overridable defaults*: shops adopt a standard with local
+exceptions, such as ISO layout with a decimal point. Naming the
+standard sets every property at once, and an override changes one
+without abandoning the rest.
+
+### Viewport overlays §spec:viewport-overlays
+
+The scale bar, the color ramp legend, and the navigation cube are
+overlays. An overlay is described in viewport pixels, not world
+coordinates, and the app draws it in a 2D layer above the scene.
+
+- An overlay anchors to one viewport corner, with an offset from that
+  corner in pixels.
+- Each overlay has a default corner, offset, and size, held as style
+  tokens. The app may override each one (§req:success-criteria).
+- Given the same camera, viewport size, and settings, an overlay's
+  description is identical in both packages.
+
+*Why pixels, not world geometry*: an overlay's job is to hold still
+while the scene moves. Placing it as world geometry near the camera
+ties it to the projection, so it shifts with field of view and clips
+against scene depth. A pixel description is also checkable as data,
+with no camera math in the test.
+
+*Tradeoff accepted*: the package has two kinds of output, a world-space
+scene and a pixel-space overlay. A renderer handles both.
 
 ### Ground plane §spec:ground-plane
 
-A reference surface anchored to a named coordinate frame origin.
+A reference surface anchored to the origin of a named coordinate frame.
 The ground plane provides spatial context. Without it, floating
-geometry has no perceptible scale or orientation.
+geometry has no perceptible scale or orientation (§req:user-stories).
 
-The ground plane is a rectangular or circular patch with
-radial or rectangular fade-to-transparent at its edges. It displays an
-adaptive grid with a major/minor line hierarchy. The grid step snaps to
-the unit system's powers-of-ten sequence at the current zoom level
-(mm: 0.1 → 1 → 10 → 100; inch: 1/16 → 1/8 → 1 → 12). Major
-divisions carry coordinate labels in the active unit.
+- The ground plane is a rectangular or circular patch, sized by the app,
+  lying in a plane of its coordinate frame.
+- It displays a grid with minor and major lines. The minor step is the
+  smallest grid step of §spec:unit-system that keeps minor lines at
+  least a token-set number of pixels apart at the camera target. The
+  major step is the next grid step.
+- Line opacity falls with distance from the patch center, reaching zero
+  at the patch edge. The fade is radial for a circular patch and
+  rectangular for a rectangular one.
+- Major lines carry coordinate labels in the active display format,
+  billboarded so they stay readable at oblique camera angles
+  (§req:quality-attributes).
+- When the camera rests near a step boundary, the grid does not flicker.
+  The step changes only once the spacing passes the boundary by a
+  token-set margin, and changes back only once it passes back by the
+  same margin.
 
 *Why an adaptive grid*: a fixed grid spacing is too coarse when zoomed
 in and an illegible mesh when zoomed out. Snapping to the unit system's
-natural steps keeps grid density perceptually constant across zoom
-levels.
+grid steps keeps grid density perceptually constant across zoom levels
+(§req:success-criteria).
 
 *Why fade at the edges*: a hard-clipped ground plane creates a visual
 boundary that implies a physical constraint. Fade-to-transparent
 communicates a reference surface without implying a wall.
 
+*Why billboard the labels*: a label lying flat on the plane becomes
+unreadable as the view approaches edge-on, which is the view a reader
+uses to judge height above the floor.
+
 ### Scale bar §spec:scale-bar
 
-A screen-space ruler showing real-world distance at the current
-zoom level. It sits in a viewport corner and stays readable at any
-camera orientation.
+A viewport overlay (§spec:viewport-overlays) showing real-world
+distance at the current zoom (§req:user-stories).
 
-The scale bar subdivides with the same unit system step sequence as
-the ground plane grid. As the camera zooms, the bar snaps to the
-nearest clean unit increment and updates its label.
+- The bar's length represents the largest scale bar step of
+  §spec:unit-system that fits within a token-set maximum pixel length,
+  measured at the camera target.
+- The bar subdivides into ticks and carries a label for the value it
+  represents, in the active display format.
+- The bar's value does not flicker at a step boundary, by the same
+  margin rule as §spec:ground-plane.
 
 *Why screen-space*: a world-space ruler changes apparent size with
 camera distance, which defeats its purpose. A fixed screen-space element
 with an adaptive label communicates scale at any zoom.
 
+*Why measure at the camera target*: under perspective, scale varies
+across the view. The camera target is the point the reader is looking
+at, so its scale is the one they want.
+
 ### Smart dimensions §spec:smart-dimensions
 
-Point-to-point dimension annotations following ISO 129 / ASME Y14.5
-conventions, with screen-space-stable text and witness lines.
+Point-to-point dimension annotations with witness lines, arrowheads, and
+text that keeps a constant screen size at any zoom (§req:user-stories).
+The app supplies the measured points; the package decides how the
+dimension reads.
 
-When two points share N−1 axis values within tolerance, the dimension
-aligns to the varying axis's measurement plane, with witness lines
-perpendicular to that axis. A difference along several axes shows
-either per-axis component dimensions or the direct distance with an
-angled leader. Variants are linear, angular (between two vectors), and
-radial (arc or circle diameter).
+- **Linear.** When two points differ along one axis only, within an
+  alignment tolerance, the dimension measures that axis. Its witness
+  lines are perpendicular to that axis. The tolerance defaults to a
+  style token, and the app may override it.
+- **Several axes.** When the points differ along more than one axis,
+  the app chooses between per-axis component dimensions and the direct
+  distance with an angled leader.
+- **Angular.** The angle between two vectors from a common vertex, drawn
+  as an arc.
+- **Radial.** The radius or diameter of a circle or arc, given its
+  center, radius, and plane.
+- Witness line gap and extension, arrowhead size, and text size are
+  style tokens, all in pixels.
+- Text orientation, decimal marker, and leading zero follow
+  §spec:drafting-convention.
 
 *Why detect axis alignment*: a reader of a technical drawing thinks in
 per-axis distances, such as X travel or Z depth. Showing the single
 varying axis matches that reading. Direct distance with components
 handles the general case.
 
+*Why the app supplies the points*: what is worth measuring depends on
+the app's domain. A generic toolkit that guessed would name concepts
+from one consumer (§spec:dart-package).
+
 ### Color ramp legend §spec:color-ramp-legend
 
-A labeled gradient bar for a scalar-to-color mapping such as speed,
-temperature, stress, or altitude. The consumer provides the color map
-and the value range. The legend handles layout and formats labels
-through §spec:unit-system.
+A viewport overlay (§spec:viewport-overlays) that keys a color-coded
+value, such as speed, temperature, stress, or altitude, to its colors.
+The app provides the scalar-to-color mapping and the value range. The
+legend handles layout, ticks, and labels, and formats them through
+§spec:unit-system.
 
-Position, orientation (horizontal or vertical), tick marks at value
-intervals, and unit-labeled endpoints are configurable.
+Orientation (horizontal or vertical), tick intervals, and unit-labeled
+endpoints are configurable.
 
-*Why a consumer-provided color map*: the legend is a display primitive,
+*Open*: how the gradient itself reaches the renderer is undecided. The
+choice is between color stops that the renderer interpolates and
+pre-sampled solid bands.
+
+*Why an app-provided color map*: the legend is a display primitive,
 not a data interpreter. Keeping the scalar-to-color mapping outside lets
 any domain reuse the same legend.
 
 ### Navigation cube §spec:navigation-cube
 
-An orientation indicator drawn as a small overlay in a viewport corner.
-A cube with labeled faces (Top, Front, Right, and so on) tracks the
-camera's orientation relative to the world axes. It builds on the
-package's coordinate frame descriptors.
+A viewport overlay (§spec:viewport-overlays) that shows the camera's
+orientation relative to the world axes. It is a passive indicator: it
+helps a viewer see which side of the scene faces them, and does not
+respond to input (§req:priorities).
 
-Clicking a part of the cube snaps the view:
-
-- **Face**: an orthographic view (top, front, right).
-- **Edge**: a two-axis view (front-right, top-front).
-- **Corner**: an isometric view (top-front-right, and so on).
-
-Every transition animates the camera smoothly.
+- The package describes a cube with labeled faces (Top, Front, Right,
+  and so on) and its rotation for the current camera. The app renders
+  it with its own fixed camera in its corner.
+- The app names the world up axis and front axis. The defaults are
+  Z up, with the Front face's normal along −Y.
+- The cube's labels and orientation build on the package's coordinate
+  frame descriptors.
 
 *Why a cube*: its six labeled faces map directly to the six orthographic
-views, and its edges and corners give two-axis and three-axis views
-without a menu. Clicking "Top" does what the label says.
+views. A viewer reads the visible face labels to know where they are
+looking from.
+
+*Why the app names the axes*: Z-up is the convention of the first
+applications and of the package's meshes, but many engines are Y-up. A
+fixed convention would label a Y-up scene's floor as its front.
+
+*Why no click-to-snap*: snapping to a clicked face, edge, or corner
+needs hit-testing and camera animation, which belong to the app. How
+the work splits between app and package is an open question
+(§req:open-questions), so the cube's first form commits to none of it.
 
 ## Python package §spec:python-package
 
 *Status: in progress*
 
-Pure Python, no runtime dependencies. It provides the style tokens.
-Layout functions arrive with §spec:golden-vectors, which is what makes a
-port checkable.
+Pure Python, no runtime dependencies (§req:constraints). It provides
+the style tokens and, in time, every layout function and annotation
+primitive the Dart package provides (§req:user-stories).
+
+- A Python function may trail its Dart counterpart by any number of
+  releases. Where both exist, they agree on every fixture of
+  §spec:golden-vectors.
+- A function arrives in Python only with its fixtures passing, which is
+  what makes a port checkable.
+
+*Why let Python trail*: the first applications are Dart apps, and the
+primitives they need first should not wait on a second port
+(§req:priorities). The fixtures keep a late port honest.
 
 ## Versioning and release §spec:release
 
