@@ -34,9 +34,11 @@ and §spec:renderer-contract.
 ### Billboard text requests §road:billboard-text-requests
 
 Emit composed text as text requests that come back as sized Billboards,
-and move `EnvelopeLabelFactory` and callout labels onto them, in
+and move `EnvelopeLabelFactory`, with its top face and label directions
+taken from the declared convention, and callout labels onto them, in
 `dart/lib/src/envelope_label_factory.dart` and
-`dart/lib/src/leader_line.dart` (§spec:scene-model).
+`dart/lib/src/leader_line.dart` (§spec:scene-model,
+§spec:coordinate-convention).
 
 ### Generated markers §road:generated-markers
 
