@@ -235,6 +235,41 @@ void main() {
     }
   });
 
+  group('createCalloutLeaderLines', () {
+    final styles = {
+      'default style': const LeaderLineStyle(),
+      'custom style': const LeaderLineStyle(lineWidth: 2, angleDegrees: 45),
+    };
+    for (final MapEntry(key: name, value: style) in styles.entries) {
+      test('draws the leader as its two segments, $name', () {
+        final leader = computeCalloutLeaderGeometry(
+          anchor: vm.Vector3(1, 2, 3),
+          cameraRight: vm.Vector3(1, 0, 0),
+          cameraUp: vm.Vector3(0, 1, 0),
+          worldUnitsPerPixel: 0.5,
+          quadrant: CalloutQuadrant.topLeft,
+          style: style,
+        );
+        final lines = createCalloutLeaderLines(
+          leader: leader,
+          style: style,
+          key: 'callout',
+          opacity: 0.25,
+        );
+        expect(lines, hasLength(2));
+        expect(lines[0].start, leader.gapEnd);
+        expect(lines[0].end, leader.elbow);
+        expect(lines[1].start, leader.elbow);
+        expect(lines[1].end, leader.labelEdge);
+        for (final line in lines) {
+          expect(line.widthPixels, style.lineWidth);
+          expect(line.key, 'callout');
+          expect(line.opacity, 0.25);
+        }
+      });
+    }
+  });
+
   group('computeCalloutOpacity', () {
     test('returns max opacity at near distance', () {
       expect(
