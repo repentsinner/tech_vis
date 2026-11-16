@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from conftest import load_vectors
+from conftest import TOLERANCE, load_vectors
 from tech_vis import (
     ViewportCorner,
     ViewportOverlayKind,
@@ -12,7 +12,6 @@ from tech_vis import (
     ViewportRect,
 )
 
-TOLERANCE = 1e-9
 VECTORS = "viewport_overlays.json"
 
 _CORNERS = {

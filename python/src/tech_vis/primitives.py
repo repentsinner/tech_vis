@@ -9,10 +9,9 @@ package emits primitives and never renders them.
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from tech_vis._vec import Vector2, Vector3
+from tech_vis._vec import CENTERED, Vector2, Vector3
 
 # A billboard's content sits centered on its anchor unless told otherwise.
-_CENTERED: Vector2 = (0.5, 0.5)
 
 _QUAD_CORNERS = 4
 
@@ -143,7 +142,7 @@ class BillboardPrimitive(Primitive):
     content: BillboardContent
     anchor: Vector3
     orientation: BillboardOrientation = field(default_factory=ViewerFacingOrientation)
-    alignment: Vector2 = _CENTERED
+    alignment: Vector2 = CENTERED
     """Point of the content on the anchor, as a fraction of its width and
     height from its bottom-left corner."""
 

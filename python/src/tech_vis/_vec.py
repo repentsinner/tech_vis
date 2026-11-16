@@ -5,6 +5,12 @@ import math
 type Vector2 = tuple[float, float]
 type Vector3 = tuple[float, float, float]
 
+# The world origin.
+ORIGIN: Vector3 = (0.0, 0.0, 0.0)
+
+# A billboard alignment at the middle of its content.
+CENTERED: Vector2 = (0.5, 0.5)
+
 
 def add(a: Vector3, b: Vector3) -> Vector3:
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])

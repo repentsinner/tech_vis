@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from tech_vis import _vec
-from tech_vis._vec import Vector2, Vector3
+from tech_vis._vec import CENTERED, ORIGIN, Vector2, Vector3
 from tech_vis.bounding_box import BoundingBox
 from tech_vis.coordinate_convention import CoordinateConvention
 from tech_vis.primitives import (
@@ -28,9 +28,6 @@ ENVELOPE_LABEL_PIXEL_SIZE = 20.0
 
 ENVELOPE_LABEL_OFFSET_PIXELS = 8.0
 """Default screen-space offset of an envelope label from its corner, in pixels."""
-
-_ORIGIN: Vector3 = (0.0, 0.0, 0.0)
-_CENTERED: Vector2 = (0.5, 0.5)
 
 
 class LabelCorner(StrEnum):
@@ -99,7 +96,7 @@ class _LabelFrame:
     @classmethod
     def of(cls, convention: CoordinateConvention) -> "_LabelFrame":
         top_view = CameraBasis.look_at(
-            position=convention.up.unit_vector, target=_ORIGIN, convention=convention
+            position=convention.up.unit_vector, target=ORIGIN, convention=convention
         )
         return cls(up=top_view.to_viewer, back=top_view.up, right=top_view.right)
 
@@ -165,7 +162,7 @@ def create_coplanar_billboard_label(
     pixel_size: float = ENVELOPE_LABEL_PIXEL_SIZE,
     surface_normal: Vector3 | None = None,
     text_direction: Vector3 | None = None,
-    anchor_alignment: Vector2 = _CENTERED,
+    anchor_alignment: Vector2 = CENTERED,
 ) -> BillboardPrimitive:
     """Returns a label at ``position`` lying flat in the plane of ``surface_normal``.
 

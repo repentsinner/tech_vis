@@ -11,12 +11,12 @@ from tech_vis import (
     Handedness,
     SignedAxis,
     SpatialAxis,
-    Vector3,
     billboard_offset_position,
     project_onto_screen_plane,
     world_to_screen,
     world_units_per_pixel_at,
 )
+from tech_vis._vec import dot
 
 Y_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT)
 Z_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
@@ -30,16 +30,12 @@ FOV = math.radians(45)
 VIEWPORT = (1280.0, 720.0)
 
 
-def _dot(a: Vector3, b: Vector3) -> float:
-    return sum(x * y for x, y in zip(a, b, strict=True))
-
-
 def _assert_orthonormal(basis: CameraBasis) -> None:
     for axis in (basis.forward, basis.right, basis.up):
-        assert _dot(axis, axis) == pytest.approx(1.0, abs=TOLERANCE)
-    assert _dot(basis.right, basis.forward) == pytest.approx(0.0, abs=TOLERANCE)
-    assert _dot(basis.up, basis.forward) == pytest.approx(0.0, abs=TOLERANCE)
-    assert _dot(basis.right, basis.up) == pytest.approx(0.0, abs=TOLERANCE)
+        assert dot(axis, axis) == pytest.approx(1.0, abs=TOLERANCE)
+    assert dot(basis.right, basis.forward) == pytest.approx(0.0, abs=TOLERANCE)
+    assert dot(basis.up, basis.forward) == pytest.approx(0.0, abs=TOLERANCE)
+    assert dot(basis.right, basis.up) == pytest.approx(0.0, abs=TOLERANCE)
 
 
 class TestCoordinateConvention:
@@ -120,7 +116,7 @@ class TestCameraBasis:
                 camera.to_viewer,
                 str(convention),
             )
-            assert _dot(camera.up, convention.up.unit_vector) > 0, convention
+            assert dot(camera.up, convention.up.unit_vector) > 0, convention
 
     def test_measures_depth_along_the_view_axis(self):
         camera = CameraBasis.look_at(

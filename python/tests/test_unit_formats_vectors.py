@@ -5,11 +5,10 @@ from typing import Any
 
 import pytest
 
-from conftest import load_vectors
+from conftest import TOLERANCE, load_vectors
 from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, tokens
 
 # Absolute tolerance on every numeric output, in the format's base unit.
-TOLERANCE = 1e-9
 
 type Json = dict[str, Any]
 

@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from tech_vis import BillboardContent, LeaderLineStyle, TextRequest, Vector3
+
 # Absolute tolerance on a golden-vector number, in the function's own units
 # (§spec:golden-vectors).
 TOLERANCE = 1e-9
@@ -33,3 +35,34 @@ def assert_close(
     assert len(actual) == len(expected), reason
     for i, (got, want) in enumerate(zip(actual, expected, strict=True)):
         assert got == pytest.approx(want, rel=0, abs=tolerance), f"{reason}[{i}]"
+
+
+# Width of one stand-in character, as a fraction of the requested height. The
+# Dart reference sizes text with the same stand-in, so content sizes agree.
+FAKE_CHARACTER_ASPECT = 0.5
+
+
+def fake_text_resolver(request: TextRequest) -> BillboardContent:
+    """Sizes each character at half its height, and hands back the request."""
+    return BillboardContent(
+        value=request,
+        width_pixels=len(request.text) * FAKE_CHARACTER_ASPECT * request.height_pixels,
+        height_pixels=request.height_pixels,
+    )
+
+
+def json_vector3(json_value: Sequence[float]) -> Vector3:
+    """Decodes a fixture's three-number vector."""
+    x, y, z = (float(c) for c in json_value)
+    return (x, y, z)
+
+
+def json_leader_style(s: dict) -> LeaderLineStyle:
+    """Decodes a fixture's leader-line style record."""
+    return LeaderLineStyle(
+        line_width=s["lineWidth"],
+        gap_pixels=s["gapPixels"],
+        angled_length_pixels=s["angledLengthPixels"],
+        horizontal_length_pixels=s["horizontalLengthPixels"],
+        angle_degrees=s["angleDegrees"],
+    )

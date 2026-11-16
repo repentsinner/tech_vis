@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from tech_vis import _vec, tokens
-from tech_vis._vec import Vector3
+from tech_vis._vec import ORIGIN, Vector3
 from tech_vis.coordinate_convention import SpatialAxis
 from tech_vis.primitives import (
     BillboardPrimitive,
@@ -14,8 +14,6 @@ from tech_vis.primitives import (
     TextRequest,
     TextResolver,
 )
-
-_ORIGIN: Vector3 = (0.0, 0.0, 0.0)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -44,7 +42,7 @@ class CoordinateFrameDescriptor:
     The defaults are the style tokens.
     """
 
-    origin: Vector3 = _ORIGIN
+    origin: Vector3 = ORIGIN
     length: float = tokens.AXIS_LENGTH
     """Length of each axis line in world units."""
 

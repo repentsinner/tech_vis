@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from conftest import TOLERANCE, assert_close
+from conftest import TOLERANCE, assert_close, fake_text_resolver
 from tech_vis import (
     BillboardContent,
     BillboardPrimitive,
@@ -41,6 +41,7 @@ from tech_vis import (
     tokens,
     world_to_screen,
 )
+from tech_vis._vec import dot, length, sub
 
 # A mesh buffer holds 32-bit floats.
 FLOAT32_TOLERANCE = 1e-6
@@ -49,22 +50,6 @@ Y_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT)
 Y_UP_LEFT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.LEFT)
 Z_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
 Z_UP_LEFT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.LEFT)
-
-
-def resolve(request: TextRequest) -> BillboardContent:
-    return BillboardContent(
-        value=request,
-        width_pixels=len(request.text) * 0.5 * request.height_pixels,
-        height_pixels=request.height_pixels,
-    )
-
-
-def _sub(a: Vector3, b: Vector3) -> Vector3:
-    return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
-
-
-def _dot(a: Vector3, b: Vector3) -> float:
-    return sum(x * y for x, y in zip(a, b, strict=True))
 
 
 class TestPrimitives:
@@ -94,7 +79,7 @@ class TestPrimitives:
 
     def test_billboards_face_the_viewer_centered_by_default(self):
         billboard = BillboardPrimitive(
-            content=resolve(TextRequest(text="A", height_pixels=10)),
+            content=fake_text_resolver(TextRequest(text="A", height_pixels=10)),
             anchor=(1, 2, 3),
             key=None,
         )
@@ -182,7 +167,7 @@ class TestCoordinateFrame:
     def test_emits_three_axes_then_three_offset_labels(self):
         frame = CoordinateFrameDescriptor(origin=(1, 2, 3), length=10)
         primitives = create_coordinate_frame(
-            frame, key_for=lambda axis: axis.label, resolve_text=resolve
+            frame, key_for=lambda axis: axis.label, resolve_text=fake_text_resolver
         )
         lines, labels = primitives[:3], primitives[3:]
         assert [line.key for line in lines] == ["X", "Y", "Z"]
@@ -204,7 +189,7 @@ class TestCoordinateFrame:
         assert (
             len(
                 create_coordinate_frame(
-                    hidden, key_for=lambda _: None, resolve_text=resolve
+                    hidden, key_for=lambda _: None, resolve_text=fake_text_resolver
                 )
             )
             == 3
@@ -213,7 +198,7 @@ class TestCoordinateFrame:
             CoordinateFrameDescriptor(),
             key_for=lambda _: "line",
             label_key_for=lambda _: "label",
-            resolve_text=resolve,
+            resolve_text=fake_text_resolver,
         )
         assert [p.key for p in shown] == ["line"] * 3 + ["label"] * 3
 
@@ -268,13 +253,13 @@ class TestEnvelopeLabels:
                 bounds=self.bounds,
                 corner=corner,
                 convention=convention,
-                resolve_text=resolve,
+                resolve_text=fake_text_resolver,
                 key="envelope",
             )
             assert label.key == "envelope"
             assert label.orientation == ViewerFacingOrientation()
             assert_close(label.anchor, anchor, f"{convention} {corner}")
-            norm = math.sqrt(_dot(outward, outward))
+            norm = length(outward)
             assert label.offset is not None
             assert_close(label.offset.direction, [c / norm for c in outward])
             assert label.offset.pixels == 8.0
@@ -293,7 +278,7 @@ class TestEnvelopeLabels:
                 edge=edge,
                 alignment=alignment,
                 convention=convention,
-                resolve_text=resolve,
+                resolve_text=fake_text_resolver,
                 key=None,
             )
             assert_close(label.anchor, anchor)
@@ -307,7 +292,7 @@ class TestEnvelopeLabels:
             text="P",
             position=(1, 2, 3),
             convention=Z_UP_RIGHT,
-            resolve_text=resolve,
+            resolve_text=fake_text_resolver,
             key=None,
             pixel_size=12,
             surface_normal=(0, 1, 0),
@@ -333,15 +318,15 @@ class TestMarker:
 
         for i in range(mesh.vertex_count):
             v = vertex(i)
-            assert math.sqrt(_dot(v, v)) == pytest.approx(1.0, abs=FLOAT32_TOLERANCE)
+            assert length(v) == pytest.approx(1.0, abs=FLOAT32_TOLERANCE)
         assert list(mesh.normals) == list(mesh.positions)
         idx = mesh.indices
         assert max(idx) < mesh.vertex_count
         for t in range(mesh.triangle_count):
             a, b, c = (vertex(idx[3 * t + k]) for k in range(3))
-            normal = convention.cross(_sub(b, a), _sub(c, a))
+            normal = convention.cross(sub(b, a), sub(c, a))
             centroid = tuple((a[k] + b[k] + c[k]) / 3 for k in range(3))
-            assert _dot(normal, centroid) > 0, f"triangle {t}"
+            assert dot(normal, centroid) > 0, f"triangle {t}"
 
     def test_sphere_mesh_uses_the_token_level_of_detail(self):
         mesh = marker_sphere_mesh(Y_UP_RIGHT)

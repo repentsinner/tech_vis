@@ -1,14 +1,21 @@
 """Scenes rebuilt through the package land where the Dart reference says."""
 
 import math
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
 
-from conftest import TOLERANCE, assert_close, load_vectors
+from conftest import (
+    FAKE_CHARACTER_ASPECT,
+    TOLERANCE,
+    assert_close,
+    fake_text_resolver,
+    json_leader_style,
+    json_vector3,
+    load_vectors,
+)
 from tech_vis import (
-    BillboardContent,
     BillboardPrimitive,
     BoundingBox,
     CalloutQuadrant,
@@ -16,7 +23,6 @@ from tech_vis import (
     CoordinateConvention,
     CoordinateFrameDescriptor,
     Handedness,
-    LeaderLineStyle,
     LinePrimitive,
     MarkerPrimitive,
     Primitive,
@@ -37,31 +43,14 @@ from tech_vis import (
     world_to_screen,
     world_units_per_pixel_at,
 )
-
-# Width of one stand-in character, as a fraction of the requested height. The
-# Dart reference sizes text with the same stand-in, so content sizes agree.
-FAKE_CHARACTER_ASPECT = 0.5
+from tech_vis._vec import along
 
 type Json = dict[str, Any]
-
-
-def fake_text_resolver(request: TextRequest) -> BillboardContent:
-    """Sizes each character at half its height, and hands back the request."""
-    return BillboardContent(
-        value=request,
-        width_pixels=len(request.text) * FAKE_CHARACTER_ASPECT * request.height_pixels,
-        height_pixels=request.height_pixels,
-    )
 
 
 @pytest.fixture(scope="module")
 def fixture() -> Json:
     return load_vectors("reference_screen_geometry.json")
-
-
-def _vector3(json_value: Sequence[float]) -> Vector3:
-    x, y, z = (float(c) for c in json_value)
-    return (x, y, z)
 
 
 def _convention(c: Json) -> CoordinateConvention:
@@ -70,23 +59,13 @@ def _convention(c: Json) -> CoordinateConvention:
     )
 
 
-def _style(s: Json) -> LeaderLineStyle:
-    return LeaderLineStyle(
-        line_width=s["lineWidth"],
-        gap_pixels=s["gapPixels"],
-        angled_length_pixels=s["angledLengthPixels"],
-        horizontal_length_pixels=s["horizontalLengthPixels"],
-        angle_degrees=s["angleDegrees"],
-    )
-
-
 class _Frame:
     """One camera and viewport, read from a fixture view."""
 
     def __init__(self, camera: Json, convention: CoordinateConvention) -> None:
         self.camera = CameraBasis.look_at(
-            position=_vector3(camera["position"]),
-            target=_vector3(camera["target"]),
+            position=json_vector3(camera["position"]),
+            target=json_vector3(camera["target"]),
             convention=convention,
         )
         self.fov_radians = math.radians(camera["verticalFovDegrees"])
@@ -112,8 +91,8 @@ def _build(build: Json, convention: CoordinateConvention, frame: _Frame) -> list
         case "BoundingBoxFactory.createCube":
             return create_bounding_box(
                 BoundingBox(
-                    min_bounds=_vector3(build["minBounds"]),
-                    max_bounds=_vector3(build["maxBounds"]),
+                    min_bounds=json_vector3(build["minBounds"]),
+                    max_bounds=json_vector3(build["maxBounds"]),
                 ),
                 key=None,
                 fill_opacity=build["fillOpacity"],
@@ -122,7 +101,7 @@ def _build(build: Json, convention: CoordinateConvention, frame: _Frame) -> list
         case "CoordinateFrameFactory.create":
             return create_coordinate_frame(
                 CoordinateFrameDescriptor(
-                    origin=_vector3(build["origin"]),
+                    origin=json_vector3(build["origin"]),
                     length=build["length"],
                     line_thickness=build["lineThickness"],
                     label_pixel_size=build["labelPixelSize"],
@@ -132,10 +111,10 @@ def _build(build: Json, convention: CoordinateConvention, frame: _Frame) -> list
                 resolve_text=fake_text_resolver,
             )
         case "createCalloutLabel":
-            style = _style(build["style"])
+            style = json_leader_style(build["style"])
             primitives: list[Primitive] = []
             for c in build["callouts"]:
-                anchor = _vector3(c["anchor"])
+                anchor = json_vector3(c["anchor"])
                 quadrant = CalloutQuadrant(c["quadrant"])
                 leader = compute_callout_leader_geometry(
                     anchor=anchor,
@@ -163,7 +142,7 @@ def _build(build: Json, convention: CoordinateConvention, frame: _Frame) -> list
         case "MarkerFactory.create":
             return [
                 create_marker(
-                    _vector3(m["position"]),
+                    json_vector3(m["position"]),
                     convention,
                     key=None,
                     diameter_pixels=m["diameterPixels"],
@@ -176,14 +155,6 @@ def _build(build: Json, convention: CoordinateConvention, frame: _Frame) -> list
 
 def _distance(a: Vector2, b: Vector2) -> float:
     return math.hypot(a[0] - b[0], a[1] - b[1])
-
-
-def _scaled(origin: Vector3, direction: Vector3, k: float) -> Vector3:
-    return (
-        origin[0] + direction[0] * k,
-        origin[1] + direction[1] * k,
-        origin[2] + direction[2] * k,
-    )
 
 
 def _check_billboard(
@@ -243,8 +214,8 @@ def _check_marker(
     assert transform is not None, reason
     radius = transform[0][0]
     right = frame.camera.right
-    left_x = frame.screen(_scaled(marker.position, right, -radius))[0]
-    right_x = frame.screen(_scaled(marker.position, right, radius))[0]
+    left_x = frame.screen(along(marker.position, right, -radius))[0]
+    right_x = frame.screen(along(marker.position, right, radius))[0]
     assert record["diameterPixels"] == pytest.approx(
         right_x - left_x, rel=0, abs=TOLERANCE
     ), f"{reason} diameter"
@@ -330,7 +301,7 @@ def test_callout_leaders_keep_their_style_lengths_on_screen(fixture: Json):
     ]
     assert callout_views
     for scene, view, convention in callout_views:
-        style = _style(scene["build"]["style"])
+        style = json_leader_style(scene["build"]["style"])
         frame = _Frame(view["camera"], convention)
         primitives = _build(scene["build"], convention, frame)
         lines = [p for p in primitives if isinstance(p, LinePrimitive)]

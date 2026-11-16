@@ -5,9 +5,8 @@ from collections.abc import Callable
 
 import pytest
 
+from conftest import TOLERANCE
 from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, UnitSystem
-
-TOLERANCE = 1e-9
 
 METRIC = DisplayFormat.METRIC
 DECIMAL_INCH = DisplayFormat.DECIMAL_INCH
