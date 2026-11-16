@@ -41,8 +41,7 @@ class RectangularGroundPatch:
     """Holds a rectangle centered on the plane's origin.
 
     Its half extents run along the plane's two axes, ``u`` and ``v`` of
-    ``CoordinateConvention.plane_axes``. A point's reach is the larger of its
-    two fractions of the half extent, so the fade runs toward all four edges.
+    ``CoordinateConvention.plane_axes``.
     """
 
     half_extent_u: float
@@ -54,11 +53,7 @@ class RectangularGroundPatch:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CircularGroundPatch:
-    """Holds a disc around the plane's origin.
-
-    A point's reach is its distance from the center over the radius, so the
-    fade is radial.
-    """
+    """Holds a disc around the plane's origin."""
 
     radius: float
     """Radius of the disc, in world units."""
@@ -67,12 +62,55 @@ class CircularGroundPatch:
 type GroundPatch = RectangularGroundPatch | CircularGroundPatch
 """The area of the ground plane, centered on the plane's origin.
 
-The patch sets where the grid's lines end and how the grid fades. The fade's
-opacity is ``1 - smoothstep(0, 1, r)``, where ``r`` is a point's reach: its
-distance from the center as a fraction of the patch's size. Labels carry the
-fade at their anchors. A renderer fading lines per pixel uses the same curve,
-so lines and labels agree.
+The patch sets where the grid's lines end and how far its ``GroundFade``
+reaches.
 """
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class GroundFade:
+    """Holds the fade of a ground grid from its patch center to the patch edge.
+
+    Labels carry the fade at their anchors. A renderer fading lines per pixel
+    evaluates ``opacity_at``, or the same formula in a shader from ``center``,
+    ``u``, ``v``, and ``patch``, so lines and labels agree.
+    """
+
+    center: Vector3
+    """World-space center of the patch, where the fade is at full opacity."""
+
+    u: Vector3
+    """Unit vector along the plane's ``u`` axis, which a rectangle's
+    ``half_extent_u`` runs along."""
+
+    v: Vector3
+    """Unit vector along the plane's ``v`` axis, which a rectangle's
+    ``half_extent_v`` runs along."""
+
+    patch: GroundPatch
+    """The patch whose extents set the fade's reach."""
+
+    def opacity_at(self, world_point: Vector3) -> float:
+        """Returns the fade's opacity at ``world_point``.
+
+        The opacity is one at ``center`` and zero from the patch edge out. The
+        point projects onto the plane to ``a = (p - center) · u`` and
+        ``b = (p - center) · v``. Its reach ``r`` is ``sqrt(a² + b²) / radius``
+        on a circular patch and ``max(|a| / half_extent_u, |b| /
+        half_extent_v)`` on a rectangular one. The opacity is
+        ``1 - smoothstep(0, 1, r)``, where ``smoothstep(0, 1, r) = t² (3 - 2t)``
+        with ``t`` the reach clamped to ``[0, 1]``.
+        """
+        d = _vec.sub(world_point, self.center)
+        a = _vec.dot(d, self.u)
+        b = _vec.dot(d, self.v)
+        patch = self.patch
+        if isinstance(patch, RectangularGroundPatch):
+            reach = max(abs(a) / patch.half_extent_u, abs(b) / patch.half_extent_v)
+        else:
+            reach = math.sqrt(a * a + b * b) / patch.radius
+        t = min(max(reach, 0.0), 1.0)
+        return 1 - t * t * (3 - 2 * t)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -107,7 +145,7 @@ _DEFAULT_NUMBERS = NumberFormatting()
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class GroundGrid:
-    """Holds a ground grid for one frame: its steps and its primitives."""
+    """Holds a ground grid for one frame: its steps, fade, and primitives."""
 
     minor_step: float
     """Distance between minor lines, in the display format's base unit.
@@ -119,11 +157,9 @@ class GroundGrid:
     major_step: float
     """Distance between major lines, in the display format's base unit."""
 
-    origin: Vector3
-    """World-space center of the patch, where the fade is at full opacity."""
-
-    patch: GroundPatch
-    """The patch the grid covers, which sets the fade's reach."""
+    fade: GroundFade
+    """The fade toward the patch edge, which the renderer applies to the lines
+    and the labels already carry."""
 
     primitives: tuple[Primitive, ...]
     """Minor lines, then major lines, then coordinate labels."""
@@ -194,13 +230,12 @@ def create_ground_grid(
 
     Each line is one Line across the whole chord of the patch, at full
     opacity, and a line whose chord is empty is left out. A renderer fades the
-    lines toward the patch edge per pixel, from ``GroundGrid.origin`` and
-    ``GroundGrid.patch``, with the curve ``GroundPatch`` gives. Each major line
-    carries one coordinate label where it crosses the perpendicular line
+    lines toward the patch edge per pixel with ``GroundGrid.fade``. Each major
+    line carries one coordinate label where it crosses the perpendicular line
     through ``origin``, and ``origin`` carries one label for zero. The labels
     form one set in ``display_format``, written with ``numbers``, and face the
-    viewer. Each label's opacity is the fade at its anchor, and a label at
-    zero opacity is left out.
+    viewer. Each label's opacity is ``GroundFade.opacity_at`` its anchor, and
+    a label at zero opacity is left out.
 
     Raises ``ValueError`` when ``target`` lies on or behind the camera plane,
     when the patch has no positive size, or when the style allows fewer than
@@ -245,6 +280,8 @@ def create_ground_grid(
     def at(a: float, b: float) -> Vector3:
         return _vec.add(_vec.add(origin, _vec.scale(u, a)), _vec.scale(v, b))
 
+    fade = GroundFade(center=origin, u=u, v=v, patch=patch)
+
     minor_lines: list[Primitive] = []
     major_lines: list[Primitive] = []
     for along_v in (True, False):
@@ -275,7 +312,7 @@ def create_ground_grid(
 
     def label_opacity(k: int, on_u: bool) -> float:
         offset = k * major_world
-        return shape.opacity(offset, 0) if on_u else shape.opacity(0, offset)
+        return fade.opacity_at(at(offset, 0) if on_u else at(0, offset))
 
     marks: list[tuple[int, bool]] = [(0, True)]
     for on_u in (True, False):
@@ -306,15 +343,14 @@ def create_ground_grid(
     return GroundGrid(
         minor_step=minor,
         major_step=major,
-        origin=origin,
-        patch=patch,
+        fade=fade,
         primitives=(*minor_lines, *major_lines, *labels),
     )
 
 
 class _PatchShape:
-    """A patch's extents, chord lengths, and fade, in plane coordinates
-    relative to its center."""
+    """A patch's extents and chord lengths, in plane coordinates relative to
+    its center."""
 
     __slots__ = ("extent_u", "extent_v", "patch")
 
@@ -341,17 +377,6 @@ class _PatchShape:
             return self.extent_v if along_v else self.extent_u
         radius = self.extent_u
         return math.sqrt(max(0.0, radius * radius - offset * offset))
-
-    def opacity(self, a: float, b: float) -> float:
-        """Returns the fade at plane coordinates (``a``, ``b``): one minus the
-        smoothstep of the reach, so one at the center and zero from the edge
-        out."""
-        if isinstance(self.patch, RectangularGroundPatch):
-            reach = max(abs(a) / self.extent_u, abs(b) / self.extent_v)
-        else:
-            reach = math.sqrt(a * a + b * b) / self.extent_u
-        t = min(max(reach, 0.0), 1.0)
-        return 1 - t * t * (3 - 2 * t)
 
 
 def _positive(x: float) -> bool:

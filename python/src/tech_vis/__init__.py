@@ -38,6 +38,7 @@ from tech_vis.filled_rectangle import (
 )
 from tech_vis.ground_plane import (
     CircularGroundPatch,
+    GroundFade,
     GroundGrid,
     GroundGridStyle,
     GroundPatch,
@@ -143,6 +144,7 @@ __all__ = [
     "DisplayFormat",
     "DraftingConvention",
     "DraftingStandard",
+    "GroundFade",
     "GroundGrid",
     "GroundGridStyle",
     "GroundPatch",

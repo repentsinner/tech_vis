@@ -7,6 +7,7 @@ import pytest
 
 from conftest import (
     TOLERANCE,
+    assert_close,
     assert_world_primitive,
     fake_text_resolver,
     json_convention,
@@ -46,6 +47,20 @@ def _patch(p: Json) -> GroundPatch:
         )
     assert p["shape"] == "circle", p
     return CircularGroundPatch(radius=p["radius"])
+
+
+def _assert_patch(actual: GroundPatch, want: Json, reason: str) -> None:
+    """Asserts that ``actual`` matches the recorded patch ``want``."""
+    if isinstance(actual, RectangularGroundPatch):
+        assert want["shape"] == "rectangle", reason
+        assert_close(
+            (actual.half_extent_u, actual.half_extent_v),
+            (want["halfExtentU"], want["halfExtentV"]),
+            f"{reason} half extents",
+        )
+    else:
+        assert want["shape"] == "circle", reason
+        assert_close((actual.radius,), (want["radius"],), f"{reason} radius")
 
 
 def _style(s: Json) -> GroundGridStyle:
@@ -123,3 +138,8 @@ def test_create(fixture: Json) -> None:
         assert len(grid.primitives) == len(expected), name
         for i, (actual, want) in enumerate(zip(grid.primitives, expected, strict=True)):
             assert_world_primitive(actual, want, f"{name} [{i}]")
+        fade = output["fade"]
+        assert_close(grid.fade.center, fade["center"], f"{name} center")
+        assert_close(grid.fade.u, fade["u"], f"{name} u")
+        assert_close(grid.fade.v, fade["v"], f"{name} v")
+        _assert_patch(grid.fade.patch, fade["patch"], f"{name} patch")

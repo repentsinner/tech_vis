@@ -305,43 +305,73 @@ def test_circular_patch_omits_the_tangent_lines() -> None:
         assert math.dist(line.start, line.end) > 0
 
 
-@pytest.mark.parametrize(
-    ("patch", "origin"),
-    [
-        pytest.param(DEFAULT_PATCH, (3.0, -4.0, 0.0), id="rectangle"),
-        pytest.param(CircularGroundPatch(radius=400), ORIGIN, id="circle"),
-    ],
-)
-def test_grid_exposes_the_fade_center_and_patch(
-    patch: GroundPatch, origin: Vector3
+FADE_ORIGIN = (3.0, -4.0, 5.0)
+FADE_CONVENTIONS = [Z_UP_RIGHT, Y_UP_RIGHT]
+CIRCLE = CircularGroundPatch(radius=400)
+
+
+@pytest.mark.parametrize("convention", FADE_CONVENTIONS, ids=str)
+def test_fade_centers_on_the_origin_along_the_plane_axes(
+    convention: CoordinateConvention,
 ) -> None:
-    grid = _grid(patch=patch, origin=origin)
-    assert grid.origin == origin
-    assert grid.patch is patch
+    fade = _grid(convention=convention, origin=FADE_ORIGIN).fade
+    u, v = convention.plane_axes
+    assert fade.center == FADE_ORIGIN
+    assert fade.u == u.unit_vector
+    assert fade.v == v.unit_vector
+
+
+@pytest.mark.parametrize("convention", FADE_CONVENTIONS, ids=str)
+def test_fade_holds_the_patch(convention: CoordinateConvention) -> None:
+    fade = _grid(convention=convention, patch=CIRCLE, origin=FADE_ORIGIN).fade
+    assert fade.patch is CIRCLE
+
+
+@pytest.mark.parametrize("patch", [DEFAULT_PATCH, CIRCLE], ids=["rectangle", "circle"])
+@pytest.mark.parametrize("convention", FADE_CONVENTIONS, ids=str)
+def test_each_label_carries_the_fade_at_its_anchor(
+    convention: CoordinateConvention, patch: GroundPatch
+) -> None:
+    grid = _grid(convention=convention, patch=patch, origin=FADE_ORIGIN)
+    labels = _labels(grid)
+    assert labels
+    for label in labels:
+        want = grid.fade.opacity_at(label.anchor)
+        assert label.opacity == pytest.approx(want, abs=TOLERANCE), label.anchor
 
 
 @pytest.mark.parametrize(
-    ("patch", "anchor", "opacity"),
+    ("patch", "at", "opacity"),
     [
         pytest.param(DEFAULT_PATCH, (0.0, 0.0), 1.0, id="rectangle, center"),
         pytest.param(DEFAULT_PATCH, (200.0, 0.0), 0.648, id="rectangle, 0.4 of u"),
         pytest.param(DEFAULT_PATCH, (-400.0, 0.0), 0.104, id="rectangle, 0.8 of u"),
         pytest.param(DEFAULT_PATCH, (0.0, 200.0), 7 / 27, id="rectangle, 2/3 of v"),
         pytest.param(
-            CircularGroundPatch(radius=400), (100.0, 0.0), 0.84375, id="circle, 0.25"
+            DEFAULT_PATCH, (200.0, -200.0), 7 / 27, id="rectangle, larger fraction"
         ),
-        pytest.param(
-            CircularGroundPatch(radius=400), (0.0, -300.0), 0.15625, id="circle, 0.75"
-        ),
+        pytest.param(DEFAULT_PATCH, (600.0, 0.0), 0.0, id="rectangle, past the edge"),
+        pytest.param(CIRCLE, (100.0, 0.0), 0.84375, id="circle, 0.25"),
+        pytest.param(CIRCLE, (0.0, -300.0), 0.15625, id="circle, 0.75"),
+        pytest.param(CIRCLE, (120.0, 160.0), 0.5, id="circle, 0.5 off both axes"),
+        pytest.param(CIRCLE, (300.0, 300.0), 0.0, id="circle, past the edge"),
     ],
 )
-def test_label_opacity_is_one_minus_smoothstep_of_the_anchor_reach(
-    patch: GroundPatch, anchor: tuple[float, float], opacity: float
+@pytest.mark.parametrize("convention", FADE_CONVENTIONS, ids=str)
+def test_opacity_at_is_one_minus_smoothstep_of_the_reach(
+    convention: CoordinateConvention,
+    patch: GroundPatch,
+    at: tuple[float, float],
+    opacity: float,
 ) -> None:
-    (label,) = [
-        b for b in _labels(_grid(patch=patch)) if (b.anchor[0], b.anchor[1]) == anchor
-    ]
-    assert label.opacity == pytest.approx(opacity, abs=TOLERANCE)
+    fade = _grid(convention=convention, patch=patch, origin=FADE_ORIGIN).fade
+    u, v = convention.plane_axes
+    a, b = at
+    point = add(add(FADE_ORIGIN, scale(u.unit_vector, a)), scale(v.unit_vector, b))
+    assert fade.opacity_at(point) == pytest.approx(opacity, abs=TOLERANCE)
+    # A point off the plane takes the fade of its projection.
+    above = add(point, scale(convention.up.unit_vector, 50))
+    assert fade.opacity_at(above) == pytest.approx(opacity, abs=TOLERANCE)
 
 
 def test_labels_mark_each_major_line_where_it_crosses_the_origin_axes() -> None:
