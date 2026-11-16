@@ -1,6 +1,7 @@
 /// Generic technical visualization primitives.
 library;
 
+export 'src/billboard_transform.dart';
 export 'src/bounding_box.dart';
 export 'src/bounding_box_factory.dart';
 export 'src/coordinate_frame.dart';

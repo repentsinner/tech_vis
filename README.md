@@ -26,10 +26,18 @@ Dart:
 ```dart
 import 'package:tech_vis/tech_vis.dart';
 
+final camera = CameraBasis.lookAt(position: eye, target: target);
+final worldUnitsPerPixel = ScreenSpaceUtils.worldUnitsPerPixelAt(
+  anchor,
+  camera,
+  verticalFovRadians,
+  viewportHeight,
+)!;
+
 final leader = computeCalloutLeaderGeometry(
   anchor: anchor,
-  cameraRight: cameraRight,
-  cameraUp: cameraUp,
+  cameraRight: camera.right,
+  cameraUp: camera.up,
   worldUnitsPerPixel: worldUnitsPerPixel,
   quadrant: CalloutQuadrant.topRight,
 );
