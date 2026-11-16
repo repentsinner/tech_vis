@@ -53,7 +53,7 @@ repository. The generator never runs on a consumer's machine.
 
 ## Golden vectors §spec:golden-vectors
 
-*Status: not started*
+*Status: in progress*
 
 Layout functions are ported by hand between languages. A shared set of
 language-neutral fixtures shall pin the ports to each other: each fixture
@@ -63,15 +63,21 @@ tests its implementation against every fixture (§req:success-criteria).
 - Fixtures live in `vectors/` at the repository root, outside both
   package roots. Each package's fixture tests skip where the directory
   is absent, as it is in a published archive.
-- The Dart implementation is the reference. A tool in `tools/` runs it
-  over each fixture's inputs and writes the expected outputs. The
-  fixtures are committed, and a change to them is reviewed like code.
+- The Dart implementation is the reference. `dart/tool/gen_vectors.dart`
+  runs it over each fixture's inputs and writes the expected outputs.
+  The fixtures are committed, and a change to them is reviewed like code.
+- The generator is repository tooling, so `dart/.pubignore` keeps it out
+  of the published archive.
 - Every public layout function in either package has fixtures. A
   function that exists in only one package still has fixtures, so the
   port inherits a finished test suite.
 - Numeric outputs compare within an absolute tolerance of 1e-9 in the
   function's own units. Label text compares exactly.
 - CI shall fail when a committed fixture differs from the tool's output.
+
+*Why the generator lives in `dart/`*: it imports the package it runs,
+and a Dart script resolves a package import only from inside a package
+root. A script in `tools/` would need a package of its own.
 
 *Why Dart is the reference*: Dart is the first implementation of every
 primitive, and Python ports from it (§req:priorities). An independent
