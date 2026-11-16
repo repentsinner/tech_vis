@@ -235,7 +235,6 @@ void main() {
     }
   });
 
-  /// @spec §spec:billboard-labels — Callout opacity fades with anchor distance
   group('computeCalloutOpacity', () {
     test('returns max opacity at near distance', () {
       expect(
