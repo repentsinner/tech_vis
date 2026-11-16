@@ -127,9 +127,18 @@ implements `SceneRendererBackend` and maps each `SceneObject` in a
 - A type belongs in the package when a visualizer in an unrelated domain
   would need it. A type that makes sense in only one domain belongs in
   that domain's consumer.
+- Factories emit every line they draw, so a renderer draws lines and
+  never derives one. `BoundingBoxFactory` emits a box's twelve edges once
+  each, plus six faces only when the box has a fill; the faces carry no
+  edge. `FilledRectangleFactory.createOutline` emits a lone rectangle's
+  perimeter.
 
 *Why data, not rendering*: one scene description drives any engine, and
 a scene can be tested without a GPU.
+
+*Why boxes emit their own edges*: a box outlined from its six face
+perimeters draws every edge twice, once for each face that shares it.
+The doubled line darkens a translucent edge and z-fights with itself.
 
 ## Scene color resolution §spec:scene-color
 
