@@ -469,6 +469,49 @@ most squarely on top. The projected faces are parallelograms, so an
 affine map draws each label onto its face. The cube is a passive
 indicator and doesn't respond to input.
 
+### Scale bar
+
+`ScaleBarLayout.atTarget` describes a scale bar for one frame. It
+measures at the camera target, the point the reader looks at, and picks
+the longest scale-bar step of the display format that fits the width of
+the scale bar's rectangle. The bar then subdivides into the most clean
+parts whose ticks stay a style-set distance apart:
+
+```dart
+ScaleBarLayout? bar;
+
+void onFrame() {
+  bar = ScaleBarLayout.atTarget(
+    camera: camera,
+    target: orbitTarget,
+    verticalFovRadians: fov,
+    viewportSize: Vector2(1280, 720),
+    worldUnits: UnitSystem.metric,
+    format: DisplayFormat.metric,
+    previousStep: bar?.step,
+  );
+  if (bar case final bar?) {
+    drawLine(bar.startX, bar.baselineY, bar.endX, bar.baselineY);
+    for (final x in bar.tickXs) {
+      drawTick(x, bar.baselineY);
+    }
+    // bar.label is a TextRequest: '100 mm' at a style-set pixel height.
+    drawTextTopCenter(bar.label, bar.labelAnchor);
+  }
+}
+```
+
+Every coordinate is in viewport pixels, in the same coordinates as
+`worldToScreen`. The bar starts at the rectangle's edge nearer its
+corner and stands on the rectangle's bottom edge, and the label's top
+center sits on the rectangle's top edge above the bar's midpoint.
+
+Passing the previous frame's step keeps the value steady at a step
+boundary. The bar keeps that step while it fits, and moves to a longer
+step only once the longer step fits with a style-set margin to spare.
+`atTarget` returns null when the target is behind the camera, or when
+even the format's shortest step is longer than the bar's rectangle.
+
 ## Style tokens
 
 `StyleTokens` holds every style constant, generated from the repository's
