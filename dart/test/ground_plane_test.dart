@@ -325,9 +325,8 @@ void main() {
     group('rectangular patch', () {
       const hu = 500.0;
       const hv = 300.0;
-      const patch = RectangularGroundPatch(halfExtentU: hu, halfExtentV: hv);
       final origin = vm.Vector3(3, -4, 0);
-      // The default patch, a canonical const, so `same` holds.
+      // The default patch has these half extents.
       final grid = _grid(origin: origin);
 
       test('draws each line whole, edge to edge, at full opacity', () {
@@ -344,11 +343,6 @@ void main() {
           final alongV = d.x == 0;
           expect(d.length, closeTo(alongV ? 2 * hv : 2 * hu, _tolerance));
         }
-      });
-
-      test('exposes the fade center and patch', () {
-        expect(grid.origin, origin);
-        expect(grid.patch, same(patch));
       });
     });
 
@@ -379,69 +373,140 @@ void main() {
           expect((l.end - l.start).length, greaterThan(0));
         }
       });
-
-      test('exposes the fade center and patch', () {
-        expect(grid.origin, vm.Vector3.zero());
-        expect(grid.patch, same(patch));
-      });
     });
 
-    group('label opacity is one minus smoothstep of the anchor reach', () {
-      for (final c in [
-        (
-          name: 'rectangle, center',
-          patch: const RectangularGroundPatch(
-            halfExtentU: 500,
-            halfExtentV: 300,
-          ),
-          anchor: (0.0, 0.0),
-          opacity: 1.0,
-        ),
-        (
-          name: 'rectangle, 0.4 of u',
-          patch: const RectangularGroundPatch(
-            halfExtentU: 500,
-            halfExtentV: 300,
-          ),
-          anchor: (200.0, 0.0),
-          opacity: 0.648,
-        ),
-        (
-          name: 'rectangle, 0.8 of u',
-          patch: const RectangularGroundPatch(
-            halfExtentU: 500,
-            halfExtentV: 300,
-          ),
-          anchor: (-400.0, 0.0),
-          opacity: 0.104,
-        ),
-        (
-          name: 'rectangle, 2/3 of v',
-          patch: const RectangularGroundPatch(
-            halfExtentU: 500,
-            halfExtentV: 300,
-          ),
-          anchor: (0.0, 200.0),
-          opacity: 7 / 27,
-        ),
-        (
-          name: 'circle, 0.25 of the radius',
-          patch: const CircularGroundPatch(radius: 400),
-          anchor: (100.0, 0.0),
-          opacity: 0.84375,
-        ),
-        (
-          name: 'circle, 0.75 of the radius',
-          patch: const CircularGroundPatch(radius: 400),
-          anchor: (0.0, -300.0),
-          opacity: 0.15625,
-        ),
-      ]) {
-        test(c.name, () {
-          final label = _labels(
-            _grid(patch: c.patch),
-          ).singleWhere((l) => (l.anchor.x, l.anchor.y) == c.anchor);
-          expect(label.opacity, closeTo(c.opacity, _tolerance));
+    group('fade', () {
+      for (final convention in [_conventionZ, _conventionY]) {
+        group('$convention', () {
+          final origin = vm.Vector3(3, -4, 5);
+
+          test('centers on the origin, along the plane axes', () {
+            final fade = _grid(convention: convention, origin: origin).fade;
+            final axes = convention.planeAxes;
+            expect(fade.center, origin);
+            expect(fade.u, axes.u.unitVector);
+            expect(fade.v, axes.v.unitVector);
+          });
+
+          test('holds the patch', () {
+            const patch = CircularGroundPatch(radius: 400);
+            final fade = _grid(
+              convention: convention,
+              patch: patch,
+              origin: origin,
+            ).fade;
+            expect(fade.patch, same(patch));
+          });
+
+          test('gives each label the fade at its anchor', () {
+            for (final patch in const <GroundPatch>[
+              RectangularGroundPatch(halfExtentU: 500, halfExtentV: 300),
+              CircularGroundPatch(radius: 400),
+            ]) {
+              final grid = _grid(
+                convention: convention,
+                patch: patch,
+                origin: origin,
+              );
+              final labels = _labels(grid);
+              expect(labels, isNotEmpty);
+              for (final l in labels) {
+                expect(
+                  l.opacity,
+                  closeTo(grid.fade.opacityAt(l.anchor), _tolerance),
+                  reason: '${l.anchor}',
+                );
+              }
+            }
+          });
+
+          group('opacityAt is one minus smoothstep of the reach', () {
+            const rectangle = RectangularGroundPatch(
+              halfExtentU: 500,
+              halfExtentV: 300,
+            );
+            const circle = CircularGroundPatch(radius: 400);
+            for (final c in [
+              (
+                name: 'rectangle, center',
+                patch: rectangle,
+                at: (0.0, 0.0),
+                opacity: 1.0,
+              ),
+              (
+                name: 'rectangle, 0.4 of u',
+                patch: rectangle,
+                at: (200.0, 0.0),
+                opacity: 0.648,
+              ),
+              (
+                name: 'rectangle, 0.8 of u',
+                patch: rectangle,
+                at: (-400.0, 0.0),
+                opacity: 0.104,
+              ),
+              (
+                name: 'rectangle, 2/3 of v',
+                patch: rectangle,
+                at: (0.0, 200.0),
+                opacity: 7 / 27,
+              ),
+              (
+                name: 'rectangle, the larger fraction wins',
+                patch: rectangle,
+                at: (200.0, -200.0),
+                opacity: 7 / 27,
+              ),
+              (
+                name: 'rectangle, past the edge',
+                patch: rectangle,
+                at: (600.0, 0.0),
+                opacity: 0.0,
+              ),
+              (
+                name: 'circle, 0.25 of the radius',
+                patch: circle,
+                at: (100.0, 0.0),
+                opacity: 0.84375,
+              ),
+              (
+                name: 'circle, 0.75 of the radius',
+                patch: circle,
+                at: (0.0, -300.0),
+                opacity: 0.15625,
+              ),
+              (
+                name: 'circle, half the radius off both axes',
+                patch: circle,
+                at: (120.0, 160.0),
+                opacity: 0.5,
+              ),
+              (
+                name: 'circle, past the edge',
+                patch: circle,
+                at: (300.0, 300.0),
+                opacity: 0.0,
+              ),
+            ]) {
+              test(c.name, () {
+                final fade = _grid(
+                  convention: convention,
+                  patch: c.patch,
+                  origin: origin,
+                ).fade;
+                final axes = convention.planeAxes;
+                final (a, b) = c.at;
+                final point =
+                    origin + axes.u.unitVector * a + axes.v.unitVector * b;
+                expect(fade.opacityAt(point), closeTo(c.opacity, _tolerance));
+                // A point off the plane takes the fade of its projection.
+                expect(
+                  fade.opacityAt(point + convention.up.unitVector * 50),
+                  closeTo(c.opacity, _tolerance),
+                );
+              });
+            }
+          });
         });
       }
     });
@@ -546,5 +611,10 @@ void main() {
 
 const _conventionZ = CoordinateConvention(
   up: SpatialAxis.z,
+  handedness: Handedness.right,
+);
+
+const _conventionY = CoordinateConvention(
+  up: SpatialAxis.y,
   handedness: Handedness.right,
 );

@@ -18,20 +18,14 @@ final vm.Vector2 _labelAlignment = vm.Vector2.zero();
 
 /// The area of the ground plane, centered on the plane's origin.
 ///
-/// The patch sets where the grid's lines end and how the grid fades. The
-/// fade's opacity is `1 - smoothstep(0, 1, r)`, where `r` is a point's
-/// reach: its distance from the center as a fraction of the patch's size.
-/// Labels carry the fade at their anchors. A renderer fading lines per
-/// pixel uses the same curve, so lines and labels agree.
+/// The patch sets where the grid's lines end and how far its [GroundFade]
+/// reaches.
 sealed class GroundPatch {
   const GroundPatch();
 }
 
 /// A rectangle with half extents along the plane's two axes, `u` and `v`
 /// of [CoordinateConvention.planeAxes].
-///
-/// A point's reach is the larger of its two fractions of the half extent,
-/// so the fade runs toward all four edges.
 final class RectangularGroundPatch extends GroundPatch {
   const RectangularGroundPatch({
     required this.halfExtentU,
@@ -46,14 +40,65 @@ final class RectangularGroundPatch extends GroundPatch {
 }
 
 /// A disc of [radius] around the plane's origin.
-///
-/// A point's reach is its distance from the center over the radius, so
-/// the fade is radial.
 final class CircularGroundPatch extends GroundPatch {
   const CircularGroundPatch({required this.radius});
 
   /// Radius of the disc, in world units.
   final double radius;
+}
+
+/// The fade of a ground grid from its patch center to the patch edge.
+///
+/// Labels carry the fade at their anchors. A renderer fading lines per
+/// pixel evaluates [opacityAt], or the same formula in a shader from
+/// [center], [u], [v], and [patch], so lines and labels agree.
+final class GroundFade {
+  /// Creates the fade over [patch] around [center], in the plane along the
+  /// unit axes [u] and [v].
+  GroundFade({
+    required vm.Vector3 center,
+    required vm.Vector3 u,
+    required vm.Vector3 v,
+    required this.patch,
+  }) : center = center.clone(),
+       u = u.clone(),
+       v = v.clone();
+
+  /// World-space center of the patch, where the fade is at full opacity.
+  final vm.Vector3 center;
+
+  /// Unit vector along the plane's `u` axis, which a rectangle's
+  /// [RectangularGroundPatch.halfExtentU] runs along.
+  final vm.Vector3 u;
+
+  /// Unit vector along the plane's `v` axis, which a rectangle's
+  /// [RectangularGroundPatch.halfExtentV] runs along.
+  final vm.Vector3 v;
+
+  /// The patch whose extents set the fade's reach.
+  final GroundPatch patch;
+
+  /// Returns the fade's opacity at [worldPoint], one at [center] and zero
+  /// from the patch edge out.
+  ///
+  /// The point projects onto the plane to `a = (p - center) · u` and
+  /// `b = (p - center) · v`. Its reach `r` is `sqrt(a² + b²) / radius` on a
+  /// circular patch and `max(|a| / halfExtentU, |b| / halfExtentV)` on a
+  /// rectangular one. The opacity is `1 - smoothstep(0, 1, r)`, where
+  /// `smoothstep(0, 1, r) = t² (3 - 2t)` with `t` the reach clamped to
+  /// `[0, 1]`.
+  double opacityAt(vm.Vector3 worldPoint) {
+    final d = worldPoint - center;
+    final a = d.dot(u);
+    final b = d.dot(v);
+    final reach = switch (patch) {
+      RectangularGroundPatch(:final halfExtentU, :final halfExtentV) =>
+        math.max(a.abs() / halfExtentU, b.abs() / halfExtentV),
+      CircularGroundPatch(:final radius) => math.sqrt(a * a + b * b) / radius,
+    };
+    final t = reach.clamp(0.0, 1.0);
+    return 1 - t * t * (3 - 2 * t);
+  }
 }
 
 /// The look of a ground grid. Every default comes from the style tokens.
@@ -92,13 +137,13 @@ final class GroundGridStyle {
   final double labelPixelSize;
 }
 
-/// A ground grid for one frame: its steps and the primitives that draw it.
+/// A ground grid for one frame: its steps, its fade, and the primitives
+/// that draw it.
 final class GroundGrid {
   const GroundGrid({
     required this.minorStep,
     required this.majorStep,
-    required this.origin,
-    required this.patch,
+    required this.fade,
     required this.primitives,
   });
 
@@ -111,11 +156,9 @@ final class GroundGrid {
   /// Distance between major lines, in the display format's base unit.
   final double majorStep;
 
-  /// World-space center of the patch, where the fade is at full opacity.
-  final vm.Vector3 origin;
-
-  /// The patch the grid covers, which sets the fade's reach.
-  final GroundPatch patch;
+  /// The fade toward the patch edge, which the renderer applies to the
+  /// lines and the labels already carry.
+  final GroundFade fade;
 
   /// Minor lines, then major lines, then coordinate labels.
   final List<Primitive> primitives;
@@ -173,14 +216,13 @@ abstract final class GroundPlaneFactory {
   ///
   /// Each line is one Line across the whole chord of the patch, at full
   /// opacity, and a line whose chord is empty is left out. A renderer
-  /// fades the lines toward the patch edge per pixel, from
-  /// [GroundGrid.origin] and [GroundGrid.patch], with the curve
-  /// [GroundPatch] gives. Each major
-  /// line carries one coordinate label where it crosses the perpendicular
-  /// line through [origin], and [origin] carries one label for zero. The
-  /// labels form one set in [format], written with [numbers], and face the
-  /// viewer. Each label's opacity is the fade at its anchor, and a label at
-  /// zero opacity is left out.
+  /// fades the lines toward the patch edge per pixel with [GroundGrid.fade].
+  /// Each major line carries one coordinate label where it crosses the
+  /// perpendicular line through [origin], and [origin] carries one label
+  /// for zero. The labels form one set in [format], written with
+  /// [numbers], and face the viewer. Each label's opacity is
+  /// [GroundFade.opacityAt] its anchor, and a label at zero opacity is left
+  /// out.
   ///
   /// Throws an [ArgumentError] when [target] lies on or behind the camera
   /// plane.
@@ -249,6 +291,7 @@ abstract final class GroundPlaneFactory {
     final v = axes.v.unitVector;
     final center = origin ?? vm.Vector3.zero();
     vm.Vector3 at(double a, double b) => center + u * a + v * b;
+    final fade = GroundFade(center: center, u: u, v: v, patch: patch);
 
     final minorLines = <Primitive>[];
     final majorLines = <Primitive>[];
@@ -276,9 +319,8 @@ abstract final class GroundPlaneFactory {
     // the patch edge is invisible, so it stays out of the set and cannot
     // promote the others.
     final majorWorld = toWorld(major);
-    double labelOpacity(int k, {required bool onU}) => onU
-        ? shape.opacity(k * majorWorld, 0)
-        : shape.opacity(0, k * majorWorld);
+    double labelOpacity(int k, {required bool onU}) =>
+        fade.opacityAt(onU ? at(k * majorWorld, 0) : at(0, k * majorWorld));
     final marks = <({int k, bool onU})>[
       (k: 0, onU: true),
       for (final onU in [true, false])
@@ -313,8 +355,7 @@ abstract final class GroundPlaneFactory {
     return GroundGrid(
       minorStep: minor,
       majorStep: major,
-      origin: center.clone(),
-      patch: patch,
+      fade: fade,
       primitives: [...minorLines, ...majorLines, ...labels],
     );
   }
@@ -325,8 +366,8 @@ abstract final class GroundPlaneFactory {
   }
 }
 
-/// A patch's extents, chord lengths, and fade, in plane coordinates
-/// relative to its center.
+/// A patch's extents and chord lengths, in plane coordinates relative to
+/// its center.
 final class _PatchShape {
   factory _PatchShape(GroundPatch patch) {
     final (extentU, extentV) = switch (patch) {
@@ -365,17 +406,4 @@ final class _PatchShape {
       math.max(0, radius * radius - offset * offset),
     ),
   };
-
-  /// Returns the fade at plane coordinates ([a], [b]): one minus the
-  /// smoothstep of the reach, so one at the center and zero from the edge
-  /// out.
-  double opacity(double a, double b) {
-    final reach = switch (patch) {
-      RectangularGroundPatch(:final halfExtentU, :final halfExtentV) =>
-        math.max(a.abs() / halfExtentU, b.abs() / halfExtentV),
-      CircularGroundPatch(:final radius) => math.sqrt(a * a + b * b) / radius,
-    };
-    final t = reach.clamp(0.0, 1.0);
-    return 1 - t * t * (3 - 2 * t);
-  }
 }

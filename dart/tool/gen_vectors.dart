@@ -1440,6 +1440,12 @@ Map<String, Object?> _groundCase(_GroundCase c) {
       'minorStep': grid.minorStep,
       'majorStep': grid.majorStep,
       'primitives': [for (final p in grid.primitives) _worldPrimitive(p)],
+      'fade': {
+        'center': _vector(grid.fade.center),
+        'u': _vector(grid.fade.u),
+        'v': _vector(grid.fade.v),
+        'patch': _groundPatch(grid.fade.patch),
+      },
     },
   };
 }
