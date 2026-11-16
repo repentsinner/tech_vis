@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'coordinate_convention.dart';
+import 'coordinate_frame.dart';
 import 'screen_space_utils.dart';
 import 'viewport_overlay.dart';
 
@@ -13,6 +14,10 @@ const double _minFacing = 1e-9;
 /// Facings closer than this count as equal when ordering faces, the
 /// tolerance golden vectors compare numbers within.
 const double _facingTieTolerance = 1e-9;
+
+/// A face's outward normal and the directions its label text runs and
+/// points up, in world space.
+typedef _Frame = ({vm.Vector3 normal, vm.Vector3 textRight, vm.Vector3 textUp});
 
 /// A face of the navigation cube, named for the orthographic view it shows.
 enum NavigationCubeFace {
@@ -63,69 +68,75 @@ class NavigationCube {
   /// Creates the cube for a space in [convention], with the Front face's
   /// outward normal along [front].
   ///
-  /// Throws an [ArgumentError] when [front] is not a signed unit world axis
-  /// perpendicular to the up axis.
+  /// Throws an [ArgumentError] when [front] runs along the up axis.
   factory NavigationCube({
     required CoordinateConvention convention,
-    required vm.Vector3 front,
+    required SignedAxis front,
   }) {
-    final up = convention.up.unitVector;
-    final frontNormal = front;
-    final components = frontNormal.storage;
-    final isSignedAxis =
-        components.where((c) => c == 0).length == 2 &&
-        components.where((c) => c.abs() == 1).length == 1;
-    if (!isSignedAxis || frontNormal.dot(up) != 0) {
+    if (front.axis == convention.up) {
       throw ArgumentError.value(
         front,
         'front',
-        'not a signed world axis perpendicular to ${convention.up.label}',
+        'runs along the up axis ${convention.up.label}',
       );
     }
-    return NavigationCube._(convention, frontNormal.clone());
+    final up = convention.up.unitVector;
+    final frontNormal = front.unitVector;
+    final right = convention.cross(up, frontNormal);
+    _Frame frame(vm.Vector3 normal, vm.Vector3 textUp) => (
+      normal: normal,
+      textUp: textUp,
+      textRight: convention.cross(textUp, normal),
+    );
+    // Side labels stand upright. Top and Bottom labels point away from
+    // Front, which is how the top and bottom views of `CameraBasis.lookAt`
+    // hold them.
+    final frames = [
+      for (final face in NavigationCubeFace.values)
+        switch (face) {
+          NavigationCubeFace.top => frame(up, -frontNormal),
+          NavigationCubeFace.bottom => frame(-up, -frontNormal),
+          NavigationCubeFace.front => frame(frontNormal, up),
+          NavigationCubeFace.back => frame(-frontNormal, up),
+          NavigationCubeFace.left => frame(-right, up),
+          NavigationCubeFace.right => frame(right, up),
+        },
+    ];
+    return NavigationCube._(convention, front, frames);
   }
 
-  NavigationCube._(this.convention, this.front);
+  NavigationCube._(this.convention, this.front, this._frames);
 
   /// Convention of the space the cube orients in.
   final CoordinateConvention convention;
 
-  /// Outward normal of the Front face.
-  final vm.Vector3 front;
+  /// Direction of the Front face's outward normal.
+  final SignedAxis front;
+
+  /// Each face's world frame, indexed by the face's index.
+  final List<_Frame> _frames;
 
   /// Returns the outward unit normal of [face] in world space.
   ///
   /// Right is the face a viewer of Front sees to their right, so it follows
   /// the declared hand rule.
-  vm.Vector3 normal(NavigationCubeFace face) {
-    final up = convention.up.unitVector;
-    final right = convention.cross(up, front);
-    return switch (face) {
-      NavigationCubeFace.top => up,
-      NavigationCubeFace.bottom => -up,
-      NavigationCubeFace.front => front.clone(),
-      NavigationCubeFace.back => -front,
-      NavigationCubeFace.right => right,
-      NavigationCubeFace.left => -right,
-    };
-  }
+  vm.Vector3 normal(NavigationCubeFace face) =>
+      _frames[face.index].normal.clone();
 
   /// Returns the world direction in which [face]'s label text points up.
   ///
   /// Side labels stand upright. Top and Bottom labels point away from
   /// Front, which is how the top and bottom views of `CameraBasis.lookAt`
   /// hold them.
-  vm.Vector3 textUp(NavigationCubeFace face) => switch (face) {
-    NavigationCubeFace.top || NavigationCubeFace.bottom => -front,
-    _ => convention.up.unitVector,
-  };
+  vm.Vector3 textUp(NavigationCubeFace face) =>
+      _frames[face.index].textUp.clone();
 
   /// Returns the world direction in which [face]'s label text runs.
   ///
   /// Text right crossed with text up gives the face normal by the declared
   /// hand rule, so a label reads left to right from outside the cube.
   vm.Vector3 textRight(NavigationCubeFace face) =>
-      convention.cross(textUp(face), normal(face));
+      _frames[face.index].textRight.clone();
 
   /// Returns the faces that face the viewer of [camera], drawn in [rect].
   ///
@@ -150,11 +161,9 @@ class NavigationCube {
 
     final views = <NavigationCubeFaceView>[];
     for (final face in NavigationCubeFace.values) {
-      final n = normal(face);
+      final (normal: n, textRight: r, textUp: u) = _frames[face.index];
       final facing = n.dot(camera.toViewer);
       if (facing <= _minFacing) continue;
-      final r = textRight(face);
-      final u = textUp(face);
       views.add(
         NavigationCubeFaceView(
           face: face,

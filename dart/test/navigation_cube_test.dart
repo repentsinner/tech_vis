@@ -23,8 +23,6 @@ const _zUpLeft = CoordinateConvention(
   handedness: Handedness.left,
 );
 
-const _conventions = [_yUpRight, _yUpLeft, _zUpRight, _zUpLeft];
-
 /// The default placement's rectangle in a 1280 x 720 viewport.
 final _rect = ViewportOverlayPlacement.of(
   ViewportOverlayKind.navigationCube,
@@ -32,29 +30,31 @@ final _rect = ViewportOverlayPlacement.of(
 
 typedef _Normals = ({
   CoordinateConvention convention,
-  vm.Vector3 front,
+  SignedAxis front,
   vm.Vector3 right,
 });
 
+/// Each convention with Front opposite its fallback axis, and the Right
+/// normal the hand rule gives it.
 final _normals = <_Normals>[
   (
     convention: _yUpRight,
-    front: vm.Vector3(-1, 0, 0),
+    front: const SignedAxis(SpatialAxis.x, negative: true),
     right: vm.Vector3(0, 0, 1),
   ),
   (
     convention: _yUpLeft,
-    front: vm.Vector3(-1, 0, 0),
+    front: const SignedAxis(SpatialAxis.x, negative: true),
     right: vm.Vector3(0, 0, -1),
   ),
   (
     convention: _zUpRight,
-    front: vm.Vector3(0, -1, 0),
+    front: const SignedAxis(SpatialAxis.y, negative: true),
     right: vm.Vector3(1, 0, 0),
   ),
   (
     convention: _zUpLeft,
-    front: vm.Vector3(0, -1, 0),
+    front: const SignedAxis(SpatialAxis.y, negative: true),
     right: vm.Vector3(-1, 0, 0),
   ),
 ];
@@ -84,13 +84,14 @@ void main() {
     for (final (:convention, :front, :right) in _normals) {
       final cube = NavigationCube(convention: convention, front: front);
       final up = convention.up.unitVector;
+      final frontNormal = front.unitVector;
 
       test('$convention: Top is the up axis, Front is the named front', () {
         final expected = {
           NavigationCubeFace.top: up,
           NavigationCubeFace.bottom: -up,
-          NavigationCubeFace.front: front,
-          NavigationCubeFace.back: -front,
+          NavigationCubeFace.front: frontNormal,
+          NavigationCubeFace.back: -frontNormal,
           NavigationCubeFace.right: right,
           NavigationCubeFace.left: -right,
         };
@@ -108,7 +109,7 @@ void main() {
           );
         }
         _expectVector(cube.textUp(NavigationCubeFace.front), up, 'front');
-        _expectVector(cube.textUp(NavigationCubeFace.top), -front, 'top');
+        _expectVector(cube.textUp(NavigationCubeFace.top), -frontNormal, 'top');
       });
     }
   });
@@ -125,14 +126,13 @@ void main() {
   });
 
   group('NavigationCube.visibleFaces', () {
-    for (final convention in _conventions) {
-      final cube = NavigationCube(
-        convention: convention,
-        front: -convention.fallbackAxis.unitVector,
-      );
+    final edge =
+        math.min(_rect.right - _rect.left, _rect.bottom - _rect.top) /
+        math.sqrt(3);
+    for (final (:convention, front: frontAxis, :right) in _normals) {
+      final cube = NavigationCube(convention: convention, front: frontAxis);
       final up = convention.up.unitVector;
-      final front = cube.normal(NavigationCubeFace.front);
-      final right = cube.normal(NavigationCubeFace.right);
+      final front = frontAxis.unitVector;
       final rectCenter = vm.Vector2(
         (_rect.left + _rect.right) / 2,
         (_rect.top + _rect.bottom) / 2,
@@ -183,10 +183,6 @@ void main() {
           final camera = _camera(convention, cube.normal(face) * 10);
           final [view] = cube.visibleFaces(camera, _rect);
           final [bl, br, tr, tl] = view.corners;
-          final edge =
-              2 *
-              math.min(_rect.right - _rect.left, _rect.bottom - _rect.top) /
-              (2 * math.sqrt(3));
           expect(view.facing, closeTo(1, vectorTolerance), reason: face.name);
           expectNumbers([br.x - bl.x, br.y - bl.y], [edge, 0], face.name);
           expectNumbers([tl.x - bl.x, tl.y - bl.y], [0, -edge], face.name);
@@ -234,7 +230,7 @@ void main() {
     test('a front along another horizontal axis turns the side faces', () {
       final cube = NavigationCube(
         convention: _yUpRight,
-        front: vm.Vector3(0, 0, 1),
+        front: const SignedAxis(SpatialAxis.z),
       );
       _expectVector(
         cube.normal(NavigationCubeFace.front),
@@ -254,11 +250,8 @@ void main() {
     });
 
     for (final (name, front) in [
-      ('along the up axis', vm.Vector3(0, 1, 0)),
-      ('against the up axis', vm.Vector3(0, -1, 0)),
-      ('off every axis', vm.Vector3(0.6, 0, 0.8)),
-      ('not unit length', vm.Vector3(2, 0, 0)),
-      ('zero', vm.Vector3.zero()),
+      ('along the up axis', const SignedAxis(SpatialAxis.y)),
+      ('against the up axis', const SignedAxis(SpatialAxis.y, negative: true)),
     ]) {
       test('a front $name throws', () {
         expect(

@@ -11,11 +11,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ]
+        "front": {
+          "axis": "x",
+          "negative": true
+        }
       },
       "output": {
         "top": {
@@ -135,11 +134,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ]
+        "front": {
+          "axis": "x",
+          "negative": true
+        }
       },
       "output": {
         "top": {
@@ -259,11 +257,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ]
+        "front": {
+          "axis": "y",
+          "negative": true
+        }
       },
       "output": {
         "top": {
@@ -383,11 +380,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ]
+        "front": {
+          "axis": "y",
+          "negative": true
+        }
       },
       "output": {
         "top": {
@@ -507,11 +503,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ]
+        "front": {
+          "axis": "z",
+          "negative": false
+        }
       },
       "output": {
         "top": {
@@ -633,11 +628,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -690,11 +684,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -747,11 +740,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -804,11 +796,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -861,11 +852,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -918,11 +908,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -975,11 +964,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -1078,11 +1066,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -1181,11 +1168,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -1284,11 +1270,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -1341,11 +1326,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -1398,11 +1382,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -1455,11 +1438,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -1512,11 +1494,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -1569,11 +1550,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -1626,11 +1606,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -1729,11 +1708,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -1832,11 +1810,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -1935,11 +1912,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -1992,11 +1968,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -2049,11 +2024,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -2106,11 +2080,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -2163,11 +2136,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -2220,11 +2192,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -2277,11 +2248,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -2380,11 +2350,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -2483,11 +2452,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -2586,11 +2554,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -2643,11 +2610,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -2700,11 +2666,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -2757,11 +2722,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -2814,11 +2778,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -2871,11 +2834,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -2928,11 +2890,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -3031,11 +2992,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -3134,11 +3094,10 @@
           "up": "y",
           "handedness": "left"
         },
-        "front": [
-          -1.0,
-          -0.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "x",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -3237,11 +3196,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -3294,11 +3252,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -3351,11 +3308,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -3408,11 +3364,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -3465,11 +3420,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -3522,11 +3476,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -3579,11 +3532,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -3682,11 +3634,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -3785,11 +3736,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -3888,11 +3838,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -3945,11 +3894,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -4002,11 +3950,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -4059,11 +4006,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -4116,11 +4062,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -4173,11 +4118,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -4230,11 +4174,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -4333,11 +4276,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -4436,11 +4378,10 @@
           "up": "z",
           "handedness": "right"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -4539,11 +4480,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -4596,11 +4536,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -4653,11 +4592,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -4710,11 +4648,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -4767,11 +4704,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -4824,11 +4760,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -4881,11 +4816,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -4984,11 +4918,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -5087,11 +5020,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -5190,11 +5122,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -5247,11 +5178,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -5304,11 +5234,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -5361,11 +5290,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -5418,11 +5346,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -5475,11 +5402,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -5532,11 +5458,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -5635,11 +5560,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -5738,11 +5662,10 @@
           "up": "z",
           "handedness": "left"
         },
-        "front": [
-          -0.0,
-          -1.0,
-          -0.0
-        ],
+        "front": {
+          "axis": "y",
+          "negative": true
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -5841,11 +5764,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -5898,11 +5820,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -5955,11 +5876,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -6012,11 +5932,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -6069,11 +5988,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -6126,11 +6044,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -6183,11 +6100,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -6286,11 +6202,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -6389,11 +6304,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           2.0,
           -6.0,
@@ -6492,11 +6406,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           10.0,
           0.0,
@@ -6549,11 +6462,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -10.0,
           -0.0,
@@ -6606,11 +6518,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           0.0,
           10.0,
@@ -6663,11 +6574,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -0.0,
           -10.0,
@@ -6720,11 +6630,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           0.0,
           0.0,
@@ -6777,11 +6686,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -0.0,
           -0.0,
@@ -6834,11 +6742,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           5.0,
           5.0,
@@ -6937,11 +6844,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           -3.0,
           1.5,
@@ -7040,11 +6946,10 @@
           "up": "y",
           "handedness": "right"
         },
-        "front": [
-          0.0,
-          0.0,
-          1.0
-        ],
+        "front": {
+          "axis": "z",
+          "negative": false
+        },
         "cameraPosition": [
           2.0,
           -6.0,

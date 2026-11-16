@@ -180,6 +180,10 @@ const _zUpLeft = CoordinateConvention(
   up: SpatialAxis.z,
   handedness: Handedness.left,
 );
+const _yUpLeft = CoordinateConvention(
+  up: SpatialAxis.y,
+  handedness: Handedness.left,
+);
 
 typedef _View = ({
   String name,
@@ -543,10 +547,7 @@ Map<String, Object?> referenceScreenGeometryFixture() => {
         'name':
             '${scene.name}, ${scene.convention.up.label}-up '
             '${scene.convention.handedness.name}-handed',
-        'convention': {
-          'up': scene.convention.up.name,
-          'handedness': scene.convention.handedness.name,
-        },
+        'convention': _convention(scene.convention),
         'build': scene.build.input,
         'views': [for (final view in scene.views) _sceneView(scene, view)],
       },
@@ -627,11 +628,6 @@ Map<String, Object?> viewportOverlaysFixture() => {
   ],
 };
 
-const _yUpLeft = CoordinateConvention(
-  up: SpatialAxis.y,
-  handedness: Handedness.left,
-);
-
 /// Camera offsets from the target: straight along each world axis, along
 /// a cube diagonal where three faces tie, and three oblique views.
 final _cubeViewOffsets = <({String name, vm.Vector3 offset})>[
@@ -644,11 +640,7 @@ final _cubeViewOffsets = <({String name, vm.Vector3 offset})>[
   (name: 'oblique from below', offset: vm.Vector3(2, -6, -1.5)),
 ];
 
-typedef _Cube = ({
-  String name,
-  CoordinateConvention convention,
-  vm.Vector3 front,
-});
+typedef _Cube = ({String name, NavigationCube cube});
 
 /// Each convention's cube with Front opposite its fallback axis, which
 /// puts Front at the bottom of a top view, plus a Y-up cube facing +Z.
@@ -656,36 +648,39 @@ List<_Cube> _cubes() => [
   for (final convention in [_yUpRight, _yUpLeft, _zUpRight, _zUpLeft])
     (
       name: '$convention',
-      convention: convention,
-      front: -convention.fallbackAxis.unitVector,
+      cube: NavigationCube(
+        convention: convention,
+        front: -SignedAxis(convention.fallbackAxis),
+      ),
     ),
   (
     name: '$_yUpRight, front +Z',
-    convention: _yUpRight,
-    front: vm.Vector3(0, 0, 1),
+    cube: NavigationCube(
+      convention: _yUpRight,
+      front: const SignedAxis(SpatialAxis.z),
+    ),
   ),
 ];
 
-Map<String, Object?> _cubeInput(_Cube c) => {
-  'convention': {
-    'up': c.convention.up.name,
-    'handedness': c.convention.handedness.name,
-  },
-  'front': _vector(c.front),
+Map<String, Object?> _convention(CoordinateConvention c) => {
+  'up': c.up.name,
+  'handedness': c.handedness.name,
 };
 
-Map<String, Object?> _cubeFaces(_Cube c) {
-  final cube = NavigationCube(convention: c.convention, front: c.front);
-  return {
-    for (final face in NavigationCubeFace.values)
-      face.name: {
-        'label': face.label,
-        'normal': _vector(cube.normal(face)),
-        'textRight': _vector(cube.textRight(face)),
-        'textUp': _vector(cube.textUp(face)),
-      },
-  };
-}
+Map<String, Object?> _cubeInput(NavigationCube cube) => {
+  'convention': _convention(cube.convention),
+  'front': {'axis': cube.front.axis.name, 'negative': cube.front.negative},
+};
+
+Map<String, Object?> _cubeFaces(NavigationCube cube) => {
+  for (final face in NavigationCubeFace.values)
+    face.name: {
+      'label': face.label,
+      'normal': _vector(cube.normal(face)),
+      'textRight': _vector(cube.textRight(face)),
+      'textUp': _vector(cube.textUp(face)),
+    },
+};
 
 Map<String, Object?> _cubeView(
   _Cube c,
@@ -693,17 +688,17 @@ Map<String, Object?> _cubeView(
   ViewportOverlayPlacement placement,
   vm.Vector2 viewport,
 ) {
-  final cube = NavigationCube(convention: c.convention, front: c.front);
+  final cube = c.cube;
   final camera = CameraBasis.lookAt(
     position: view.offset,
     target: vm.Vector3.zero(),
-    convention: c.convention,
+    convention: cube.convention,
   );
   final rect = placement.rect(viewport);
   return {
     'name': '${c.name}, camera at ${view.name}, ${placement.corner.name}',
     'input': {
-      ..._cubeInput(c),
+      ..._cubeInput(cube),
       'cameraPosition': _vector(view.offset),
       'cameraTarget': [0.0, 0.0, 0.0],
       'rect': [rect.left, rect.top, rect.right, rect.bottom],
@@ -741,7 +736,11 @@ Map<String, Object?> navigationCubeFixture() {
     'cornerOrder': "label's bottom-left, bottom-right, top-right, top-left",
     'NavigationCube.faces': [
       for (final c in _cubes())
-        {'name': c.name, 'input': _cubeInput(c), 'output': _cubeFaces(c)},
+        {
+          'name': c.name,
+          'input': _cubeInput(c.cube),
+          'output': _cubeFaces(c.cube),
+        },
     ],
     'NavigationCube.visibleFaces': [
       for (final c in _cubes())

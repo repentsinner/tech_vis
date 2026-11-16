@@ -28,6 +28,24 @@ List<double> jsonNumbers(Object? json) =>
 
 vm.Vector3 jsonVector3(Object? json) => vm.Vector3.array(jsonNumbers(json));
 
+/// Decodes a fixture's `{up, handedness}` convention record.
+CoordinateConvention jsonConvention(Object? json) {
+  final c = json! as Json;
+  return CoordinateConvention(
+    up: SpatialAxis.values.byName(c['up'] as String),
+    handedness: Handedness.values.byName(c['handedness'] as String),
+  );
+}
+
+/// Decodes a fixture's `{axis, negative}` signed-axis record.
+SignedAxis jsonSignedAxis(Object? json) {
+  final a = json! as Json;
+  return SignedAxis(
+    SpatialAxis.values.byName(a['axis'] as String),
+    negative: a['negative'] as bool,
+  );
+}
+
 vm.Vector2 jsonVector2(Object? json) => vm.Vector2.array(jsonNumbers(json));
 
 List<Json> jsonList(Object? json) => (json! as List<dynamic>).cast<Json>();

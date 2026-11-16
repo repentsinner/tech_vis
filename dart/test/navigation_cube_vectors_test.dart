@@ -8,17 +8,9 @@ import 'support/vectors.dart';
 
 final _fixture = vectorFixture('navigation_cube.json');
 
-CoordinateConvention _convention(Object? json) {
-  final c = json! as Json;
-  return CoordinateConvention(
-    up: SpatialAxis.values.byName(c['up'] as String),
-    handedness: Handedness.values.byName(c['handedness'] as String),
-  );
-}
-
 NavigationCube _cube(Json input) => NavigationCube(
-  convention: _convention(input['convention']),
-  front: jsonVector3(input['front']),
+  convention: jsonConvention(input['convention']),
+  front: jsonSignedAxis(input['front']),
 );
 
 List<double> _numbers(vm.Vector v) => List.of(v.storage);
@@ -68,7 +60,7 @@ void main() {
         final camera = CameraBasis.lookAt(
           position: jsonVector3(input['cameraPosition']),
           target: jsonVector3(input['cameraTarget']),
-          convention: _convention(input['convention']),
+          convention: jsonConvention(input['convention']),
         );
         final [left, top, right, bottom] = jsonNumbers(input['rect']);
         final seen = _cube(input).visibleFaces(camera, (

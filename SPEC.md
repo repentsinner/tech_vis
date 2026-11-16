@@ -800,7 +800,8 @@ respond to input (§req:priorities).
   RIGHT, each with a world normal and a label frame: the directions its
   text runs and points up.
 - Top is the up axis of §spec:coordinate-convention. The app names the
-  front axis, a signed horizontal world axis, and has no default. Right
+  front axis as a signed world axis other than up, such as -Y, and it
+  has no default. Right
   is the face a viewer of Front sees on their right, by the declared
   hand rule.
 - Side labels stand upright. Top and Bottom labels point away from

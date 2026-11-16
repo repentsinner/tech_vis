@@ -448,7 +448,7 @@ puts FRONT along the bottom edge of TOP in a top view:
 ```dart
 final cube = NavigationCube(
   convention: convention,
-  front: -convention.fallbackAxis.unitVector,
+  front: -SignedAxis(convention.fallbackAxis),
 );
 final rect = ViewportOverlayPlacement.of(
   ViewportOverlayKind.navigationCube,
