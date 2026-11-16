@@ -14,6 +14,13 @@ and the copies drift.
 **Success** is one style, defined once, that renderers in more than one
 language reproduce and can prove they reproduce.
 
+The core of the style is placement. A label, leader, or marker sits in
+world space so that it moves with the scene, yet it reads as if drawn on
+the screen: a fixed pixel size, upright, at a predictable offset. The
+library owns that placement. How finely a renderer draws the result, its
+anti-aliasing, glyph rasterization, and blending, belongs to the
+renderer.
+
 The first applications are desktop- to room-scale machines: 3D printers,
 CNC mills, and CNC routers. Their readers check sizes, clearances, and
 travel in a 3D view, and they read those numbers the way they read a shop
@@ -42,6 +49,16 @@ geographic data or micron-scale specimens.
   readable while the object moves.
 - When the app switches mode and a set of callouts appears or disappears,
   the change fades in or out instead of popping.
+- Before adopting the library, an app developer can read what every piece
+  of scene data means to a renderer, such as which sizes are screen
+  pixels and which are world units, and which camera the placement
+  assumes, and can check an engine against that list.
+- From one rendered frame, a renderer's author can measure that labels,
+  leaders, and lines land at the screen positions and pixel sizes the
+  library computed, within a stated tolerance, whatever the font or
+  anti-aliasing.
+- Annotations draw without any asset file: no model, no bundled texture,
+  no font.
 
 ## User stories §req:user-stories
 
@@ -69,6 +86,23 @@ geographic data or micron-scale specimens.
   gets crowded.
 - As an app developer, I want to show and hide whole sets of callouts as my
   app changes mode, so that each mode shows only what matters to it.
+- As an app developer, I want to place any 2D content I prepare, such as
+  text, an icon, or a video frame, at a world point as a camera-facing
+  billboard of its own pixel size, so that one placement serves every
+  kind of label.
+- As an app developer, I want labels in my app's own typeface, so that
+  annotations match the rest of my interface.
+
+### Renderer author
+
+- As a renderer author, I want each kind of scene data's meaning stated
+  plainly, such as screen-pixel widths and sRGB colors, so that my engine
+  places every annotation where the library intended.
+- As a renderer author, I want reference screen positions and sizes for
+  sample scenes, so that I can test my rendered output against them and
+  tighten my tolerance over time.
+- As a renderer author, I want to draw indicator markers from generated
+  geometry, so that my engine needs no model loader for annotations.
 
 ### Machine operator
 
@@ -115,6 +149,9 @@ geographic data or micron-scale specimens.
 - **Keeps up with motion.** Callout placement keeps pace with the app's
   frame rate while the camera and anchors move, for up to about 20
   callouts on screen at once.
+- **Fidelity only improves.** Once a renderer meets a placement tolerance
+  against the reference positions and sizes, a later change does not
+  loosen it.
 - **Calm, not jumpy.** A callout does not jump between positions frame to
   frame. Stability matters more than the best position in every frame.
 
@@ -130,6 +167,14 @@ geographic data or micron-scale specimens.
 - The packages name nothing from any one consumer's domain.
 - The supported size range runs from about 0.01 mm to tens of meters.
   Labels cover mm, m, decimal inches, fractional inches, and feet.
+- The library targets 3D scene renderers in any language: GPU engines,
+  Python 3D and plotting tools, and web viewers.
+- The library guarantees placement, not pixels. Visual fidelity beyond
+  where things land and how big they are is the renderer's.
+- Annotations depend on no asset file. Scene content, such as a model of
+  the object being annotated, is the app's to load and draw.
+- The typeface is the app's choice. The style sets label sizes, not a
+  font.
 
 ## Priorities §req:priorities
 
@@ -154,6 +199,9 @@ displays a real-world measurement.
   and fades when sets of callouts change.
 - Python versions of every primitive above, agreeing with Dart within
   tolerance.
+- The renderer contract: what each piece of scene data means to a
+  renderer, reference screen positions and sizes to measure against, and
+  markers drawn from generated geometry.
 
 **Later:**
 
@@ -180,5 +228,8 @@ displays a real-world measurement.
   each label in a group belongs to without zooming in is undecided. The
   answer chooses between a single grouped marker and leaders that each
   run to their own point.
+- **2D renderers.** Whether a renderer with no 3D scene, such as a 2D
+  canvas that projects the scene itself, is a supported target is
+  undecided.
 - **Motion damping.** How strongly a moving object's callout lags behind
   it, to stay readable without seeming detached, needs tuning by eye.
