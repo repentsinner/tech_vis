@@ -86,6 +86,10 @@ geographic data or micron-scale specimens.
   gets crowded.
 - As an app developer, I want to show and hide whole sets of callouts as my
   app changes mode, so that each mode shows only what matters to it.
+- As an app developer, I want to place any 2D content I prepare, such as
+  text, an icon, or a video frame, at a world point as a camera-facing
+  billboard of its own pixel size, so that one placement serves every
+  kind of label.
 - As an app developer, I want labels in my app's own typeface, so that
   annotations match the rest of my interface.
 

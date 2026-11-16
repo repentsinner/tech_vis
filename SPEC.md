@@ -124,7 +124,7 @@ graph and draws them with its own engine (§req:constraints).
 |---|---|
 | Line | Two world endpoints and a width in screen pixels |
 | Quad | Four world corners of a filled face |
-| Label | Text, a world anchor, a height in screen pixels, an orientation mode, an anchor alignment, and an optional screen offset |
+| Billboard | 2D content that the app prepares, the content's size in screen pixels, a world anchor, an orientation mode, an anchor alignment, and an optional screen offset |
 | Marker | A world position, a diameter in screen pixels, and its generated mesh |
 | Mesh | Triangle positions, normals, and indices, in the declared convention of §spec:coordinate-convention |
 
@@ -132,6 +132,14 @@ graph and draws them with its own engine (§req:constraints).
   app key. The key is an opaque value that the package passes through
   and never inspects. The app resolves color and any other meaning from
   it.
+- A Billboard's content is opaque to the package: text, an icon, a
+  video frame, or anything else the app can draw, alpha included. The
+  package places the content by its pixel size and never inspects it.
+- Text that the package composes for its own annotations, such as a
+  dimension value, a grid coordinate, or an axis letter, reaches the app
+  as a text request: the string and a pixel height. The app turns the
+  request into content in its own typeface and reports the content's
+  pixel size, and layout places the Billboard by that size.
 - Factories return primitives: `BoundingBoxFactory`,
   `CoordinateFrameFactory`, `EnvelopeLabelFactory`,
   `FilledRectangleFactory`, §spec:callout-layout, and
@@ -153,6 +161,12 @@ and a renderer handles exactly five cases. A slimmed single type was
 rejected because it still mixes kinds in one type. A shared type that
 apps subclass was rejected because it puts the package's scene graph
 inside every app.
+
+*Why a billboard, not a text label*: the placement math needs only the
+content's pixel size and anchor. Text is one kind of content, and an
+icon or a video frame places the same way. A text-only primitive would
+force each other kind of content through a second path. Composed text
+goes through the same billboard, so one mechanism places everything.
 
 *Why no renderer interface*: a renderer interface carries engine and app
 concerns, such as building a widget, a frame callback, or an app's
@@ -269,8 +283,9 @@ A renderer shall:
   the same frame;
 - draw a Line at its width in screen pixels, constant along its length
   at any depth;
-- draw a Label at its pixel height, in the app's typeface, at its anchor
-  alignment, facing the viewer in a viewer-facing mode;
+- draw a Billboard's content at its pixel size and anchor alignment,
+  facing the viewer in a viewer-facing mode, with the content's own
+  alpha multiplied by the primitive's opacity;
 - draw a Marker's mesh at the transform the package returns for the
   frame;
 - apply each primitive's opacity;
@@ -283,8 +298,9 @@ A renderer shall:
 
 A renderer should anti-alias a line narrower than one pixel.
 
-The app measures each label's text in its typeface and passes the
-measured size in. The package never measures text.
+The app prepares each Billboard's content, including the content for
+the package's text requests, and reports its pixel size. The package
+never measures or rasterizes content.
 
 *Why placement, not pixels*: the package controls where an element lands
 and how big it is, and nothing about how an engine fills its pixels. A
@@ -295,7 +311,7 @@ contract on pixels would bind every engine to one rasterizer
 
 Fixtures of §spec:golden-vectors cover a set of sample scenes. For each
 camera and viewport, a fixture records every primitive's expected screen
-position and pixel size: label boxes, leader endpoints, line widths, and
+position and pixel size: billboard boxes, leader endpoints, line widths, and
 marker diameters. A renderer author renders the sample scene, measures
 the frame, and compares the measurements with the fixture within a
 tolerance that the renderer records. A renderer's recorded tolerance
