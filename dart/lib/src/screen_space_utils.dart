@@ -75,11 +75,11 @@ class CameraBasis {
   double depthOf(vm.Vector3 point) => (point - position).dot(forward);
 }
 
-/// Utility class for screen-space calculations shared between renderers.
+/// Screen-space math that every renderer shares: the world size of a
+/// pixel at a point, and where a point lands in the viewport.
 ///
-/// Provides methods for converting between pixel sizes and world sizes
-/// based on camera parameters, similar to how Three.js handles screen-space
-/// calculations. Pure math — no Flutter dependency.
+/// Every method assumes one perspective camera model, so a size and a
+/// position computed for the same frame agree.
 class ScreenSpaceUtils {
   /// Convert a target pixel size to world size based on camera distance and
   /// field of view.
