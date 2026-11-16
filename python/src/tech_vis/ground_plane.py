@@ -346,19 +346,18 @@ class _PatchShape:
     def span(self, offset: float, *, along_v: bool) -> float:
         """Returns half the length of the line at ``offset``, running along
         ``v`` when ``along_v`` and along ``u`` otherwise."""
-        patch = self.patch
-        if isinstance(patch, RectangularGroundPatch):
-            return patch.half_extent_v if along_v else patch.half_extent_u
-        return math.sqrt(max(0.0, patch.radius * patch.radius - offset * offset))
+        if isinstance(self.patch, RectangularGroundPatch):
+            return self.extent_v if along_v else self.extent_u
+        radius = self.extent_u
+        return math.sqrt(max(0.0, radius * radius - offset * offset))
 
     def opacity(self, a: float, b: float) -> float:
         """Returns the opacity at plane coordinates (``a``, ``b``): one at the
         center, falling linearly to zero at the edge."""
-        patch = self.patch
-        if isinstance(patch, RectangularGroundPatch):
-            reach = max(abs(a) / patch.half_extent_u, abs(b) / patch.half_extent_v)
+        if isinstance(self.patch, RectangularGroundPatch):
+            reach = max(abs(a) / self.extent_u, abs(b) / self.extent_v)
         else:
-            reach = math.sqrt(a * a + b * b) / patch.radius
+            reach = math.sqrt(a * a + b * b) / self.extent_u
         return min(max(1 - reach, 0.0), 1.0)
 
 

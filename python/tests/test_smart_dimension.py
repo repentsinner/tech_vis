@@ -6,6 +6,7 @@ import pytest
 
 from conftest import (
     TOLERANCE,
+    Z_UP_RIGHT,
     assert_close,
     billboards_of,
     fake_text_resolver,
@@ -15,7 +16,6 @@ from conftest import (
 from tech_vis import (
     CalloutQuadrant,
     CameraBasis,
-    CoordinateConvention,
     CoplanarOrientation,
     DecimalMarker,
     DimensionStyle,
@@ -23,12 +23,10 @@ from tech_vis import (
     DisplayFormat,
     DraftingConvention,
     DraftingStandard,
-    Handedness,
     LeaderLineStyle,
     MultiAxisDimension,
     NumberFormatting,
     Primitive,
-    SpatialAxis,
     TextRequest,
     UnitSystem,
     Vector2,
@@ -42,7 +40,7 @@ from tech_vis import (
 )
 from tech_vis._vec import ORIGIN, dot, normalized, sub
 
-Z_UP = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
+Z_UP = Z_UP_RIGHT
 FOV = math.pi / 3
 VIEWPORT: Vector2 = (1000.0, 1000.0)
 

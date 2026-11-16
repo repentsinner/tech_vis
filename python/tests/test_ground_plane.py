@@ -4,7 +4,17 @@ import math
 
 import pytest
 
-from conftest import TOLERANCE, fake_text_resolver
+from conftest import (
+    TOLERANCE,
+    Y_UP_LEFT,
+    Y_UP_RIGHT,
+    Z_UP_LEFT,
+    Z_UP_RIGHT,
+    billboards_of,
+    fake_text_resolver,
+    lines_of,
+    texts_of,
+)
 from tech_vis import (
     BillboardPrimitive,
     CameraBasis,
@@ -29,12 +39,12 @@ from tech_vis import (
 )
 from tech_vis._vec import ORIGIN, add, normalized, scale
 
-Z_UP = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
+Z_UP = Z_UP_RIGHT
 CONVENTIONS = [
-    Z_UP,
-    CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.LEFT),
-    CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT),
-    CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.LEFT),
+    Z_UP_RIGHT,
+    Z_UP_LEFT,
+    Y_UP_RIGHT,
+    Y_UP_LEFT,
     CoordinateConvention(up=SpatialAxis.X, handedness=Handedness.RIGHT),
 ]
 
@@ -99,23 +109,15 @@ def _grid(
 
 
 def _lines(grid: GroundGrid, key: str | None = None) -> list[LinePrimitive]:
-    return [
-        p
-        for p in grid.primitives
-        if isinstance(p, LinePrimitive) and (key is None or p.key == key)
-    ]
+    return [p for p in lines_of(grid.primitives) if key is None or p.key == key]
 
 
 def _labels(grid: GroundGrid) -> list[BillboardPrimitive]:
-    return [p for p in grid.primitives if isinstance(p, BillboardPrimitive)]
+    return billboards_of(grid.primitives)
 
 
 def _texts(grid: GroundGrid) -> list[str]:
-    texts = []
-    for label in _labels(grid):
-        assert isinstance(label.content.value, TextRequest)
-        texts.append(label.content.value.text)
-    return texts
+    return texts_of(grid.primitives)
 
 
 def _index(axis: SpatialAxis) -> int:

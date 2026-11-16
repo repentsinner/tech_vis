@@ -489,14 +489,6 @@ def create_radial_dimension(
     )
 
 
-def _midpoint(a: Vector3, b: Vector3) -> Vector3:
-    return _vec.scale(_vec.add(a, b), 0.5)
-
-
-def _neg(v: Vector3) -> Vector3:
-    return (-v[0], -v[1], -v[2])
-
-
 def _length2(v: Vector2) -> float:
     return math.sqrt(v[0] * v[0] + v[1] * v[1])
 
@@ -576,7 +568,7 @@ class _DimensionBuilder:
             if abs(upward) > _EPSILON
             else _vec.dot(perpendicular, camera.right) < 0
         )
-        return _neg(perpendicular) if flip else perpendicular
+        return _vec.negated(perpendicular) if flip else perpendicular
 
     def _offset_direction(
         self, direction: Vector3, requested: Vector3 | None
@@ -599,7 +591,7 @@ class _DimensionBuilder:
     ) -> list[Primitive] | None:
         style = self.style
         measured = _vec.dot(_vec.sub(end, start), direction)
-        points_pixel = self._pixel(_midpoint(start, end))
+        points_pixel = self._pixel(_vec.midpoint(start, end))
         start_pixel = self._pixel(start)
         end_pixel = self._pixel(end)
         if points_pixel is None or start_pixel is None or end_pixel is None:
@@ -608,7 +600,7 @@ class _DimensionBuilder:
         offset = self._offset_direction(direction, requested_offset)
         foot_start = _vec.along(start, offset, style.offset_pixels * points_pixel)
         foot_end = _vec.along(foot_start, direction, measured)
-        middle = _midpoint(foot_start, foot_end)
+        middle = _vec.midpoint(foot_start, foot_end)
         foot_start_pixel = self._pixel(foot_start)
         foot_end_pixel = self._pixel(foot_end)
         middle_pixel = self._pixel(middle)
@@ -654,7 +646,7 @@ class _DimensionBuilder:
                 line_on_screen,
             ),
             *self._arrowhead(foot_start, direction, foot_start_pixel),
-            *self._arrowhead(foot_end, _neg(direction), foot_end_pixel),
+            *self._arrowhead(foot_end, _vec.negated(direction), foot_end_pixel),
             *self._text(
                 placement, content, middle, line_on_screen, offset, middle_pixel
             ),
@@ -777,7 +769,7 @@ class _DimensionBuilder:
 
         primitives.extend(self._arrowhead(first_end, tangent(0), first_end_pixel))
         primitives.extend(
-            self._arrowhead(second_end, _neg(tangent(angle)), second_end_pixel)
+            self._arrowhead(second_end, _vec.negated(tangent(angle)), second_end_pixel)
         )
         primitives.extend(
             self._text(
@@ -798,7 +790,7 @@ class _DimensionBuilder:
         """Returns a radial dimension line from ``start`` to ``rim`` along the
         unit ``direction``, with an arrowhead on ``rim``, and on ``start`` too
         for a ``diameter``."""
-        middle = _midpoint(start, rim)
+        middle = _vec.midpoint(start, rim)
         start_pixel = self._pixel(start)
         rim_pixel = self._pixel(rim)
         middle_pixel = self._pixel(middle)
@@ -822,7 +814,7 @@ class _DimensionBuilder:
             *self._straight_line(
                 start, rim, direction, placement, extent, middle_pixel, line_on_screen
             ),
-            *self._arrowhead(rim, _neg(direction), rim_pixel),
+            *self._arrowhead(rim, _vec.negated(direction), rim_pixel),
             *(self._arrowhead(start, direction, start_pixel) if diameter else []),
             *self._text(
                 placement,
@@ -849,7 +841,7 @@ class _DimensionBuilder:
         inlined text of ``extent`` pixels makes at its midpoint."""
         if placement is not DimensionTextPlacement.INLINED:
             return [self._line(start, end)]
-        middle = _midpoint(start, end)
+        middle = _vec.midpoint(start, end)
         half_break = self._half_break(extent, middle_pixel, line_on_screen)
         return [
             self._line(start, _vec.along(middle, direction, -half_break)),

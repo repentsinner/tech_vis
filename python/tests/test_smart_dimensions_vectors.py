@@ -12,17 +12,16 @@ from conftest import (
     fake_text_resolver,
     json_convention,
     json_leader_style,
+    json_number_formatting,
     json_vector3,
     load_vectors,
 )
 from tech_vis import (
     CameraBasis,
-    DecimalMarker,
     DimensionStyle,
     DisplayFormat,
     DraftingConvention,
     MultiAxisDimension,
-    NumberFormatting,
     Primitive,
     RadialMeasure,
     UnitSystem,
@@ -58,13 +57,6 @@ def _style(s: Json) -> DimensionStyle:
     )
 
 
-def _numbers(n: Json) -> NumberFormatting:
-    return NumberFormatting(
-        decimal_marker=DecimalMarker(n["decimalMarker"]),
-        show_leading_zero=n["showLeadingZero"],
-    )
-
-
 def _view(given: Json) -> dict[str, Any]:
     """Returns the camera arguments every factory shares, from a case input."""
     camera = given["camera"]
@@ -80,7 +72,7 @@ def _view(given: Json) -> dict[str, Any]:
         "resolve_text": fake_text_resolver,
         "key": None,
         "drafting": DraftingConvention(given["drafting"]),
-        "numbers": _numbers(given["numbers"]),
+        "numbers": json_number_formatting(given["numbers"]),
         "style": _style(given["style"]),
     }
 
