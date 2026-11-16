@@ -157,6 +157,20 @@ COLOR_RAMP_LEGEND_WIDTH_PIXELS: float = 48.0
 # Default height of the color ramp legend overlay. Unit: px.
 COLOR_RAMP_LEGEND_HEIGHT_PIXELS: float = 200.0
 
+# Thickness of the color ramp legend's gradient bar, across its length. The bar sits
+# on the overlay rectangle's edge nearer its corner. Unit: px.
+COLOR_RAMP_LEGEND_BAR_THICKNESS_PIXELS: float = 12.0
+
+# Least distance between adjacent automatic ticks along the color ramp legend's bar.
+# Unit: px.
+COLOR_RAMP_LEGEND_MIN_TICK_SPACING_PIXELS: float = 32.0
+
+# Gap between the color ramp legend's bar and its tick labels. Unit: px.
+COLOR_RAMP_LEGEND_LABEL_GAP_PIXELS: float = 4.0
+
+# Text height of the color ramp legend's tick labels. Unit: px.
+COLOR_RAMP_LEGEND_LABEL_HEIGHT_PIXELS: float = 12.0
+
 # Default viewport corner of the navigation cube overlay. Top-right, where CAD tools
 # place their view cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-
 # right. Unit: corner.
@@ -247,6 +261,10 @@ ALL: dict[str, float] = {
     "colorRampLegendOffsetYPixels": COLOR_RAMP_LEGEND_OFFSET_YPIXELS,
     "colorRampLegendWidthPixels": COLOR_RAMP_LEGEND_WIDTH_PIXELS,
     "colorRampLegendHeightPixels": COLOR_RAMP_LEGEND_HEIGHT_PIXELS,
+    "colorRampLegendBarThicknessPixels": COLOR_RAMP_LEGEND_BAR_THICKNESS_PIXELS,
+    "colorRampLegendMinTickSpacingPixels": COLOR_RAMP_LEGEND_MIN_TICK_SPACING_PIXELS,
+    "colorRampLegendLabelGapPixels": COLOR_RAMP_LEGEND_LABEL_GAP_PIXELS,
+    "colorRampLegendLabelHeightPixels": COLOR_RAMP_LEGEND_LABEL_HEIGHT_PIXELS,
     "navigationCubeCorner": NAVIGATION_CUBE_CORNER,
     "navigationCubeOffsetXPixels": NAVIGATION_CUBE_OFFSET_XPIXELS,
     "navigationCubeOffsetYPixels": NAVIGATION_CUBE_OFFSET_YPIXELS,

@@ -565,7 +565,7 @@ the next.
 
 ## Annotation primitives §spec:annotation-primitives
 
-*Status: in progress*
+*Status: complete*
 
 The package provides annotation primitives for engineering 3D scenes.
 Each primitive produces data, pure geometry and labels, without
@@ -989,20 +989,39 @@ linear one does, even when a radius has one arrowhead.
 
 A viewport overlay (§spec:viewport-overlays) that keys a color-coded
 value, such as speed, temperature, stress, or altitude, to its colors.
-The app provides the scalar-to-color mapping and the value range. The
-legend handles layout, ticks, and labels, and formats them through
-§spec:unit-system.
+The app provides the scalar-to-color mapping and the value range, in its
+own value unit. The legend handles layout, ticks, and labels.
+`ColorRampLegendLayout.forRange` describes it.
 
 Orientation (horizontal or vertical), tick intervals, and unit-labeled
-endpoints are configurable.
+endpoints are configurable. The orientation defaults to vertical, which
+the default placement's tall rectangle suits.
 
 - The gradient reaches the renderer as ordered color stops: each stop
   has a position from 0 to 1 along the bar and the app's key. The app
   resolves each key to a color and interpolates between neighboring
-  stops, in the color space its renderer needs.
+  stops, in the color space its renderer needs. The stops run from 0 to
+  1 without descending, so two stops at one position make a hard edge.
 - The legend describes the bar's rectangle in viewport pixels, its
   stops, and its ticks, each tick with a position along the bar and a
-  label request. The labels form one set in the display format.
+  label request. Position 0 is the range's minimum, at the bar's bottom
+  when vertical and its left when horizontal.
+- The bar spans the placement rectangle's full length and a token-set
+  thickness, on the rectangle's edge nearer its corner. Labels sit a
+  token-set gap off the bar's other side, toward the viewport center,
+  centered on their ticks, with one anchor alignment for the set.
+- A tick marks every whole multiple of the tick interval inside the
+  range, within a relative slack of 1e-9. The app may set the interval.
+  By default it is the smallest of 1, 2, and 5 times a power of ten that
+  keeps adjacent ticks a token-set number of pixels apart.
+- The labels form one label set of §spec:unit-system: plain decimals
+  rounded to the interval, with the app's number formatting.
+  `formatNumberLabel` writes each one. When the app names a unit, the
+  first and last labels carry it after a space; a lone tick carries it
+  once.
+- `vectors/color_ramp_legend.json` pins legends in every corner, both
+  orientations, app intervals, the range slack, and a lone tick
+  (§spec:golden-vectors).
 
 *Why stops by key*: the package holds no color and converts none
 (§spec:scene-color), so a stop names the app's color by key, as every
@@ -1014,6 +1033,31 @@ app.
 *Why an app-provided color map*: the legend is a display primitive,
 not a data interpreter. Keeping the scalar-to-color mapping outside lets
 any domain reuse the same legend.
+
+*Why plain decimals, not a display format*: a display format labels
+lengths, and most legend values, such as a temperature or a stress, are
+not lengths. The app knows its value's unit, so it names it. A
+length-valued legend names its base unit the same way and forgoes
+promotion. An app-supplied formatter was rejected, because the label
+text would then escape the fixtures that keep both packages equal.
+
+*Why ticks only on multiples*: a tick at an arbitrary range end, such as
+23.7, would need its own rounding and break the one-set rule. An app
+that wants its ends ticked picks a range on the interval.
+
+*Why 1, 2, and 5*: they are the decimal formats' scale-bar steps, so a
+legend's ticks read as clean as a scale bar's. The grid steps' powers of
+ten were rejected, because a range such as 20 to 80 holds no tick of 100
+and too few of 10 at the spacing.
+
+*Why the unit only at the ends*: every label shares the unit, and a
+narrow bar has no room to repeat it. The ends are where a reader looks
+for the range.
+
+*Why the bar spans the rectangle*: the package does not measure text, so
+it cannot inset the bar by an end label's width. An end label may
+overhang the rectangle by half its extent, which the unclipped
+rectangle of §spec:viewport-overlays allows.
 
 ### Navigation cube §spec:navigation-cube
 
@@ -1087,8 +1131,9 @@ the work splits between app and package is an open question
 
 Pure Python, no runtime dependencies (§req:constraints). It provides
 the style tokens, the typed primitives of §spec:scene-model with the
-factories and screen-space math of §spec:renderer-contract, the scale bar
-and navigation cube of §spec:viewport-overlays, the ground plane of
+factories and screen-space math of §spec:renderer-contract, the scale
+bar, color ramp legend, and navigation cube of §spec:viewport-overlays,
+the ground plane of
 §spec:ground-plane, the smart dimensions of §spec:smart-dimensions, and,
 in time, every layout function and annotation primitive the Dart package
 provides (§req:user-stories).

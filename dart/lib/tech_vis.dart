@@ -4,6 +4,7 @@ library;
 export 'src/billboard_transform.dart';
 export 'src/bounding_box.dart';
 export 'src/bounding_box_factory.dart';
+export 'src/color_ramp_legend.dart';
 export 'src/coordinate_convention.dart';
 export 'src/coordinate_frame.dart';
 export 'src/coordinate_frame_factory.dart';

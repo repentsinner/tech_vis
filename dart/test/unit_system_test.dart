@@ -9,6 +9,10 @@ const _fractionalInch = DisplayFormat.fractionalInch;
 
 const _noLeadingZero = NumberFormatting(showLeadingZero: false);
 const _comma = NumberFormatting(decimalMarker: DecimalMarker.comma);
+const _noLeadingZeroComma = NumberFormatting(
+  decimalMarker: DecimalMarker.comma,
+  showLeadingZero: false,
+);
 
 /// A step query: the format, the requested length in its base unit, and
 /// the step expected back.
@@ -569,6 +573,46 @@ void main() {
       for (final step in [0.0, -1.0, double.nan, double.infinity]) {
         expect(() => formatDegreesLabel(1, step: step), throwsArgumentError);
       }
+    });
+  });
+
+  group('niceStepAtLeast', () {
+    for (final (length, step) in const [
+      (0.3, 0.5),
+      (1.0, 1.0),
+      (1.2, 2.0),
+      (3.0, 5.0),
+      (7.0, 10.0),
+      (0.1 + 0.2, 0.5),
+      (2e-7, 2e-7),
+      (3e19, 5e19),
+    ]) {
+      test('rounds $length up to $step', () {
+        expect(niceStepAtLeast(length), closeTo(step, step * 1e-12));
+      });
+    }
+
+    test('rejects a length that is not positive and finite', () {
+      for (final length in [0.0, -1.0, double.nan, double.infinity]) {
+        expect(() => niceStepAtLeast(length), throwsArgumentError);
+      }
+    });
+  });
+
+  group('formatNumberLabel', () {
+    test('snaps to a multiple of the step', () {
+      expect(formatNumberLabel(7, step: 5), '5');
+    });
+
+    test('writes the app decimal marker and leading zero', () {
+      expect(
+        formatNumberLabel(0.5, step: 0.1, numbers: _noLeadingZeroComma),
+        ',5',
+      );
+    });
+
+    test('rejects a step that is not positive', () {
+      expect(() => formatNumberLabel(1, step: 0), throwsArgumentError);
     });
   });
 }

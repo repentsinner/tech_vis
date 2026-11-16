@@ -138,11 +138,12 @@ DisplayFormat.FRACTIONAL_INCH.grid_step_above(1)  # 12.0
 
 ### Viewport overlays
 
-The scale bar and the navigation cube sit in the 2D layer above the
-scene. Each is laid out in viewport pixels, origin top-left with y down,
-inside the rectangle its `ViewportOverlayPlacement` gives it.
-`ScaleBarLayout.at_target` measures the scene at the point the camera
-looks at and picks the longest clean step that fits the bar's rectangle.
+The scale bar, the color ramp legend, and the navigation cube sit in the
+2D layer above the scene. Each is laid out in viewport pixels, origin
+top-left with y down, inside the rectangle its `ViewportOverlayPlacement`
+gives it. `ScaleBarLayout.at_target` measures the scene at the point the
+camera looks at and picks the longest clean step that fits the bar's
+rectangle.
 Passing the previous frame's `step` as `previous_step` keeps the value
 from flickering as the camera zooms. `NavigationCube` lists the faces
 that face the viewer, least direct first, each as four pixel corners for
@@ -176,6 +177,28 @@ cube = NavigationCube(convention=z_up, front=SignedAxis(SpatialAxis.Y, negative=
 rect = ViewportOverlayPlacement.of(ViewportOverlayKind.NAVIGATION_CUBE).rect(viewport)
 for view in cube.visible_faces(camera, rect):
     view.face.label, view.corners  # "TOP", four (x, y) tuples
+```
+
+A color ramp legend keys a color-coded value, such as a temperature, to
+its colors. The app owns the value-to-color mapping and the value range.
+`ColorRampLegendLayout.for_range` returns the bar's rectangle, the
+gradient's stops, and the ticks. Each stop pairs a position from 0 to 1
+along the bar with the app's key, and the app blends between the stops'
+colors. Ticks fall on whole multiples of a clean interval, and the
+optional `unit` follows the first and last labels:
+
+```python
+from tech_vis import ColorRampLegendLayout, ColorRampStop
+
+legend = ColorRampLegendLayout.for_range(
+    min_value=0,
+    max_value=100,
+    stops=[ColorRampStop(position=0, key="cold"), ColorRampStop(position=1, key="hot")],
+    viewport_size=(1280, 720),
+    unit="°C",
+)
+legend.bar_rect, legend.stops
+[t.label.text for t in legend.ticks]  # ['0 °C', '20', '40', '60', '80', '100 °C']
 ```
 
 `tokens.STYLE_VERSION` identifies the token set. Two implementations that

@@ -873,6 +873,15 @@ Map<String, Object?> unitFormatsFixture() => {
         },
       },
   ],
+  'formatNumberLabel': [
+    for (final (value, step, numbers) in _numberLabels)
+      {
+        'input': {'value': value, 'step': step, 'numbers': _numbers(numbers)},
+        'output': {
+          'label': formatNumberLabel(value, step: step, numbers: numbers),
+        },
+      },
+  ],
   'formatDegreesLabel': [
     for (final (degrees, step, numbers) in _degreeLabels)
       {
@@ -899,6 +908,26 @@ const _degreeLabels = <(double, double, NumberFormatting)>[
   (
     0.25,
     0.05,
+    NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+];
+
+/// Plain values either side of a rounding boundary, a negative value that
+/// rounds to zero, steps coarser than the value's digits, and both decimal
+/// markers.
+const _numberLabels = <(double, double, NumberFormatting)>[
+  (45, 1, _defaultNumbers),
+  (12.345, 0.01, _defaultNumbers),
+  (-0.04, 0.1, _defaultNumbers),
+  (-17.5, 2.5, _defaultNumbers),
+  (7, 5, _defaultNumbers),
+  (1250000, 500000, _defaultNumbers),
+  (
+    0.5,
+    0.1,
     NumberFormatting(
       decimalMarker: DecimalMarker.comma,
       showLeadingZero: false,
@@ -1085,6 +1114,184 @@ Map<String, Object?> scaleBarFixture() => {
             format: c.format,
             placement: c.placement,
             previousStep: c.previousStep,
+            numbers: c.numbers,
+          ),
+        ),
+      },
+  ],
+};
+
+typedef _LegendCase = ({
+  String name,
+  double minValue,
+  double maxValue,
+  vm.Vector2 viewport,
+  ColorRampOrientation orientation,
+  ViewportOverlayPlacement placement,
+  double? tickInterval,
+  String? unit,
+  NumberFormatting numbers,
+});
+
+/// Stops with an uneven spacing and a hard edge at the middle, where two
+/// stops share a position.
+const _legendStops = [
+  ColorRampStop(position: 0, key: 'low'),
+  ColorRampStop(position: 0.25, key: 'lowMid'),
+  ColorRampStop(position: 0.5, key: 'mid'),
+  ColorRampStop(position: 0.5, key: 'midEdge'),
+  ColorRampStop(position: 1, key: 'high'),
+];
+
+_LegendCase _legendCase(
+  String name, {
+  double minValue = 0,
+  double maxValue = 100,
+  vm.Vector2? viewport,
+  ColorRampOrientation orientation = ColorRampOrientation.vertical,
+  ViewportOverlayPlacement? placement,
+  double? tickInterval,
+  String? unit,
+  NumberFormatting numbers = _defaultNumbers,
+}) => (
+  name: name,
+  minValue: minValue,
+  maxValue: maxValue,
+  viewport: viewport ?? vm.Vector2(1280, 720),
+  orientation: orientation,
+  placement:
+      placement ??
+      ViewportOverlayPlacement.of(ViewportOverlayKind.colorRampLegend),
+  tickInterval: tickInterval,
+  unit: unit,
+  numbers: numbers,
+);
+
+List<_LegendCase> _legendCases() => [
+  _legendCase('defaults, 0 to 100', unit: '°C'),
+  _legendCase('defaults, phone viewport', viewport: vm.Vector2(390, 844)),
+  _legendCase(
+    'range off the interval',
+    minValue: -12.5,
+    maxValue: 37.5,
+    unit: 'm/s',
+  ),
+  _legendCase('fractional range', maxValue: 1),
+  _legendCase('large range', minValue: 2e5, maxValue: 1.35e6, unit: 'Pa'),
+  _legendCase('tiny range', minValue: 0.0012, maxValue: 0.0047),
+  _legendCase('negative range', minValue: -40, maxValue: -5, unit: '°F'),
+  _legendCase('app interval', tickInterval: 25),
+  _legendCase('range end inside the slack', maxValue: 0.3, tickInterval: 0.1),
+  _legendCase(
+    'interval longer than the range',
+    minValue: 0.1,
+    maxValue: 0.9,
+    tickInterval: 1,
+    unit: 'K',
+  ),
+  _legendCase(
+    'one tick carries the unit',
+    minValue: 15,
+    maxValue: 35,
+    tickInterval: 20,
+    unit: 'kPa',
+  ),
+  _legendCase(
+    'comma, no leading zero',
+    maxValue: 1,
+    numbers: const NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+  for (final corner in ViewportCorner.values) ...[
+    _legendCase(
+      'vertical, ${corner.name}',
+      placement: ViewportOverlayPlacement.of(
+        ViewportOverlayKind.colorRampLegend,
+        corner: corner,
+        offsetXPixels: 12.5,
+        offsetYPixels: 30,
+      ),
+    ),
+    _legendCase(
+      'horizontal, ${corner.name}',
+      orientation: ColorRampOrientation.horizontal,
+      minValue: -3,
+      maxValue: 7,
+      unit: 'mm',
+      placement: ViewportOverlayPlacement.of(
+        ViewportOverlayKind.colorRampLegend,
+        corner: corner,
+        widthPixels: 260,
+        heightPixels: 44.5,
+      ),
+    ),
+  ],
+];
+
+List<double> _rect(ViewportRect r) => [r.left, r.top, r.right, r.bottom];
+
+Map<String, Object?> _legendLayout(ColorRampLegendLayout legend) => {
+  'rect': _rect(legend.rect),
+  'barRect': _rect(legend.barRect),
+  'orientation': legend.orientation.name,
+  'stops': [
+    for (final s in legend.stops) {'position': s.position, 'key': s.key},
+  ],
+  'tickInterval': legend.tickInterval,
+  'ticks': [
+    for (final t in legend.ticks)
+      {
+        'value': t.value,
+        'position': t.position,
+        'label': {'text': t.label.text, 'heightPixels': t.label.heightPixels},
+        'labelAnchor': _vector(t.labelAnchor),
+      },
+  ],
+  'labelAlignment': _vector(legend.labelAlignment),
+};
+
+/// The color-ramp-legend fixture: the legend that a value range, its
+/// stops, and a placement lay out, under the style's default bar
+/// thickness, tick spacing, label gap, and label height.
+Map<String, Object?> colorRampLegendFixture() => {
+  'screenCoordinates':
+      'pixels from the top-left corner of the viewport, x right, y down',
+  'units': "values and tickInterval in the app's value unit",
+  'ColorRampLegendLayout.forRange': [
+    for (final c in _legendCases())
+      {
+        'name': c.name,
+        'input': {
+          'minValue': c.minValue,
+          'maxValue': c.maxValue,
+          'stops': [
+            for (final s in _legendStops)
+              {'position': s.position, 'key': s.key},
+          ],
+          'viewport': _vector(c.viewport),
+          'orientation': c.orientation.name,
+          'placement': _placement(c.placement),
+          'tickInterval': c.tickInterval,
+          'unit': c.unit,
+          'numbers': _numbers(c.numbers),
+          'barThicknessPixels': StyleTokens.colorRampLegendBarThicknessPixels,
+          'minTickSpacingPixels':
+              StyleTokens.colorRampLegendMinTickSpacingPixels,
+          'labelGapPixels': StyleTokens.colorRampLegendLabelGapPixels,
+          'labelHeightPixels': StyleTokens.colorRampLegendLabelHeightPixels,
+        },
+        'output': _legendLayout(
+          ColorRampLegendLayout.forRange(
+            minValue: c.minValue,
+            maxValue: c.maxValue,
+            stops: _legendStops,
+            viewportSize: c.viewport,
+            orientation: c.orientation,
+            placement: c.placement,
+            tickInterval: c.tickInterval,
+            unit: c.unit,
             numbers: c.numbers,
           ),
         ),
@@ -1824,6 +2031,7 @@ void main(List<String> args) {
     'vectors/unit_formats.json': _render(unitFormatsFixture()),
     'vectors/navigation_cube.json': _render(navigationCubeFixture()),
     'vectors/scale_bar.json': _render(scaleBarFixture()),
+    'vectors/color_ramp_legend.json': _render(colorRampLegendFixture()),
     'vectors/ground_plane.json': _render(groundPlaneFixture()),
     'vectors/smart_dimensions.json': _render(smartDimensionsFixture()),
   };
