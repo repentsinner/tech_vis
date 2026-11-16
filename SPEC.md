@@ -387,11 +387,12 @@ crowds thin triangles at its poles and spends its vertices there.
 
 ## Unit system §spec:unit-system
 
-*Status: in progress*
+*Status: complete*
 
 `UnitSystem` names the metric (mm) and imperial (in) systems and
-converts between them. A measurement displays in one of three formats,
-which the app selects:
+converts between them. A `DisplayFormat` decides how a measurement
+displays, and the app selects it. Every length a format takes or
+returns is in its unit system's base unit.
 
 - **Metric**: millimeters, promoted to meters at 10 m and above.
 - **Decimal inch**: inches with decimal places. No promotion to feet.
@@ -409,14 +410,32 @@ line is always also a minor line.
 | Decimal inch | 1, 2, 5 × every power of ten | every power of ten |
 | Fractional inch | 1/64, 1/32, 1/16, 1/8, 1/4, 1/2, 1, 6, 12 in; then 1, 2, 5 × every power of ten ft | 1/16, 1/4, 1, 12 in; then every power of ten ft |
 
+A format answers step queries instead of listing its sequences: the
+largest scale bar step that fits a length, the smallest grid step that
+covers one, and the grid step above a given step. These are what
+§spec:scale-bar and §spec:ground-plane consume.
+
 - A set of labels displayed together, such as a grid's or a scale
-  bar's, uses one unit for every label in the set. The largest value in
-  the set decides whether the set promotes.
-- A label shows the fewest decimal places that represent its step
-  exactly, with no trailing zeros.
+  bar's, uses one unit for every label in the set. The largest rounded
+  magnitude in the set decides whether the set promotes.
+- A label rounds to its step and shows the fewest decimal places, or the
+  smallest binary fraction, that represent the step exactly, with no
+  trailing zeros. A label with no step, such as a single measured
+  value, rounds to 0.001 mm, 0.0001 in, or 1/64 in.
+- A fractional-inch set whose step is a whole number of feet omits the
+  inches (`2'`).
 - The app sets the decimal marker (point or comma) and whether a value
   below one shows its leading zero. The defaults are a point and a
-  leading zero shown.
+  leading zero shown. Fractional inch has no decimals, so neither
+  applies to it.
+
+*Why query steps, not list them*: the sequences run over every power
+of ten. A finite list would cut off a scene larger or finer than its
+ends.
+
+*Why a default rounding*: a dimension measures one value and has no
+step. Each default is finer than its format's readers work to, so it
+hides floating-point noise without hiding a real digit.
 
 *Why three formats, not two systems*: imperial readers split. Machinists
 read thousandths of an inch, and router and woodworking users read
