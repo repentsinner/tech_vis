@@ -49,8 +49,3 @@ Screen-space ruler with adaptive subdivision (§spec:scale-bar).
 Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
 Blocked: how the gradient reaches the renderer is an open question in
 §spec:color-ramp-legend. Unblocked when the spec settles it.
-
-### Navigation cube §road:nav-cube
-
-Passive orientation indicator whose Top face follows the declared up
-axis (§spec:navigation-cube).
