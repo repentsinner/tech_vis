@@ -31,11 +31,6 @@ Port the leader-line functions to Python. Test them against
 Closes §spec:annotation-primitives. Every workstream here emits the
 typed primitives.
 
-### Smart dimensions §road:smart-dimensions
-
-Point-to-point dimensions under the app's drafting convention
-(§spec:smart-dimensions, §spec:drafting-convention).
-
 ### Color ramp legend §road:color-ramp-legend
 
 Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
