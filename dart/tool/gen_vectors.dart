@@ -1269,6 +1269,248 @@ Map<String, Object?> groundPlaneFixture() => {
   'GroundPlaneFactory.create': [for (final c in _groundCases()) _groundCase(c)],
 };
 
+typedef _DimensionCase = ({
+  String name,
+  vm.Vector3 from,
+  vm.Vector3 to,
+  DraftingConvention drafting,
+  DisplayFormat format,
+  UnitSystem worldUnits,
+  CoordinateConvention convention,
+  _View view,
+  MultiAxisDimension multiAxis,
+  vm.Vector3? offsetDirection,
+  NumberFormatting numbers,
+  DimensionStyle style,
+});
+
+const _customDimensionStyle = DimensionStyle(
+  lineWidth: 1.5,
+  witnessGapPixels: 3,
+  witnessExtensionPixels: 8,
+  offsetPixels: 40,
+  arrowLengthPixels: 14,
+  arrowWidthPixels: 6,
+  textPixelSize: 18,
+  textGapPixels: 5,
+  alignmentTolerance: 0.01,
+  leader: _customStyle,
+);
+
+/// Dimensions under each drafting convention, with room for the text and
+/// cramped, measuring one axis, components, and the direct distance, in
+/// Z-up and Y-up right-handed and Z-up left-handed spaces.
+List<_DimensionCase> _dimensionCases() {
+  final oblique = _view('oblique', [260, -320, 210], [50, 10, 0], 45, [
+    1280,
+    720,
+  ]);
+  _DimensionCase c(
+    String name, {
+    required List<double> from,
+    required List<double> to,
+    required DraftingConvention drafting,
+    DisplayFormat format = DisplayFormat.metric,
+    UnitSystem worldUnits = UnitSystem.metric,
+    CoordinateConvention convention = _zUpRight,
+    _View? view,
+    MultiAxisDimension multiAxis = MultiAxisDimension.components,
+    List<double>? offsetDirection,
+    NumberFormatting numbers = _defaultNumbers,
+    DimensionStyle style = const DimensionStyle(),
+  }) => (
+    name: name,
+    from: vm.Vector3.array(from),
+    to: vm.Vector3.array(to),
+    drafting: drafting,
+    format: format,
+    worldUnits: worldUnits,
+    convention: convention,
+    view: view ?? oblique,
+    multiAxis: multiAxis,
+    offsetDirection: offsetDirection == null
+        ? null
+        : vm.Vector3.array(offsetDirection),
+    numbers: numbers,
+    style: style,
+  );
+  return [
+    for (final drafting in DraftingConvention.values) ...[
+      c(
+        'one axis with room, ${drafting.name}',
+        from: [0, 0, 0],
+        to: [100, 0.05, 0],
+        drafting: drafting,
+      ),
+      c(
+        'one axis cramped, ${drafting.name}',
+        from: [10, 20, 5],
+        to: [10, 20, 13],
+        drafting: drafting,
+      ),
+    ],
+    c(
+      'three axes as components, Y-up',
+      from: [-20, 5, 10],
+      to: [40, 35, -30],
+      drafting: DraftingConvention.asmeReferencing,
+      convention: _yUpRight,
+      view: _view('front', [120, 90, 260], [10, 20, -10], 40, [1024, 768]),
+    ),
+    c(
+      'three axes direct, Z-up left-handed',
+      from: [-20, 5, 10],
+      to: [40, 35, -30],
+      drafting: DraftingConvention.isoOriented,
+      convention: _zUpLeft,
+      multiAxis: MultiAxisDimension.direct,
+    ),
+    c(
+      'vertical axis seen end-on from above',
+      from: [50, 10, 0],
+      to: [50, 10, 40],
+      drafting: DraftingConvention.asmeInlined,
+      view: _view('top', [50, 10, 300], [50, 10, 0], 30, [800, 800]),
+    ),
+    c(
+      'inches in fractional inch, app offset direction',
+      from: [0, 0, 0],
+      to: [0, 40.5, 0],
+      drafting: DraftingConvention.asmeInlined,
+      format: DisplayFormat.fractionalInch,
+      worldUnits: UnitSystem.imperial,
+      offsetDirection: [-1, 0.3, 0.2],
+      view: _view('oblique', [-40, -60, 50], [0, 20, 0], 50, [1280, 720]),
+    ),
+    c(
+      'comma and no leading zero, custom style',
+      from: [1, 1, 1],
+      to: [1.5, 1, 1.004],
+      drafting: DraftingConvention.isoOriented,
+      format: DisplayFormat.decimalInch,
+      numbers: const NumberFormatting(
+        decimalMarker: DecimalMarker.comma,
+        showLeadingZero: false,
+      ),
+      style: _customDimensionStyle,
+      view: _view('close', [1.25, -0.4, 0.6], [1.25, 1, 1], 45, [1280, 720]),
+    ),
+  ];
+}
+
+Map<String, Object?> _dimensionStyle(DimensionStyle s) => {
+  'lineWidth': s.lineWidth,
+  'witnessGapPixels': s.witnessGapPixels,
+  'witnessExtensionPixels': s.witnessExtensionPixels,
+  'offsetPixels': s.offsetPixels,
+  'arrowLengthPixels': s.arrowLengthPixels,
+  'arrowWidthPixels': s.arrowWidthPixels,
+  'textPixelSize': s.textPixelSize,
+  'textGapPixels': s.textGapPixels,
+  'alignmentTolerance': s.alignmentTolerance,
+  'leader': _style(s.leader),
+};
+
+/// A primitive as emitted, in world space.
+Map<String, Object?> _worldPrimitive(Primitive p) => switch (p) {
+  LinePrimitive() => {
+    'type': 'line',
+    'start': _vector(p.start),
+    'end': _vector(p.end),
+    'widthPixels': p.widthPixels,
+  },
+  BillboardPrimitive() => {
+    'type': 'billboard',
+    'anchor': _vector(p.anchor),
+    'orientation': switch (p.orientation) {
+      ViewerFacingOrientation() => {'type': 'viewerFacing'},
+      CoplanarOrientation(:final normal, :final right) => {
+        'type': 'coplanar',
+        'normal': _vector(normal),
+        'right': _vector(right),
+      },
+    },
+    'alignment': _vector(p.alignment),
+    'offset': switch (p.offset) {
+      null => null,
+      final o => {'direction': _vector(o.direction), 'pixels': o.pixels},
+    },
+    if (p.content.value case final TextRequest request)
+      'textRequest': {
+        'text': request.text,
+        'heightPixels': request.heightPixels,
+      },
+    'contentSize': [p.content.widthPixels, p.content.heightPixels],
+  },
+  QuadPrimitive() || MarkerPrimitive() || MeshPrimitive() =>
+    throw UnsupportedError('a dimension emits lines and billboards'),
+};
+
+Map<String, Object?> _dimension(_DimensionCase c) {
+  final camera = CameraBasis.lookAt(
+    position: c.view.position,
+    target: c.view.target,
+    convention: c.convention,
+  );
+  final primitives = SmartDimensionFactory.create(
+    from: c.from,
+    to: c.to,
+    convention: c.drafting,
+    format: c.format,
+    worldUnits: c.worldUnits,
+    camera: camera,
+    verticalFovRadians: c.view.verticalFovDegrees * math.pi / 180,
+    viewportSize: c.view.viewport,
+    resolveText: fakeTextResolver,
+    key: null,
+    multiAxis: c.multiAxis,
+    offsetDirection: c.offsetDirection,
+    numbers: c.numbers,
+    style: c.style,
+  );
+  return {
+    'name': c.name,
+    'input': {
+      'from': _vector(c.from),
+      'to': _vector(c.to),
+      'drafting': c.drafting.name,
+      'format': c.format.name,
+      'worldUnits': c.worldUnits.name,
+      'convention': {
+        'up': c.convention.up.name,
+        'handedness': c.convention.handedness.name,
+      },
+      'camera': {
+        'position': _vector(c.view.position),
+        'target': _vector(c.view.target),
+        'verticalFovDegrees': c.view.verticalFovDegrees,
+        'viewport': _vector(c.view.viewport),
+      },
+      'multiAxis': c.multiAxis.name,
+      'offsetDirection': c.offsetDirection == null
+          ? null
+          : _vector(c.offsetDirection!),
+      'numbers': {
+        'decimalMarker': c.numbers.decimalMarker.name,
+        'showLeadingZero': c.numbers.showLeadingZero,
+      },
+      'style': _dimensionStyle(c.style),
+    },
+    'output': {
+      'primitives': [for (final p in primitives) _worldPrimitive(p)],
+    },
+  };
+}
+
+/// The smart-dimension fixture: each case's inputs and the primitives
+/// `SmartDimensionFactory.create` emits for them, in world space.
+Map<String, Object?> smartDimensionsFixture() => {
+  'textResolver': {'characterWidthPerHeight': fakeCharacterAspect},
+  'SmartDimensionFactory.create': [
+    for (final c in _dimensionCases()) _dimension(c),
+  ],
+};
+
 /// Renders a fixture family under the header and style version every
 /// fixture file carries.
 String _render(Map<String, Object?> family) {
@@ -1292,6 +1534,7 @@ void main(List<String> args) {
     'vectors/navigation_cube.json': _render(navigationCubeFixture()),
     'vectors/scale_bar.json': _render(scaleBarFixture()),
     'vectors/ground_plane.json': _render(groundPlaneFixture()),
+    'vectors/smart_dimensions.json': _render(smartDimensionsFixture()),
   };
 
   final stale = [
