@@ -79,11 +79,37 @@ class CalloutLeaderGeometry {
   /// [calloutAnchorAlignment].
   final vm.Vector3 labelEdge;
 
+  /// Width of the leader's lines in screen pixels, from the style it was
+  /// computed with.
+  final double widthPixels;
+
   const CalloutLeaderGeometry({
     required this.gapEnd,
     required this.elbow,
     required this.labelEdge,
+    required this.widthPixels,
   });
+}
+
+/// The horizontal and vertical sign of [quadrant]'s corner, on screen
+/// with y up.
+(double, double) _quadrantSigns(CalloutQuadrant quadrant) => switch (quadrant) {
+  CalloutQuadrant.topRight => (1.0, 1.0),
+  CalloutQuadrant.topLeft => (-1.0, 1.0),
+  CalloutQuadrant.bottomRight => (1.0, -1.0),
+  CalloutQuadrant.bottomLeft => (-1.0, -1.0),
+};
+
+/// Returns the unit screen direction, y up, in which [quadrant]'s leader
+/// leaves its anchor: [LeaderLineStyle.angleDegrees] above or below the
+/// horizontal, toward the quadrant's corner.
+vm.Vector2 calloutLeaderDirection(
+  CalloutQuadrant quadrant, {
+  LeaderLineStyle style = const LeaderLineStyle(),
+}) {
+  final angleRad = style.angleDegrees * math.pi / 180.0;
+  final (hSign, vSign) = _quadrantSigns(quadrant);
+  return vm.Vector2(math.cos(angleRad) * hSign, math.sin(angleRad) * vSign);
 }
 
 /// Compute leader line geometry in camera-aligned world space.
@@ -103,28 +129,9 @@ CalloutLeaderGeometry computeCalloutLeaderGeometry({
   required CalloutQuadrant quadrant,
   LeaderLineStyle style = const LeaderLineStyle(),
 }) {
-  final angleRad = style.angleDegrees * math.pi / 180.0;
-
-  final double hSign;
-  final double vSign;
-  switch (quadrant) {
-    case CalloutQuadrant.topRight:
-      hSign = 1.0;
-      vSign = 1.0;
-    case CalloutQuadrant.topLeft:
-      hSign = -1.0;
-      vSign = 1.0;
-    case CalloutQuadrant.bottomRight:
-      hSign = 1.0;
-      vSign = -1.0;
-    case CalloutQuadrant.bottomLeft:
-      hSign = -1.0;
-      vSign = -1.0;
-  }
-
-  final angledDir =
-      cameraRight * (math.cos(angleRad) * hSign) +
-      cameraUp * (math.sin(angleRad) * vSign);
+  final (hSign, _) = _quadrantSigns(quadrant);
+  final screen = calloutLeaderDirection(quadrant, style: style);
+  final angledDir = cameraRight * screen.x + cameraUp * screen.y;
   final horizontalDir = cameraRight * hSign;
 
   final gapEnd = anchor + angledDir * (style.gapPixels * worldUnitsPerPixel);
@@ -138,6 +145,7 @@ CalloutLeaderGeometry computeCalloutLeaderGeometry({
     gapEnd: gapEnd,
     elbow: elbow,
     labelEdge: labelEdge,
+    widthPixels: style.lineWidth,
   );
 }
 
@@ -178,6 +186,34 @@ BillboardPrimitive createCalloutLabel({
     opacity: opacity,
   );
 }
+
+/// Returns a callout's [leader] as the two lines a renderer draws: the
+/// angled segment from the gap end to the elbow, then the horizontal
+/// segment from the elbow to the label edge.
+///
+/// Both lines take the leader's own pixel width and carry [key] and
+/// [opacity]. The leader moves with the camera, so the lines are rebuilt
+/// each frame with it.
+List<LinePrimitive> createCalloutLeaderLines({
+  required CalloutLeaderGeometry leader,
+  required Object? key,
+  required double opacity,
+}) => [
+  LinePrimitive(
+    start: leader.gapEnd,
+    end: leader.elbow,
+    widthPixels: leader.widthPixels,
+    key: key,
+    opacity: opacity,
+  ),
+  LinePrimitive(
+    start: leader.elbow,
+    end: leader.labelEdge,
+    widthPixels: leader.widthPixels,
+    key: key,
+    opacity: opacity,
+  ),
+];
 
 /// Compute callout opacity based on anchor-to-camera distance.
 ///
