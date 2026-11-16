@@ -16,14 +16,13 @@ enum ViewportCorner {
   ///
   /// Throws an [ArgumentError] when [code] is not 0, 1, 2, or 3.
   static ViewportCorner fromToken(double code) {
-    for (final corner in values) {
-      if (corner.tokenCode == code) return corner;
+    // A code is a corner's index; NaN and fractions fail the round trip.
+    final index = code.isFinite ? code.toInt() : -1;
+    if (index != code || index < 0 || index >= values.length) {
+      throw ArgumentError.value(code, 'code', 'not a viewport corner code');
     }
-    throw ArgumentError.value(code, 'code', 'not a viewport corner code');
+    return values[index];
   }
-
-  /// The corner's code in `style/tokens.json`.
-  double get tokenCode => index.toDouble();
 
   /// Whether the corner is on the viewport's right edge.
   bool get isRight => this == topRight || this == bottomRight;

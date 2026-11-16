@@ -46,12 +46,6 @@ ViewportCorner _otherCorner(ViewportCorner corner) =>
 
 void main() {
   group('ViewportCorner', () {
-    test('every corner round-trips through its token code', () {
-      for (final corner in ViewportCorner.values) {
-        expect(ViewportCorner.fromToken(corner.tokenCode), corner);
-      }
-    });
-
     test('codes match the documented order', () {
       expect(ViewportCorner.fromToken(0), ViewportCorner.topLeft);
       expect(ViewportCorner.fromToken(1), ViewportCorner.topRight);
