@@ -192,7 +192,7 @@ The doubled line darkens a translucent edge and z-fights with itself.
 
 ## Color §spec:scene-color
 
-*Status: in progress*
+*Status: complete*
 
 The package performs no color conversion and holds no palette. The app
 resolves each primitive's color from its key, in whatever color space
