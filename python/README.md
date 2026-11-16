@@ -136,6 +136,48 @@ DisplayFormat.DECIMAL_INCH.format_labels(
 DisplayFormat.FRACTIONAL_INCH.grid_step_above(1)  # 12.0
 ```
 
+### Viewport overlays
+
+The scale bar and the navigation cube sit in the 2D layer above the
+scene. Each is laid out in viewport pixels, origin top-left with y down,
+inside the rectangle its `ViewportOverlayPlacement` gives it.
+`ScaleBarLayout.at_target` measures the scene at the point the camera
+looks at and picks the longest clean step that fits the bar's rectangle.
+Passing the previous frame's `step` as `previous_step` keeps the value
+from flickering as the camera zooms. `NavigationCube` lists the faces
+that face the viewer, least direct first, each as four pixel corners for
+an affine map of its label:
+
+```python
+from tech_vis import (
+    DisplayFormat,
+    NavigationCube,
+    ScaleBarLayout,
+    SignedAxis,
+    SpatialAxis,
+    UnitSystem,
+    ViewportOverlayKind,
+    ViewportOverlayPlacement,
+)
+
+bar = ScaleBarLayout.at_target(
+    camera=camera,
+    target=(0, 0, 0.75),
+    vertical_fov_radians=fov,
+    viewport_size=viewport,
+    world_units=UnitSystem.METRIC,
+    display_format=DisplayFormat.METRIC,
+    previous_step=None,  # last frame's bar.step
+)
+if bar is not None:
+    bar.label.text, bar.start_x, bar.end_x, bar.tick_xs
+
+cube = NavigationCube(convention=z_up, front=SignedAxis(SpatialAxis.Y, negative=True))
+rect = ViewportOverlayPlacement.of(ViewportOverlayKind.NAVIGATION_CUBE).rect(viewport)
+for view in cube.visible_faces(camera, rect):
+    view.face.label, view.corners  # "TOP", four (x, y) tuples
+```
+
 `tokens.STYLE_VERSION` identifies the token set. Two implementations that
 report the same style version produce the same layout.
 
