@@ -298,6 +298,61 @@ final label = createCalloutLabel(
 );
 ```
 
+## Measurements
+
+A `DisplayFormat` decides how a real-world length reads. The app picks
+one of three: `metric` writes millimeters and switches to meters at
+10 m, `decimalInch` writes inches with decimal places at any size, and
+`fractionalInch` writes binary fractions down to 1/64 in and switches to
+feet and inches at 12 in. Every length a format takes is in the base
+unit of its `unitSystem`, millimeters or inches, so convert a world
+length with `UnitSystem.convertTo` first.
+
+Each format supplies clean steps for a scale bar and a grid. The steps
+run over every power of ten, so the format answers a query rather than
+listing them:
+
+```dart
+const format = DisplayFormat.metric;
+
+// The longest scale bar that fits in 37 mm of world length.
+final bar = format.scaleBarStepAtMost(37); // 20
+
+// The finest grid whose lines sit at least 3 mm apart, and its major step.
+final minor = format.gridStepAtLeast(3); // 10
+final major = format.gridStepAbove(minor); // 100
+```
+
+Each grid step is a whole multiple of the one before it, so every major
+line is also a minor line.
+
+`formatLabels` writes a set of values that display together, such as a
+grid's coordinates, in one unit. The set's largest value decides whether
+the whole set switches unit, so a grid never reads `9000 mm`, `10 m`.
+Each label rounds to the step passed in and shows only the decimals that
+step needs:
+
+```dart
+DisplayFormat.metric.formatLabels([0, 5000, 10000], step: 5000);
+// ['0 m', '5 m', '10 m']
+
+DisplayFormat.fractionalInch.formatLabels([40.5]); // ["3' 4 1/2\""]
+```
+
+Without a step, labels round to 0.001 mm, 0.0001 in, or 1/64 in. The
+app sets the decimal marker and whether a value below one keeps its
+leading zero, with `NumberFormatting`:
+
+```dart
+DisplayFormat.decimalInch.formatLabels(
+  [0.125],
+  numbers: const NumberFormatting(
+    decimalMarker: DecimalMarker.comma,
+    showLeadingZero: false,
+  ),
+); // [',125 in']
+```
+
 ## Measure a frame against the reference geometry
 
 The repository's
