@@ -3,6 +3,12 @@
 from tech_vis import tokens
 from tech_vis._vec import Vector2, Vector3
 from tech_vis.bounding_box import BoundingBox, create_bounding_box
+from tech_vis.color_ramp_legend import (
+    ColorRampLegendLayout,
+    ColorRampOrientation,
+    ColorRampStop,
+    ColorRampTick,
+)
 from tech_vis.coordinate_convention import (
     CoordinateConvention,
     Handedness,
@@ -102,6 +108,7 @@ from tech_vis.unit_system import (
     NumberFormatting,
     UnitSystem,
     format_degrees_label,
+    format_number_label,
 )
 from tech_vis.viewport_overlay import (
     ViewportCorner,
@@ -122,6 +129,10 @@ __all__ = [
     "CalloutQuadrant",
     "CameraBasis",
     "CircularGroundPatch",
+    "ColorRampLegendLayout",
+    "ColorRampOrientation",
+    "ColorRampStop",
+    "ColorRampTick",
     "CoordinateConvention",
     "CoordinateFrameDescriptor",
     "CoplanarOrientation",
@@ -188,6 +199,7 @@ __all__ = [
     "create_radial_dimension",
     "create_rectangle_outline",
     "format_degrees_label",
+    "format_number_label",
     "ground_minor_step",
     "marker_sphere_mesh",
     "marker_transform",
