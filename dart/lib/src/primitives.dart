@@ -100,6 +100,70 @@ final class ScreenOffset {
   final double pixels;
 }
 
+/// Text that the package composes for an annotation, such as an axis
+/// letter or a label, at the pixel height it is drawn at.
+///
+/// The package never measures or rasterizes text. The app answers each
+/// request with a [TextResolver], which sets the text in its own typeface
+/// and reports the result's pixel size.
+final class TextRequest {
+  const TextRequest({required this.text, required this.heightPixels});
+
+  /// Text to set.
+  final String text;
+
+  /// Height to set the text at, in screen pixels.
+  final double heightPixels;
+
+  @override
+  bool operator ==(Object other) =>
+      other is TextRequest &&
+      other.text == text &&
+      other.heightPixels == heightPixels;
+
+  @override
+  int get hashCode => Object.hash(text, heightPixels);
+
+  @override
+  String toString() => 'TextRequest($text, $heightPixels px)';
+}
+
+/// Content that the app prepared for a billboard, with its size in screen
+/// pixels.
+///
+/// The app owns content creation. [value] is any handle the app's renderer
+/// draws: a text layout, a texture, an icon, or a video frame. The package
+/// places the content by [widthPixels] and [heightPixels] and never
+/// inspects [value].
+final class BillboardContent {
+  const BillboardContent({
+    required this.value,
+    required this.widthPixels,
+    required this.heightPixels,
+  }) : assert(
+         widthPixels >= 0 && heightPixels >= 0,
+         'a pixel size is never negative',
+       );
+
+  /// App handle for the content, passed through untouched.
+  final Object? value;
+
+  /// Width of the content in screen pixels.
+  final double widthPixels;
+
+  /// Height of the content in screen pixels.
+  final double heightPixels;
+}
+
+/// Answers a [TextRequest] with the app's content for it and the content's
+/// pixel size.
+///
+/// The resolver runs synchronously, so every factory result follows from
+/// its inputs alone. An app measures text with its own layout pass, and
+/// may rasterize the content later, as long as the size it reports is the
+/// size it draws.
+typedef TextResolver = BillboardContent Function(TextRequest request);
+
 /// 2D content that the app prepares, placed at a world anchor and sized in
 /// screen pixels.
 ///
@@ -109,8 +173,6 @@ final class ScreenOffset {
 final class BillboardPrimitive extends Primitive {
   BillboardPrimitive({
     required this.content,
-    required this.heightPixels,
-    this.widthPixels,
     required this.anchor,
     this.orientation = const ViewerFacingOrientation(),
     vm.Vector2? alignment,
@@ -119,20 +181,8 @@ final class BillboardPrimitive extends Primitive {
     super.opacity,
   }) : alignment = alignment ?? vm.Vector2.all(_centered);
 
-  /// Content for the app to draw.
-  ///
-  /// A [String] is text the package passes on for the app to set in its
-  /// own typeface at [heightPixels].
-  final Object? content;
-
-  /// Height of the content in screen pixels.
-  final double heightPixels;
-
-  /// Width of the content in screen pixels.
-  ///
-  /// Null when the content is text the app has not measured: the app sets
-  /// the width from its own measurement.
-  final double? widthPixels;
+  /// Content for the app to draw, with its size in screen pixels.
+  final BillboardContent content;
 
   /// World point the content is placed at.
   final vm.Vector3 anchor;

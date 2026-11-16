@@ -5,10 +5,10 @@ import 'primitives.dart';
 
 /// Factory for text labels attached to bounding box corners and edges.
 ///
-/// Each label is a [BillboardPrimitive] whose content is the label text as
-/// a [String], at a pixel height, for the app to set in its own typeface.
-/// The label's width is null until the app measures the text. The app key
-/// passes through to the label untouched.
+/// Each label is a [BillboardPrimitive] whose content answers a
+/// [TextRequest] for the label text at a pixel height. The app's
+/// [TextResolver] sets the text in its own typeface and reports its pixel
+/// size. The app key passes through to the label untouched.
 class EnvelopeLabelFactory {
   /// Default pixel height of an envelope label.
   static const double defaultPixelSize = 20.0;
@@ -25,13 +25,13 @@ class EnvelopeLabelFactory {
     required String text,
     required BoundingBox bounds,
     required LabelCorner corner,
+    required TextResolver resolveText,
     required Object? key,
     double pixelSize = defaultPixelSize,
     double offsetPixels = defaultOffsetPixels,
   }) {
     return BillboardPrimitive(
-      content: text,
-      heightPixels: pixelSize,
+      content: resolveText(TextRequest(text: text, heightPixels: pixelSize)),
       anchor: _cornerPosition(bounds, corner),
       offset: ScreenOffset(
         direction: _anchorDirection(corner),
@@ -51,6 +51,7 @@ class EnvelopeLabelFactory {
   static BillboardPrimitive createCoplanarBillboardLabel({
     required String text,
     required vm.Vector3 position,
+    required TextResolver resolveText,
     required Object? key,
     double pixelSize = defaultPixelSize,
     vm.Vector3? surfaceNormal,
@@ -58,8 +59,7 @@ class EnvelopeLabelFactory {
     vm.Vector2? anchorAlignment,
   }) {
     return BillboardPrimitive(
-      content: text,
-      heightPixels: pixelSize,
+      content: resolveText(TextRequest(text: text, heightPixels: pixelSize)),
       anchor: position,
       orientation: CoplanarOrientation(
         normal: surfaceNormal ?? vm.Vector3(0, 0, 1),
@@ -80,12 +80,14 @@ class EnvelopeLabelFactory {
     required BoundingBox bounds,
     required LabelEdge edge,
     required LabelAlignment alignment,
+    required TextResolver resolveText,
     required Object? key,
     double pixelSize = defaultPixelSize,
   }) {
     return createCoplanarBillboardLabel(
       text: text,
       position: _edgeTabPosition(bounds, edge, alignment),
+      resolveText: resolveText,
       key: key,
       pixelSize: pixelSize,
       anchorAlignment: _anchorAlignmentForEdgeTab(edge, alignment),

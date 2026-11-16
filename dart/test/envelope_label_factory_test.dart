@@ -2,6 +2,8 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'support/fake_text_resolver.dart';
+
 const _tolerance = 1e-9;
 
 Matcher _closeToVector(vm.Vector3 expected) => predicate<vm.Vector3>(
@@ -28,14 +30,23 @@ void main() {
           text: 'box',
           bounds: bounds,
           corner: corner,
+          resolveText: fakeTextResolver,
           key: 'envelope',
         );
-        expect(label.content, 'box');
+        expect(
+          label.content.value,
+          const TextRequest(
+            text: 'box',
+            heightPixels: EnvelopeLabelFactory.defaultPixelSize,
+          ),
+        );
         expect(label.key, 'envelope');
         expect(label.anchor, _closeToVector(anchor));
         expect(label.orientation, isA<ViewerFacingOrientation>());
-        expect(label.heightPixels, EnvelopeLabelFactory.defaultPixelSize);
-        expect(label.widthPixels, isNull);
+        expect(
+          label.content.widthPixels,
+          3 * fakeCharacterAspect * EnvelopeLabelFactory.defaultPixelSize,
+        );
         expect(label.offset!.direction, _closeToVector(direction.normalized()));
         expect(label.offset!.pixels, EnvelopeLabelFactory.defaultOffsetPixels);
       });
@@ -47,6 +58,7 @@ void main() {
       final label = EnvelopeLabelFactory.createCoplanarBillboardLabel(
         text: 'flat',
         position: vm.Vector3(1, 2, 3),
+        resolveText: fakeTextResolver,
         key: 'envelope',
         pixelSize: 12,
         surfaceNormal: vm.Vector3(0, 1, 0),
@@ -58,7 +70,7 @@ void main() {
       expect(orientation.right, vm.Vector3(1, 0, 0));
       expect(label.anchor, vm.Vector3(1, 2, 3));
       expect(label.alignment, vm.Vector2(0, 1));
-      expect(label.heightPixels, 12);
+      expect(label.content.heightPixels, 12);
       expect(label.offset, isNull);
     });
   });
@@ -91,6 +103,7 @@ void main() {
           bounds: bounds,
           edge: edge,
           alignment: alignment,
+          resolveText: fakeTextResolver,
           key: 'envelope',
         );
         expect(label.anchor, _closeToVector(anchor));
