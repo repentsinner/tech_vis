@@ -1,21 +1,26 @@
 """Shared test helpers."""
 
 import json
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 import pytest
 
 from tech_vis import (
     BillboardContent,
+    BillboardPrimitive,
     CoordinateConvention,
+    CoplanarOrientation,
     DecimalMarker,
     Handedness,
     LeaderLineStyle,
+    LinePrimitive,
     NumberFormatting,
+    Primitive,
     SpatialAxis,
     TextRequest,
     Vector3,
+    ViewerFacingOrientation,
     ViewportCorner,
     ViewportOverlayPlacement,
 )
@@ -119,3 +124,72 @@ Y_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT)
 Y_UP_LEFT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.LEFT)
 Z_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
 Z_UP_LEFT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.LEFT)
+
+
+def assert_world_primitive(actual: Primitive, want: dict, reason: str) -> None:
+    """Asserts that a world-space line or billboard matches its fixture record.
+
+    The ground-plane and smart-dimension families record their primitives
+    this way: numbers within ``TOLERANCE``, keys and text exactly.
+    """
+    assert actual.key == want["key"], f"{reason} key"
+    assert actual.opacity == pytest.approx(want["opacity"], rel=0, abs=TOLERANCE), (
+        f"{reason} opacity"
+    )
+    if isinstance(actual, LinePrimitive):
+        assert want["type"] == "line", reason
+        assert_close(actual.start, want["start"], f"{reason} start")
+        assert_close(actual.end, want["end"], f"{reason} end")
+        assert_close([actual.width_pixels], [want["widthPixels"]], f"{reason} width")
+        return
+    assert isinstance(actual, BillboardPrimitive), f"{reason}: {actual!r}"
+    assert want["type"] == "billboard", reason
+    assert_close(actual.anchor, want["anchor"], f"{reason} anchor")
+    assert_close(actual.alignment, want["alignment"], f"{reason} alignment")
+    orientation = want["orientation"]
+    if isinstance(actual.orientation, CoplanarOrientation):
+        assert orientation["type"] == "coplanar", reason
+        assert_close(actual.orientation.normal, orientation["normal"], f"{reason} n")
+        assert_close(actual.orientation.right, orientation["right"], f"{reason} r")
+    else:
+        assert isinstance(actual.orientation, ViewerFacingOrientation), reason
+        assert orientation["type"] == "viewerFacing", reason
+    offset = want["offset"]
+    if offset is None:
+        assert actual.offset is None, f"{reason} offset"
+    else:
+        assert actual.offset is not None, f"{reason} offset"
+        assert_close(
+            actual.offset.direction, offset["direction"], f"{reason} offset direction"
+        )
+        assert_close(
+            [actual.offset.pixels], [offset["pixels"]], f"{reason} offset pixels"
+        )
+    request = want["textRequest"]
+    assert actual.content.value == TextRequest(
+        text=request["text"], height_pixels=request["heightPixels"]
+    ), f"{reason} text"
+    assert_close(
+        [actual.content.width_pixels, actual.content.height_pixels],
+        want["contentSize"],
+        f"{reason} content size",
+    )
+
+
+def lines_of(primitives: Iterable[Primitive]) -> list[LinePrimitive]:
+    """Returns the lines among ``primitives``, in order."""
+    return [p for p in primitives if isinstance(p, LinePrimitive)]
+
+
+def billboards_of(primitives: Iterable[Primitive]) -> list[BillboardPrimitive]:
+    """Returns the billboards among ``primitives``, in order."""
+    return [p for p in primitives if isinstance(p, BillboardPrimitive)]
+
+
+def texts_of(primitives: Iterable[Primitive]) -> list[str]:
+    """Returns the text of each text-request billboard among ``primitives``."""
+    texts = []
+    for b in billboards_of(primitives):
+        assert isinstance(b.content.value, TextRequest)
+        texts.append(b.content.value.text)
+    return texts

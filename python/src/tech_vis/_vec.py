@@ -33,6 +33,14 @@ def along(origin: Vector3, direction: Vector3, distance: float) -> Vector3:
     )
 
 
+def negated(v: Vector3) -> Vector3:
+    return (-v[0], -v[1], -v[2])
+
+
+def midpoint(a: Vector3, b: Vector3) -> Vector3:
+    return scale(add(a, b), 0.5)
+
+
 def dot(a: Vector3, b: Vector3) -> float:
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 

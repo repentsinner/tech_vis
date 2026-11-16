@@ -193,7 +193,7 @@ class SmartDimensionFactory {
   ///
   /// The text is the measured length, converted from [worldUnits] and
   /// written by [format] with [numbers], and [resolveText] answers its
-  /// request. [convention] places it. An oriented or inlined dimension
+  /// request. [drafting] places it. An oriented or inlined dimension
   /// whose text and arrowheads do not fit between its witness lines on
   /// screen falls back to its standard's referencing style.
   ///
@@ -202,7 +202,7 @@ class SmartDimensionFactory {
   static List<Primitive> create({
     required vm.Vector3 from,
     required vm.Vector3 to,
-    required DraftingConvention convention,
+    required DraftingConvention drafting,
     required DisplayFormat format,
     required UnitSystem worldUnits,
     required CameraBasis camera,
@@ -242,7 +242,7 @@ class SmartDimensionFactory {
       camera: camera,
       verticalFovRadians: verticalFovRadians,
       viewportSize: viewportSize,
-      convention: convention,
+      drafting: drafting,
       style: style,
       resolveText: resolveText,
       key: key,
@@ -281,7 +281,7 @@ class SmartDimensionFactory {
   ///
   /// The text is the angle in decimal degrees, rounded to
   /// [DimensionStyle.angleResolutionDegrees] and written with [numbers],
-  /// and [resolveText] answers its request. [convention] places it at the
+  /// and [resolveText] answers its request. [drafting] places it at the
   /// arc's midpoint, along the arc's tangent there, and falls back to
   /// referencing when it does not fit along the arc on screen.
   ///
@@ -292,7 +292,7 @@ class SmartDimensionFactory {
     required vm.Vector3 vertex,
     required vm.Vector3 first,
     required vm.Vector3 second,
-    required DraftingConvention convention,
+    required DraftingConvention drafting,
     required CameraBasis camera,
     required double verticalFovRadians,
     required vm.Vector2 viewportSize,
@@ -316,7 +316,7 @@ class SmartDimensionFactory {
       camera: camera,
       verticalFovRadians: verticalFovRadians,
       viewportSize: viewportSize,
-      convention: convention,
+      drafting: drafting,
       style: style,
       resolveText: resolveText,
       key: key,
@@ -357,7 +357,7 @@ class SmartDimensionFactory {
   ///
   /// The text is `R` before a radius and `⌀` before a diameter, then the
   /// length converted from [worldUnits] and written by [format] with
-  /// [numbers]. [resolveText] answers its request, and [convention]
+  /// [numbers]. [resolveText] answers its request, and [drafting]
   /// places it at the dimension line's midpoint, falling back to
   /// referencing as a linear dimension does.
   ///
@@ -369,7 +369,7 @@ class SmartDimensionFactory {
     required double radius,
     required vm.Vector3 normal,
     required RadialMeasure measure,
-    required DraftingConvention convention,
+    required DraftingConvention drafting,
     required DisplayFormat format,
     required UnitSystem worldUnits,
     required CameraBasis camera,
@@ -406,7 +406,7 @@ class SmartDimensionFactory {
       camera: camera,
       verticalFovRadians: verticalFovRadians,
       viewportSize: viewportSize,
-      convention: convention,
+      drafting: drafting,
       style: style,
       resolveText: resolveText,
       key: key,
@@ -428,7 +428,7 @@ class _DimensionBuilder {
     required this.camera,
     required this.verticalFovRadians,
     required this.viewportSize,
-    required this.convention,
+    required this.drafting,
     required this.style,
     required this.resolveText,
     required this.key,
@@ -438,7 +438,7 @@ class _DimensionBuilder {
   final CameraBasis camera;
   final double verticalFovRadians;
   final vm.Vector2 viewportSize;
-  final DraftingConvention convention;
+  final DraftingConvention drafting;
   final DimensionStyle style;
   final TextResolver resolveText;
   final Object? key;
@@ -528,7 +528,7 @@ class _DimensionBuilder {
       return null;
     }
 
-    final gap = style.witnessGapFor(convention.standard);
+    final gap = style.witnessGapFor(drafting.standard);
     LinePrimitive witness(
       vm.Vector3 point,
       vm.Vector3 foot,
@@ -631,7 +631,7 @@ class _DimensionBuilder {
       screenLength += screen[i]!.distanceTo(screen[i - 1]!);
     }
 
-    final gap = style.witnessGapFor(convention.standard);
+    final gap = style.witnessGapFor(drafting.standard);
     final primitives = <Primitive>[];
     void witness(
       vm.Vector3 leg,
@@ -787,7 +787,7 @@ class _DimensionBuilder {
     double screenLength,
   ) {
     final screenDirection = _unit(lineOnScreen);
-    final extent = convention.placement == DimensionTextPlacement.oriented
+    final extent = drafting.placement == DimensionTextPlacement.oriented
         ? content.widthPixels
         : content.widthPixels * screenDirection.x.abs() +
               content.heightPixels * screenDirection.y.abs();
@@ -797,7 +797,7 @@ class _DimensionBuilder {
         extent + 2 * (style.arrowLengthPixels + style.textGapPixels) <=
             screenLength;
     return (
-      fits ? convention.placement : DimensionTextPlacement.referencing,
+      fits ? drafting.placement : DimensionTextPlacement.referencing,
       extent,
     );
   }

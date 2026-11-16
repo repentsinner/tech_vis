@@ -1475,7 +1475,7 @@ Map<String, Object?> _dimension(_DimensionCase c) {
   final primitives = SmartDimensionFactory.create(
     from: c.from,
     to: c.to,
-    convention: c.drafting,
+    drafting: c.drafting,
     format: c.format,
     worldUnits: c.worldUnits,
     camera: camera,
@@ -1608,7 +1608,7 @@ Map<String, Object?> _angular(_AngularCase c) {
     vertex: c.vertex,
     first: c.first,
     second: c.second,
-    convention: c.drafting,
+    drafting: c.drafting,
     camera: CameraBasis.lookAt(
       position: c.view.position,
       target: c.view.target,
@@ -1748,7 +1748,7 @@ Map<String, Object?> _radial(_RadialCase c) {
     radius: c.radius,
     normal: c.normal,
     measure: c.measure,
-    convention: c.drafting,
+    drafting: c.drafting,
     format: c.format,
     worldUnits: c.worldUnits,
     camera: CameraBasis.lookAt(
