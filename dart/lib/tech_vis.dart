@@ -16,3 +16,4 @@ export 'src/scene_layout_constants.dart';
 export 'src/screen_space_utils.dart';
 export 'src/style_tokens.g.dart';
 export 'src/unit_system.dart';
+export 'src/viewport_overlay.dart';

@@ -350,6 +350,38 @@ Keep the recorded tolerance with your renderer's tests, and let it only
 tighten. A change that needs a looser tolerance has moved an annotation,
 which is a regression in placement rather than a matter of style.
 
+## Viewport overlays
+
+An overlay is an element that holds still while the scene moves, such as
+a scale bar, a color ramp legend, or a navigation cube. The package
+describes an overlay in viewport pixels rather than world coordinates,
+and the renderer draws it in a 2D layer above the scene. Overlays are a
+second kind of output beside the primitives, so a `switch` over a
+`Primitive` never meets one.
+
+An overlay anchors to one corner of the viewport, with an offset from
+that corner and a size, all in pixels. The offset points toward the
+viewport center, so the same offset keeps an overlay the same distance
+from its two edges in any corner. `ViewportOverlayPlacement.of` returns
+the style's default placement for an overlay kind, and each named
+argument replaces one default:
+
+```dart
+final cube = ViewportOverlayPlacement.of(ViewportOverlayKind.navigationCube);
+final legend = ViewportOverlayPlacement.of(
+  ViewportOverlayKind.colorRampLegend,
+  corner: ViewportCorner.topLeft,
+);
+
+// Pixels from the viewport's top-left corner, y down, as worldToScreen.
+final rect = legend.rect(Vector2(1280, 720));
+drawLegend(left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom);
+```
+
+By default the navigation cube sits top-right, the scale bar
+bottom-left, and the color ramp legend bottom-right, so the three never
+share a corner. The rectangle is not clipped to the viewport.
+
 ## Style tokens
 
 `StyleTokens` holds every style constant, generated from the repository's
