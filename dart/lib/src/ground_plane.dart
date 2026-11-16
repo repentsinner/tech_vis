@@ -319,38 +319,41 @@ abstract final class GroundPlaneFactory {
     // the patch edge is invisible, so it stays out of the set and cannot
     // promote the others.
     final majorWorld = toWorld(major);
-    double labelOpacity(int k, {required bool onU}) =>
-        fade.opacityAt(onU ? at(k * majorWorld, 0) : at(0, k * majorWorld));
-    final marks = <({int k, bool onU})>[
-      (k: 0, onU: true),
+    ({int k, vm.Vector3 anchor, double opacity}) mark(
+      int k, {
+      required bool onU,
+    }) {
+      final anchor = onU ? at(k * majorWorld, 0) : at(0, k * majorWorld);
+      return (k: k, anchor: anchor, opacity: fade.opacityAt(anchor));
+    }
+
+    final marks = [
+      mark(0, onU: true),
       for (final onU in [true, false])
         for (final k in _majorIndices(
           onU ? shape.extentU : shape.extentV,
           majorWorld,
         ))
-          if (k != 0 && labelOpacity(k, onU: onU) > 0) (k: k, onU: onU),
+          if (k != 0)
+            if (mark(k, onU: onU) case final m when m.opacity > 0) m,
     ];
     final texts = format.formatLabels(
       [for (final m in marks) m.k * major],
       step: major,
       numbers: numbers,
     );
-    final labels = <Primitive>[];
-    for (var i = 0; i < marks.length; i++) {
-      final (:k, :onU) = marks[i];
-      final offset = k * majorWorld;
-      labels.add(
+    final labels = <Primitive>[
+      for (var i = 0; i < marks.length; i++)
         BillboardPrimitive(
           content: resolveText(
             TextRequest(text: texts[i], heightPixels: style.labelPixelSize),
           ),
-          anchor: onU ? at(offset, 0) : at(0, offset),
+          anchor: marks[i].anchor,
           alignment: _labelAlignment.clone(),
           key: labelKey,
-          opacity: labelOpacity(k, onU: onU),
+          opacity: marks[i].opacity,
         ),
-      );
-    }
+    ];
 
     return GroundGrid(
       minorStep: minor,
