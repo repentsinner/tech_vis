@@ -467,6 +467,22 @@ void main() {
       });
     });
 
+    test('leave an invisible edge label out of the set', () {
+      // Major lines every 1 m reach the 10 m edge, where opacity is zero,
+      // so the set tops out at 9 m and stays in millimeters.
+      final grid = _grid(
+        distance: 2000,
+        patch: const RectangularGroundPatch(halfExtentU: 1e4, halfExtentV: 1e4),
+        style: const GroundGridStyle(maxLinesPerAxis: 201, fadeSegments: 1),
+      );
+      expect(grid.majorStep, closeTo(1000, _tolerance));
+      final texts = [
+        for (final l in _labels(grid)) (l.content.value! as TextRequest).text,
+      ];
+      expect(texts, contains('9000 mm'));
+      expect(texts, everyElement(endsWith(' mm')));
+    });
+
     test('keeps the previous step inside the margin', () {
       // 12 px spans 10 mm at a distance near 724.
       final fresh = _grid(distance: 700);

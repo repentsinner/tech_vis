@@ -305,8 +305,13 @@ abstract final class GroundPlaneFactory {
     }
 
     // Labels on the u axis, then the v axis, each a whole number of major
-    // steps from the origin, which carries the one zero label.
+    // steps from the origin, which carries the one zero label. A label at
+    // the patch edge is invisible, so it stays out of the set and cannot
+    // promote the others.
     final majorWorld = toWorld(major);
+    double labelOpacity(int k, {required bool onU}) => onU
+        ? shape.opacity(k * majorWorld, 0)
+        : shape.opacity(0, k * majorWorld);
     final marks = <({int k, bool onU})>[
       (k: 0, onU: true),
       for (final onU in [true, false])
@@ -314,7 +319,7 @@ abstract final class GroundPlaneFactory {
           onU ? shape.extentU : shape.extentV,
           majorWorld,
         ))
-          if (k != 0) (k: k, onU: onU),
+          if (k != 0 && labelOpacity(k, onU: onU) > 0) (k: k, onU: onU),
     ];
     final texts = format.formatLabels(
       [for (final m in marks) m.k * major],
@@ -325,8 +330,6 @@ abstract final class GroundPlaneFactory {
     for (var i = 0; i < marks.length; i++) {
       final (:k, :onU) = marks[i];
       final offset = k * majorWorld;
-      final opacity = onU ? shape.opacity(offset, 0) : shape.opacity(0, offset);
-      if (opacity <= 0) continue;
       labels.add(
         BillboardPrimitive(
           content: resolveText(
@@ -335,7 +338,7 @@ abstract final class GroundPlaneFactory {
           anchor: onU ? at(offset, 0) : at(0, offset),
           alignment: _labelAlignment.clone(),
           key: labelKey,
-          opacity: opacity,
+          opacity: labelOpacity(k, onU: onU),
         ),
       );
     }

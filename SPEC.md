@@ -712,7 +712,8 @@ no perceptible scale or orientation (§req:user-stories).
   label for zero. The labels form one label set of §spec:unit-system in
   the active display format. They face the viewer, with their content's
   bottom-left corner on the crossing (§req:quality-attributes), and fade
-  like the lines at their anchors.
+  like the lines at their anchors. A label at zero opacity is left out
+  of the set, so an invisible edge label cannot promote the others.
 - When the camera rests near a step boundary, the grid does not flicker.
   The step changes only once the spacing passes the boundary by a
   token-set margin, and changes back only once it passes back by the
