@@ -50,7 +50,7 @@ typedef _GeometryCase = ({
   _Basis camera,
   double worldUnitsPerPixel,
   CalloutQuadrant quadrant,
-  LeaderLineStyle? style,
+  LeaderLineStyle style,
 });
 
 List<_GeometryCase> _geometryCases() => [
@@ -61,7 +61,7 @@ List<_GeometryCase> _geometryCases() => [
       camera: _oblique,
       worldUnitsPerPixel: 0.125,
       quadrant: quadrant,
-      style: null,
+      style: const LeaderLineStyle(),
     ),
   (
     name: 'topRight, axis-aligned camera, one world unit per pixel',
@@ -69,7 +69,7 @@ List<_GeometryCase> _geometryCases() => [
     camera: _axisAligned,
     worldUnitsPerPixel: 1,
     quadrant: CalloutQuadrant.topRight,
-    style: null,
+    style: const LeaderLineStyle(),
   ),
   (
     name: 'bottomLeft, Z-up camera, far anchor',
@@ -77,7 +77,7 @@ List<_GeometryCase> _geometryCases() => [
     camera: _zUp,
     worldUnitsPerPixel: 0.02,
     quadrant: CalloutQuadrant.bottomLeft,
-    style: null,
+    style: const LeaderLineStyle(),
   ),
   for (final quadrant in [CalloutQuadrant.topLeft, CalloutQuadrant.bottomRight])
     (
@@ -119,7 +119,7 @@ Map<String, Object?> _geometry(_GeometryCase c) {
     cameraUp: c.camera.up,
     worldUnitsPerPixel: c.worldUnitsPerPixel,
     quadrant: c.quadrant,
-    style: c.style ?? const LeaderLineStyle(),
+    style: c.style,
   );
   return {
     'name': c.name,
@@ -129,7 +129,7 @@ Map<String, Object?> _geometry(_GeometryCase c) {
       'cameraUp': _vector(c.camera.up),
       'worldUnitsPerPixel': c.worldUnitsPerPixel,
       'quadrant': c.quadrant.name,
-      if (c.style != null) 'style': _style(c.style!),
+      'style': _style(c.style),
     },
     'output': {
       'gapEnd': _vector(result.gapEnd),
@@ -140,10 +140,8 @@ Map<String, Object?> _geometry(_GeometryCase c) {
 }
 
 /// The leader-line fixture: callout geometry, anchor alignment, and the
-/// opacity ramp. A case without `style` uses the default style.
+/// opacity ramp.
 Map<String, Object?> leaderLineFixture() => {
-  'generated': _header,
-  'styleVersion': StyleTokens.styleVersion,
   'computeCalloutLeaderGeometry': [
     for (final c in _geometryCases()) _geometry(c),
   ],
@@ -165,8 +163,16 @@ Map<String, Object?> leaderLineFixture() => {
   ],
 };
 
-String _render(Map<String, Object?> fixture) =>
-    '${const JsonEncoder.withIndent('  ').convert(fixture)}\n';
+/// Renders a fixture family under the header and style version every
+/// fixture file carries.
+String _render(Map<String, Object?> family) {
+  final fixture = {
+    'generated': _header,
+    'styleVersion': StyleTokens.styleVersion,
+    ...family,
+  };
+  return '${const JsonEncoder.withIndent('  ').convert(fixture)}\n';
+}
 
 void main(List<String> args) {
   final check = args.contains('--check');
@@ -174,13 +180,13 @@ void main(List<String> args) {
 
   final stale = [
     for (final MapEntry(key: path, value: text) in rendered.entries)
-      if (!File('$_root/$path').existsSync() ||
-          File('$_root/$path').readAsStringSync() != text)
-        path,
+      if (File('$_root/$path') case final file
+          when !file.existsSync() || file.readAsStringSync() != text)
+        (path: path, file: file, text: text),
   ];
 
   if (check) {
-    for (final path in stale) {
+    for (final (:path, file: _, text: _) in stale) {
       stderr.writeln('stale: $path');
     }
     if (stale.isNotEmpty) {
@@ -190,10 +196,10 @@ void main(List<String> args) {
     return;
   }
 
-  for (final path in stale) {
-    File('$_root/$path')
+  for (final (:path, :file, :text) in stale) {
+    file
       ..parent.createSync(recursive: true)
-      ..writeAsStringSync(rendered[path]!);
+      ..writeAsStringSync(text);
     stdout.writeln('wrote $path');
   }
 }

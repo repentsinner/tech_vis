@@ -21,7 +21,14 @@
           0.8
         ],
         "worldUnitsPerPixel": 0.125,
-        "quadrant": "topRight"
+        "quadrant": "topRight",
+        "style": {
+          "lineWidth": 0.3,
+          "gapPixels": 4.0,
+          "angledLengthPixels": 60.0,
+          "horizontalLengthPixels": 20.0,
+          "angleDegrees": 30.0
+        }
       },
       "output": {
         "gapEnd": [
@@ -60,7 +67,14 @@
           0.8
         ],
         "worldUnitsPerPixel": 0.125,
-        "quadrant": "topLeft"
+        "quadrant": "topLeft",
+        "style": {
+          "lineWidth": 0.3,
+          "gapPixels": 4.0,
+          "angledLengthPixels": 60.0,
+          "horizontalLengthPixels": 20.0,
+          "angleDegrees": 30.0
+        }
       },
       "output": {
         "gapEnd": [
@@ -99,7 +113,14 @@
           0.8
         ],
         "worldUnitsPerPixel": 0.125,
-        "quadrant": "bottomRight"
+        "quadrant": "bottomRight",
+        "style": {
+          "lineWidth": 0.3,
+          "gapPixels": 4.0,
+          "angledLengthPixels": 60.0,
+          "horizontalLengthPixels": 20.0,
+          "angleDegrees": 30.0
+        }
       },
       "output": {
         "gapEnd": [
@@ -138,7 +159,14 @@
           0.8
         ],
         "worldUnitsPerPixel": 0.125,
-        "quadrant": "bottomLeft"
+        "quadrant": "bottomLeft",
+        "style": {
+          "lineWidth": 0.3,
+          "gapPixels": 4.0,
+          "angledLengthPixels": 60.0,
+          "horizontalLengthPixels": 20.0,
+          "angleDegrees": 30.0
+        }
       },
       "output": {
         "gapEnd": [
@@ -177,7 +205,14 @@
           0.0
         ],
         "worldUnitsPerPixel": 1.0,
-        "quadrant": "topRight"
+        "quadrant": "topRight",
+        "style": {
+          "lineWidth": 0.3,
+          "gapPixels": 4.0,
+          "angledLengthPixels": 60.0,
+          "horizontalLengthPixels": 20.0,
+          "angleDegrees": 30.0
+        }
       },
       "output": {
         "gapEnd": [
@@ -216,7 +251,14 @@
           1.0
         ],
         "worldUnitsPerPixel": 0.02,
-        "quadrant": "bottomLeft"
+        "quadrant": "bottomLeft",
+        "style": {
+          "lineWidth": 0.3,
+          "gapPixels": 4.0,
+          "angledLengthPixels": 60.0,
+          "horizontalLengthPixels": 20.0,
+          "angleDegrees": 30.0
+        }
       },
       "output": {
         "gapEnd": [

@@ -14,8 +14,16 @@ const _tolerance = 1e-9;
 
 typedef _Json = Map<String, dynamic>;
 
-List<_Json> _cases(_Json fixture, String function) =>
-    (fixture[function] as List<dynamic>).cast<_Json>();
+typedef _Case = ({String name, _Json input, _Json output});
+
+List<_Case> _cases(_Json fixture, String function) => [
+  for (final c in (fixture[function] as List<dynamic>).cast<_Json>())
+    (
+      name: c['name'] as String,
+      input: c['input'] as _Json,
+      output: c['output'] as _Json,
+    ),
+];
 
 double _number(Object? json) => (json! as num).toDouble();
 
@@ -28,8 +36,7 @@ CalloutQuadrant _quadrant(Object? json) =>
     CalloutQuadrant.values.byName(json! as String);
 
 LeaderLineStyle _style(Object? json) {
-  if (json == null) return const LeaderLineStyle();
-  final s = json as _Json;
+  final s = json! as _Json;
   return LeaderLineStyle(
     lineWidth: _number(s['lineWidth']),
     gapPixels: _number(s['gapPixels']),
@@ -59,7 +66,7 @@ void main() {
   group('leader-line golden vectors', () {
     late _Json fixture;
 
-    setUp(() {
+    setUpAll(() {
       fixture = jsonDecode(_fixture.readAsStringSync()) as _Json;
     });
 
@@ -70,9 +77,7 @@ void main() {
     test('computeCalloutLeaderGeometry', () {
       final cases = _cases(fixture, 'computeCalloutLeaderGeometry');
       expect(cases, isNotEmpty);
-      for (final c in cases) {
-        final input = c['input'] as _Json;
-        final output = c['output'] as _Json;
+      for (final (:name, :input, :output) in cases) {
         final result = computeCalloutLeaderGeometry(
           anchor: _vector3(input['anchor']),
           cameraRight: _vector3(input['cameraRight']),
@@ -81,7 +86,6 @@ void main() {
           quadrant: _quadrant(input['quadrant']),
           style: _style(input['style']),
         );
-        final name = c['name'] as String;
         _expectVector(result.gapEnd, output['gapEnd'], '$name gapEnd');
         _expectVector(result.elbow, output['elbow'], '$name elbow');
         _expectVector(result.labelEdge, output['labelEdge'], '$name labelEdge');
@@ -91,16 +95,14 @@ void main() {
     test('calloutAnchorAlignment', () {
       final cases = _cases(fixture, 'calloutAnchorAlignment');
       expect(
-        cases.map((c) => (c['input'] as _Json)['quadrant']).toSet(),
+        cases.map((c) => c.input['quadrant']).toSet(),
         CalloutQuadrant.values.map((q) => q.name).toSet(),
       );
-      for (final c in cases) {
-        final input = c['input'] as _Json;
-        final output = c['output'] as _Json;
+      for (final (:name, :input, :output) in cases) {
         _expectVector(
           calloutAnchorAlignment(_quadrant(input['quadrant'])),
           output['alignment'],
-          c['name'] as String,
+          name,
         );
       }
     });
@@ -108,13 +110,11 @@ void main() {
     test('computeCalloutOpacity', () {
       final cases = _cases(fixture, 'computeCalloutOpacity');
       expect(cases, isNotEmpty);
-      for (final c in cases) {
-        final input = c['input'] as _Json;
-        final output = c['output'] as _Json;
+      for (final (:name, :input, :output) in cases) {
         expect(
           computeCalloutOpacity(_number(input['distance'])),
           closeTo(_number(output['opacity']), _tolerance),
-          reason: c['name'] as String,
+          reason: name,
         );
       }
     });
