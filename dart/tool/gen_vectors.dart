@@ -10,6 +10,7 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:tech_vis/tech_vis.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
@@ -163,6 +164,420 @@ Map<String, Object?> leaderLineFixture() => {
   ],
 };
 
+/// Width of one character of the generator's stand-in typeface, as a
+/// fraction of the requested height. The fixture records it beside each
+/// content size it gives, so a renderer can substitute its own measure.
+const _characterWidthPerHeight = 0.5;
+
+BillboardContent _resolveText(TextRequest request) => BillboardContent(
+  value: request,
+  widthPixels:
+      request.text.length * _characterWidthPerHeight * request.heightPixels,
+  heightPixels: request.heightPixels,
+);
+
+const _zUpRight = CoordinateConvention(
+  up: SpatialAxis.z,
+  handedness: Handedness.right,
+);
+const _yUpRight = CoordinateConvention(
+  up: SpatialAxis.y,
+  handedness: Handedness.right,
+);
+const _zUpLeft = CoordinateConvention(
+  up: SpatialAxis.z,
+  handedness: Handedness.left,
+);
+
+typedef _View = ({
+  String name,
+  vm.Vector3 position,
+  vm.Vector3 target,
+  double verticalFovDegrees,
+  vm.Vector2 viewport,
+});
+
+/// One camera and viewport over a scene.
+typedef _Frame = ({CameraBasis camera, double fovRadians, vm.Vector2 viewport});
+
+typedef _Emitted = ({
+  List<Primitive> primitives,
+  List<Map<String, Object?>> leaders,
+});
+
+/// A scene's factory inputs, as the fixture records them, and the call
+/// that emits its primitives for one frame.
+typedef _Build = ({
+  Map<String, Object?> input,
+  _Emitted Function(_Frame frame) emit,
+});
+
+typedef _Scene = ({
+  String name,
+  CoordinateConvention convention,
+  _Build build,
+  List<_View> views,
+});
+
+_View _view(
+  String name,
+  List<double> position,
+  List<double> target,
+  double verticalFovDegrees,
+  List<double> viewport,
+) => (
+  name: name,
+  position: vm.Vector3.array(position),
+  target: vm.Vector3.array(target),
+  verticalFovDegrees: verticalFovDegrees,
+  viewport: vm.Vector2.array(viewport),
+);
+
+_Build _box({
+  required vm.Vector3 minBounds,
+  required vm.Vector3 maxBounds,
+  required double fillOpacity,
+  required double edgeWidth,
+}) => (
+  input: {
+    'factory': 'BoundingBoxFactory.createCube',
+    'minBounds': _vector(minBounds),
+    'maxBounds': _vector(maxBounds),
+    'fillOpacity': fillOpacity,
+    'edgeWidth': edgeWidth,
+  },
+  emit: (_) => (
+    primitives: BoundingBoxFactory.createCube(
+      bounds: BoundingBox(minBounds: minBounds, maxBounds: maxBounds),
+      key: null,
+      fillOpacity: fillOpacity,
+      edgeWidth: edgeWidth,
+    ),
+    leaders: const [],
+  ),
+);
+
+_Build _axes(CoordinateFrameDescriptor frame) => (
+  input: {
+    'factory': 'CoordinateFrameFactory.create',
+    'origin': _vector(frame.origin),
+    'length': frame.length,
+    'lineThickness': frame.lineThickness,
+    'labelPixelSize': frame.labelPixelSize,
+    'labelOffsetPixels': frame.labelOffsetPixels,
+  },
+  emit: (_) => (
+    primitives: CoordinateFrameFactory.create(
+      frame,
+      keyFor: (_) => null,
+      resolveText: _resolveText,
+    ),
+    leaders: const [],
+  ),
+);
+
+typedef _Callout = ({
+  vm.Vector3 anchor,
+  CalloutQuadrant quadrant,
+  TextRequest text,
+});
+
+_Build _callouts(List<_Callout> callouts, LeaderLineStyle style) => (
+  input: {
+    'factory': 'createCalloutLabel',
+    'style': _style(style),
+    'callouts': [
+      for (final c in callouts)
+        {
+          'anchor': _vector(c.anchor),
+          'quadrant': c.quadrant.name,
+          'text': c.text.text,
+          'textHeightPixels': c.text.heightPixels,
+        },
+    ],
+  },
+  emit: (frame) {
+    final primitives = <Primitive>[];
+    final leaders = <Map<String, Object?>>[];
+    for (final c in callouts) {
+      final leader = computeCalloutLeaderGeometry(
+        anchor: c.anchor,
+        cameraRight: frame.camera.right,
+        cameraUp: frame.camera.up,
+        worldUnitsPerPixel: ScreenSpaceUtils.worldUnitsPerPixelAt(
+          c.anchor,
+          frame.camera,
+          frame.fovRadians,
+          frame.viewport.y,
+        )!,
+        quadrant: c.quadrant,
+        style: style,
+      );
+      primitives.add(
+        createCalloutLabel(
+          leader: leader,
+          quadrant: c.quadrant,
+          content: _resolveText(c.text),
+          key: null,
+          opacity: 1,
+        ),
+      );
+      leaders.add({
+        'anchor': _screen(c.anchor, frame),
+        'gapEnd': _screen(leader.gapEnd, frame),
+        'elbow': _screen(leader.elbow, frame),
+        'labelEdge': _screen(leader.labelEdge, frame),
+        'widthPixels': style.lineWidth,
+      });
+    }
+    return (primitives: primitives, leaders: leaders);
+  },
+);
+
+_Build _markers(
+  CoordinateConvention convention,
+  List<({vm.Vector3 position, double diameterPixels})> markers,
+) => (
+  input: {
+    'factory': 'MarkerFactory.create',
+    'markers': [
+      for (final m in markers)
+        {'position': _vector(m.position), 'diameterPixels': m.diameterPixels},
+    ],
+  },
+  emit: (_) => (
+    primitives: [
+      for (final m in markers)
+        MarkerFactory.create(
+          position: m.position,
+          convention: convention,
+          key: null,
+          diameterPixels: m.diameterPixels,
+        ),
+    ],
+    leaders: const [],
+  ),
+);
+
+/// The sample scenes: each factory family, under Z-up and Y-up
+/// right-handed and Z-up left-handed conventions, with off-axis cameras
+/// and one top view that takes the fallback axis.
+List<_Scene> _scenes() => [
+  (
+    name: 'filled box',
+    convention: _zUpRight,
+    build: _box(
+      minBounds: vm.Vector3(-2, -1, 0),
+      maxBounds: vm.Vector3(2, 1, 1.5),
+      fillOpacity: 0.25,
+      edgeWidth: 1.5,
+    ),
+    views: [
+      _view('off-axis', [7, -9, 5], [0, 0, 0.75], 45, [1280, 720]),
+      _view('top', [0.5, 0.25, 12], [0.5, 0.25, 0], 30, [800, 800]),
+    ],
+  ),
+  (
+    name: 'labeled coordinate frame',
+    convention: _yUpRight,
+    build: _axes(
+      CoordinateFrameDescriptor(origin: vm.Vector3(1, 0.5, -2), length: 3),
+    ),
+    views: [
+      _view('off-axis', [8, 6, 9], [1, 0.5, -2], 50, [1920, 1080]),
+      _view('front', [1.5, 1, 10], [1, 0.5, -2], 40, [1024, 768]),
+    ],
+  ),
+  (
+    name: 'labeled coordinate frame',
+    convention: _zUpLeft,
+    build: _axes(
+      CoordinateFrameDescriptor(
+        length: 2,
+        lineThickness: 2,
+        labelPixelSize: 16,
+        labelOffsetPixels: 12,
+      ),
+    ),
+    views: [
+      _view('off-axis', [-5, -7, 4], [0, 0, 0.5], 45, [1280, 720]),
+    ],
+  ),
+  (
+    name: 'callouts',
+    convention: _zUpRight,
+    build: _callouts([
+      (
+        anchor: vm.Vector3(1, 2, 0.5),
+        quadrant: CalloutQuadrant.topRight,
+        text: const TextRequest(text: 'Datum A', heightPixels: 14),
+      ),
+      (
+        anchor: vm.Vector3(-3, -1, 2),
+        quadrant: CalloutQuadrant.bottomLeft,
+        text: const TextRequest(text: 'Hole 2', heightPixels: 12),
+      ),
+    ], const LeaderLineStyle()),
+    views: [
+      _view('off-axis', [10, -12, 8], [0, 0, 1], 45, [1280, 720]),
+    ],
+  ),
+  (
+    name: 'markers at near and far depths',
+    convention: _yUpRight,
+    build: _markers(_yUpRight, [
+      (
+        position: vm.Vector3.zero(),
+        diameterPixels: StyleTokens.markerDiameterPixels,
+      ),
+      (position: vm.Vector3(1.5, -0.5, -2), diameterPixels: 20),
+      (
+        position: vm.Vector3(-420, -300, -860),
+        diameterPixels: StyleTokens.markerDiameterPixels,
+      ),
+    ]),
+    views: [
+      _view('off-axis', [3, 4, 9], [0, 0, 0], 45, [1280, 720]),
+      _view('high', [-2, 5, 12], [-3, -1, -4], 45, [640, 480]),
+    ],
+  ),
+];
+
+List<double> _screen(vm.Vector3 point, _Frame frame) => _vector(
+  ScreenSpaceUtils.worldToScreen(
+    point,
+    frame.camera,
+    frame.fovRadians,
+    frame.viewport,
+  )!,
+);
+
+/// A viewer-facing billboard's placed anchor and content box.
+///
+/// The anchor, alignment, and text request hold for any typeface. The
+/// box follows from them and the content size, which is the stand-in
+/// typeface's: a renderer with its own text measure recomputes the box
+/// from its own content size.
+Map<String, Object?> _billboard(BillboardPrimitive b, _Frame frame) {
+  if (b.orientation is! ViewerFacingOrientation) {
+    throw UnsupportedError('the fixture places viewer-facing billboards');
+  }
+  final offset = b.offset;
+  final placed = offset == null
+      ? b.anchor
+      : billboardOffsetPosition(
+          anchor: b.anchor,
+          direction: offset.direction,
+          offsetPixels: offset.pixels,
+          worldUnitsPerPixel: ScreenSpaceUtils.worldUnitsPerPixelAt(
+            b.anchor,
+            frame.camera,
+            frame.fovRadians,
+            frame.viewport.y,
+          )!,
+          camera: frame.camera,
+        );
+  final [x, y] = _screen(placed, frame);
+  final width = b.content.widthPixels;
+  final height = b.content.heightPixels;
+  // Alignment counts up from the bottom-left corner; screen y runs down.
+  final left = x - b.alignment.x * width;
+  final top = y - (1 - b.alignment.y) * height;
+  return {
+    'type': 'billboard',
+    'anchor': [x, y],
+    'alignment': _vector(b.alignment),
+    if (b.content.value case final TextRequest request)
+      'textRequest': {
+        'text': request.text,
+        'heightPixels': request.heightPixels,
+      },
+    'contentSize': [width, height],
+    'box': [left, top, left + width, top + height],
+  };
+}
+
+/// A marker's center and its diameter as drawn through the frame's
+/// transform.
+Map<String, Object?> _marker(MarkerPrimitive m, _Frame frame) {
+  final transform = MarkerFactory.transform(
+    m,
+    frame.camera,
+    frame.fovRadians,
+    frame.viewport.y,
+  )!;
+  // The unit sphere scaled by the transform, measured across screen
+  // right at its center's depth.
+  final radius = transform.getMaxScaleOnAxis();
+  final [left, _] = _screen(m.position - frame.camera.right * radius, frame);
+  final [right, _] = _screen(m.position + frame.camera.right * radius, frame);
+  return {
+    'type': 'marker',
+    'center': _screen(m.position, frame),
+    'diameterPixels': right - left,
+  };
+}
+
+Map<String, Object?> _primitive(Primitive p, _Frame frame) => switch (p) {
+  LinePrimitive() => {
+    'type': 'line',
+    'start': _screen(p.start, frame),
+    'end': _screen(p.end, frame),
+    'widthPixels': p.widthPixels,
+  },
+  QuadPrimitive() => {
+    'type': 'quad',
+    'corners': [for (final c in p.corners) _screen(c, frame)],
+  },
+  BillboardPrimitive() => _billboard(p, frame),
+  MarkerPrimitive() => _marker(p, frame),
+  MeshPrimitive() => throw UnsupportedError('no sample scene emits a mesh'),
+};
+
+Map<String, Object?> _sceneView(_Scene scene, _View view) {
+  final frame = (
+    camera: CameraBasis.lookAt(
+      position: view.position,
+      target: view.target,
+      convention: scene.convention,
+    ),
+    fovRadians: view.verticalFovDegrees * math.pi / 180,
+    viewport: view.viewport,
+  );
+  final (:primitives, :leaders) = scene.build.emit(frame);
+  return {
+    'name': view.name,
+    'camera': {
+      'position': _vector(view.position),
+      'target': _vector(view.target),
+      'verticalFovDegrees': view.verticalFovDegrees,
+      'viewport': _vector(view.viewport),
+    },
+    'primitives': [for (final p in primitives) _primitive(p, frame)],
+    if (leaders.isNotEmpty) 'leaders': leaders,
+  };
+}
+
+/// The reference screen geometry fixture: sample scenes and, for each
+/// camera and viewport, where every primitive lands and how big it is.
+Map<String, Object?> referenceScreenGeometryFixture() => {
+  'screenCoordinates':
+      'pixels from the top-left corner of the viewport, x right, y down',
+  'textResolver': {'characterWidthPerHeight': _characterWidthPerHeight},
+  'scenes': [
+    for (final scene in _scenes())
+      {
+        'name': '${scene.name}, ${scene.convention}',
+        'convention': {
+          'up': scene.convention.up.name,
+          'handedness': scene.convention.handedness.name,
+        },
+        'build': scene.build.input,
+        'views': [for (final view in scene.views) _sceneView(scene, view)],
+      },
+  ],
+};
+
 /// Renders a fixture family under the header and style version every
 /// fixture file carries.
 String _render(Map<String, Object?> family) {
@@ -176,7 +591,12 @@ String _render(Map<String, Object?> family) {
 
 void main(List<String> args) {
   final check = args.contains('--check');
-  final rendered = {'vectors/leader_line.json': _render(leaderLineFixture())};
+  final rendered = {
+    'vectors/leader_line.json': _render(leaderLineFixture()),
+    'vectors/reference_screen_geometry.json': _render(
+      referenceScreenGeometryFixture(),
+    ),
+  };
 
   final stale = [
     for (final MapEntry(key: path, value: text) in rendered.entries)
