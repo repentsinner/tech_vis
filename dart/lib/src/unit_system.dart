@@ -253,9 +253,8 @@ final class _StepSequence {
   Iterable<double> _near(double length) sync* {
     yield* leading;
     final own = (math.log(length / decadeUnit) / math.ln10).floor();
-    final floor = minExponent;
-    final low = floor == null ? own - 1 : math.max(own - 1, floor);
-    final high = floor == null ? own + 1 : math.max(own + 1, floor);
+    final low = math.max(own - 1, minExponent ?? own - 1);
+    final high = math.max(own + 1, minExponent ?? own + 1);
     for (var exponent = low; exponent <= high; exponent++) {
       for (final mantissa in mantissas) {
         final step = _decade(mantissa, exponent) * decadeUnit;
@@ -276,17 +275,15 @@ final class _StepSequence {
     return best;
   }
 
-  double atLeast(double length) =>
-      _smallestAbove(length * (1 - _relativeSlack), inclusive: true);
+  double atLeast(double length) => _smallestFrom(length * (1 - _relativeSlack));
 
-  double above(double step) =>
-      _smallestAbove(step * (1 + _relativeSlack), inclusive: false);
+  double above(double step) => _smallestFrom(step * (1 + _relativeSlack));
 
-  double _smallestAbove(double bound, {required bool inclusive}) {
+  /// The smallest step at or past [bound], which already carries the slack.
+  double _smallestFrom(double bound) {
     var best = double.infinity;
     for (final step in _near(bound)) {
-      final past = inclusive ? step >= bound : step > bound;
-      if (past && step < best) best = step;
+      if (step >= bound && step < best) best = step;
     }
     return best;
   }
@@ -298,13 +295,14 @@ double _decade(double mantissa, int exponent) => exponent >= 0
     ? mantissa * math.pow(10, exponent)
     : mantissa / math.pow(10, -exponent);
 
+/// Whether [x] is a whole number, within the relative slack.
+bool _isWhole(double x) =>
+    (x - x.roundToDouble()).abs() <= x.abs() * _relativeSlack;
+
 /// The fewest decimal places that write [step] exactly.
 int _decimalsFor(double step) {
   for (var places = 0; places < _maxDecimals; places++) {
-    final scaled = step * math.pow(10, places);
-    if ((scaled - scaled.roundToDouble()).abs() <= scaled * _relativeSlack) {
-      return places;
-    }
+    if (_isWhole(step * math.pow(10, places))) return places;
   }
   return _maxDecimals;
 }
@@ -331,12 +329,12 @@ List<String> _decimalLabels(
   return [for (final v in rounded) '${_decimal(v, places, numbers)} $unit'];
 }
 
+final _trailingZeros = RegExp(r'\.?0+$');
+
 /// Writes [value] to [places] decimals, without trailing zeros.
 String _decimal(double value, int places, NumberFormatting numbers) {
   var text = value.abs().toStringAsFixed(places);
-  if (text.contains('.')) {
-    text = text.replaceFirst(RegExp(r'\.?0+$'), '');
-  }
+  if (text.contains('.')) text = text.replaceFirst(_trailingZeros, '');
   if (text == '0') return text;
   if (!numbers.showLeadingZero && text.startsWith('0.')) {
     text = text.substring(1);
@@ -353,10 +351,7 @@ int _denominatorFor(double step) {
     denominator < _finestDenominator;
     denominator *= 2
   ) {
-    final scaled = step * denominator;
-    if ((scaled - scaled.roundToDouble()).abs() <= scaled * _relativeSlack) {
-      return denominator;
-    }
+    if (_isWhole(step * denominator)) return denominator;
   }
   return _finestDenominator;
 }
@@ -369,11 +364,7 @@ List<String> _fractionalLabels(List<double> values, double step) {
   final largest = counts.fold(0, (m, c) => math.max(m, c.abs()));
   final promote = largest >= foot;
   // A step of whole feet never needs the inches, so its labels drop them.
-  final feetPerStep = step / _inchesPerFoot;
-  final wholeFeet =
-      promote &&
-      (feetPerStep - feetPerStep.roundToDouble()).abs() <=
-          feetPerStep * _relativeSlack;
+  final wholeFeet = promote && _isWhole(step / _inchesPerFoot);
 
   String inches(int count) {
     final whole = count ~/ denominator;
