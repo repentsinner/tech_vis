@@ -54,9 +54,18 @@ final leader = computeCalloutLeaderGeometry(
 final opacity = computeCalloutOpacity(distanceToCamera);
 ```
 
-The leader is a polyline of world points, not a primitive. Draw it as two
-lines, from the gap end to the elbow and from the elbow to the label
-edge, at the width in pixels that `LeaderLineStyle.lineWidth` gives.
+Each frame, `createCalloutLeaderLines` turns the leader into the two
+lines a renderer draws: the angled segment from the gap end to the elbow,
+and the horizontal segment from the elbow to the label edge, both at the
+style's line width in pixels.
+
+```dart
+final leaderLines = createCalloutLeaderLines(
+  leader: leader,
+  key: MyStyle.callout,
+  opacity: opacity,
+);
+```
 
 The rest of this page is the renderer guide. It states what each piece
 of output means to the engine that draws it. A renderer author reads it

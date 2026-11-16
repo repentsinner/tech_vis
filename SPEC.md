@@ -120,7 +120,7 @@ too, which spares a Flutter-based renderer a conversion per transform.
 
 ## Primitive output §spec:scene-model
 
-*Status: in progress*
+*Status: complete*
 
 The package emits annotations as a closed set of typed primitives and
 never renders them. Each app maps the primitives into its own scene
@@ -153,7 +153,8 @@ graph and draws them with its own engine (§req:constraints).
   renderer draws lines and never derives one. `BoundingBoxFactory`
   emits a box's twelve edges once each, plus six faces only when the box
   has a fill. `FilledRectangleFactory.createOutline` emits a lone
-  rectangle's perimeter.
+  rectangle's perimeter, and `createCalloutLeaderLines` a callout
+  leader's two segments.
 - The package defines no scene container, no renderer interface, and no
   type for scene content such as a loaded model.
 - A primitive or factory belongs in the package when a visualizer in an
