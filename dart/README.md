@@ -359,7 +359,7 @@ A ground plane gives floating geometry a sense of scale and orientation.
 `GroundPlaneFactory.create` draws a grid of minor and major lines on a
 patch centered on an origin, in the plane across the declared up axis.
 The plane lies along the two axes after the up axis in the cycle X, Y,
-Z, which `GroundPlaneFactory.planeAxes` names: X and Y for Z-up, Z and
+Z, which `CoordinateConvention.planeAxes` names: X and Y for Z-up, Z and
 X for Y-up. A `RectangularGroundPatch` takes a half extent along each of
 those axes, and a `CircularGroundPatch` takes a radius.
 

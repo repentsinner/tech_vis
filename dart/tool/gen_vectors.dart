@@ -1204,10 +1204,7 @@ Map<String, Object?> _groundCase(_GroundCase c) {
         '${c.name}, ${c.convention.up.label}-up '
         '${c.convention.handedness.name}-handed',
     'input': {
-      'convention': {
-        'up': c.convention.up.name,
-        'handedness': c.convention.handedness.name,
-      },
+      'convention': _convention(c.convention),
       'patch': _groundPatch(c.patch),
       'format': c.format.name,
       'worldUnits': c.worldUnits.name,

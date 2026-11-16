@@ -32,13 +32,7 @@ GroundGridStyle _style(Json json) => GroundGridStyle(
 
 /// Rebuilds a recorded grid through the public factory.
 GroundGrid _build(Json input) {
-  final conventionJson = input['convention'] as Json;
-  final convention = CoordinateConvention(
-    up: SpatialAxis.values.byName(conventionJson['up'] as String),
-    handedness: Handedness.values.byName(
-      conventionJson['handedness'] as String,
-    ),
-  );
+  final convention = jsonConvention(input['convention']);
   final camera = input['camera'] as Json;
   final target = jsonVector3(camera['target']);
   return GroundPlaneFactory.create(

@@ -238,6 +238,39 @@ void main() {
       }
     });
 
+    test('isGridStep accepts exactly the grid steps', () {
+      final cases = <(DisplayFormat, double, bool)>[
+        for (final format in [_metric, _decimalInch]) ...[
+          (format, 1, true),
+          (format, 0.01, true),
+          (format, 1000, true),
+          (format, 5, false),
+          (format, 2, false),
+        ],
+        (_fractionalInch, 1 / 16, true),
+        (_fractionalInch, 0.25, true),
+        (_fractionalInch, 12, true),
+        (_fractionalInch, 120, true),
+        (_fractionalInch, 0.5, false),
+        (_fractionalInch, 6, false),
+      ];
+      for (final (format, length, expected) in cases) {
+        expect(
+          format.isGridStep(length),
+          expected,
+          reason: '${format.name} at $length',
+        );
+      }
+    });
+
+    test('isGridStep rejects a length that is not positive and finite', () {
+      for (final format in DisplayFormat.values) {
+        for (final length in [0.0, -1.0, double.nan, double.infinity]) {
+          expect(format.isGridStep(length), isFalse, reason: '$length');
+        }
+      }
+    });
+
     test('each grid step is a whole multiple of the one before', () {
       for (final format in DisplayFormat.values) {
         var step = format.gridStepAtLeast(1e-3);

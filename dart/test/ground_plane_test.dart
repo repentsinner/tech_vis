@@ -31,7 +31,7 @@ CameraBasis _camera(
   vm.Vector3 target,
   double distance,
 ) {
-  final axes = GroundPlaneFactory.planeAxes(convention);
+  final axes = convention.planeAxes;
   final direction =
       (convention.up.unitVector * 2 +
               axes.u.unitVector * 0.5 +
@@ -109,24 +109,6 @@ void main() {
       expect(style.majorLineWidth, StyleTokens.groundGridMajorLineWidth);
       expect(style.labelPixelSize, StyleTokens.groundGridLabelPixelSize);
     });
-  });
-
-  group('GroundPlaneFactory.planeAxes', () {
-    for (final (up, u, v) in [
-      (SpatialAxis.z, SpatialAxis.x, SpatialAxis.y),
-      (SpatialAxis.y, SpatialAxis.z, SpatialAxis.x),
-      (SpatialAxis.x, SpatialAxis.y, SpatialAxis.z),
-    ]) {
-      for (final hand in Handedness.values) {
-        test('${up.label}-up ${hand.name}-handed lies in $u, $v', () {
-          final axes = GroundPlaneFactory.planeAxes(
-            CoordinateConvention(up: up, handedness: hand),
-          );
-          expect(axes.u, u);
-          expect(axes.v, v);
-        });
-      }
-    }
   });
 
   group('GroundPlaneFactory.minorStep', () {
@@ -242,7 +224,7 @@ void main() {
         });
 
         test('each line runs along one plane axis', () {
-          final axes = GroundPlaneFactory.planeAxes(convention);
+          final axes = convention.planeAxes;
           for (final line in _lines(grid)) {
             final d = line.end - line.start;
             final alongU = d[axes.u.index].abs() > 0;

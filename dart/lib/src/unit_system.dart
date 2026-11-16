@@ -177,6 +177,15 @@ enum DisplayFormat {
   double gridStepAtLeast(double length) =>
       _gridSteps.atLeast(_positive(length, 'length'));
 
+  /// Whether [length] is one of the grid steps.
+  ///
+  /// Returns false for a [length] that is not positive and finite.
+  bool isGridStep(double length) {
+    if (!length.isFinite || length <= 0) return false;
+    final step = _gridSteps.atLeast(length);
+    return (step - length).abs() <= length * _relativeSlack;
+  }
+
   /// Returns the smallest grid step longer than [step]: the major step
   /// over a minor [step].
   double gridStepAbove(double step) =>

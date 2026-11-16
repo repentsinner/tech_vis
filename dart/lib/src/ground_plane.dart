@@ -3,15 +3,10 @@ import 'dart:math' as math;
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'coordinate_convention.dart';
-import 'coordinate_frame.dart';
 import 'primitives.dart';
 import 'screen_space_utils.dart';
 import 'style_tokens.g.dart';
 import 'unit_system.dart';
-
-/// Relative slack when matching a step against the step sequence, so a
-/// step that round-tripped through a unit conversion still matches.
-const double _stepSlack = 1e-9;
 
 /// The center line and one line either side: the fewest lines a grid
 /// with a step can draw across a patch.
@@ -30,7 +25,7 @@ sealed class GroundPatch {
 }
 
 /// A rectangle with half extents along the plane's two axes, `u` and `v`
-/// of [GroundPlaneFactory.planeAxes].
+/// of [CoordinateConvention.planeAxes].
 ///
 /// Opacity falls with the larger of the two fractions of the half extent,
 /// so lines fade toward all four edges.
@@ -129,20 +124,6 @@ final class GroundGrid {
 /// The minor step adapts to the camera, so minor lines keep a minimum
 /// pixel spacing at the camera target at any zoom.
 abstract final class GroundPlaneFactory {
-  /// Returns the two world axes the ground plane lies along: the axes
-  /// after the declared up axis in the cycle X, Y, Z.
-  ///
-  /// A Z-up plane lies along X and Y, a Y-up plane along Z and X. Both
-  /// axes point the positive way, so a coordinate label reads the world
-  /// coordinate in either handedness.
-  static ({SpatialAxis u, SpatialAxis v}) planeAxes(
-    CoordinateConvention convention,
-  ) => switch (convention.up) {
-    SpatialAxis.x => (u: SpatialAxis.y, v: SpatialAxis.z),
-    SpatialAxis.y => (u: SpatialAxis.z, v: SpatialAxis.x),
-    SpatialAxis.z => (u: SpatialAxis.x, v: SpatialAxis.y),
-  };
-
   /// Returns the minor grid step for lines at least [minimumSpacing]
   /// apart, both in the base unit of [format].
   ///
@@ -163,15 +144,15 @@ abstract final class GroundPlaneFactory {
       throw ArgumentError.value(margin, 'margin', 'must be zero or more');
     }
     final ideal = format.gridStepAtLeast(minimumSpacing);
-    if (previousStep == null || !_isGridStep(format, previousStep)) {
+    if (previousStep == null || !format.isGridStep(previousStep)) {
       return ideal;
     }
+    // Every value compared is a step the format returned, so each
+    // comparison is exact.
+    final held = format.gridStepAtLeast(previousStep);
     final finest = format.gridStepAtLeast(minimumSpacing / (1 + margin));
     final coarsest = format.gridStepAtLeast(minimumSpacing * (1 + margin));
-    final kept =
-        previousStep >= finest * (1 - _stepSlack) &&
-        previousStep <= coarsest * (1 + _stepSlack);
-    return kept ? previousStep : ideal;
+    return held >= finest && held <= coarsest ? held : ideal;
   }
 
   /// Returns the ground grid over [patch], centered on [origin], for a
@@ -264,7 +245,7 @@ abstract final class GroundPlaneFactory {
     final minorWorld = toWorld(minor);
     final linesPerMajor = (major / minor).round();
 
-    final axes = planeAxes(convention);
+    final axes = convention.planeAxes;
     final u = axes.u.unitVector;
     final v = axes.v.unitVector;
     final center = origin ?? vm.Vector3.zero();
@@ -354,41 +335,36 @@ abstract final class GroundPlaneFactory {
     final count = (extent / step).floor();
     return [for (var k = -count; k <= count; k++) k];
   }
-
-  static bool _isGridStep(DisplayFormat format, double step) {
-    if (!step.isFinite || step <= 0) return false;
-    final nearest = format.gridStepAtLeast(step);
-    return (nearest - step).abs() <= step * _stepSlack;
-  }
 }
 
 /// A patch's extents, chord lengths, and fade, in plane coordinates
 /// relative to its center.
 final class _PatchShape {
-  _PatchShape(this.patch) {
-    final valid = switch (patch) {
-      RectangularGroundPatch(:final halfExtentU, :final halfExtentV) =>
-        _positive(halfExtentU) && _positive(halfExtentV),
-      CircularGroundPatch(:final radius) => _positive(radius),
+  factory _PatchShape(GroundPatch patch) {
+    final (extentU, extentV) = switch (patch) {
+      RectangularGroundPatch(:final halfExtentU, :final halfExtentV) => (
+        halfExtentU,
+        halfExtentV,
+      ),
+      CircularGroundPatch(:final radius) => (radius, radius),
     };
-    if (!valid) {
+    if (!_positive(extentU) || !_positive(extentV)) {
       throw ArgumentError.value(patch, 'patch', 'needs a positive size');
     }
+    return _PatchShape._(patch, extentU, extentV);
   }
+
+  _PatchShape._(this.patch, this.extentU, this.extentV);
 
   final GroundPatch patch;
 
+  /// Half extent along the plane's `u` axis: the radius of a disc.
+  final double extentU;
+
+  /// Half extent along the plane's `v` axis: the radius of a disc.
+  final double extentV;
+
   static bool _positive(double x) => x.isFinite && x > 0;
-
-  double get extentU => switch (patch) {
-    RectangularGroundPatch(:final halfExtentU) => halfExtentU,
-    CircularGroundPatch(:final radius) => radius,
-  };
-
-  double get extentV => switch (patch) {
-    RectangularGroundPatch(:final halfExtentV) => halfExtentV,
-    CircularGroundPatch(:final radius) => radius,
-  };
 
   double get maxExtent => math.max(extentU, extentV);
 
