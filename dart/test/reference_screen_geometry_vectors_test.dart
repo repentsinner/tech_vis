@@ -11,11 +11,6 @@ import 'support/vectors.dart';
 
 final _fixture = vectorFixture('reference_screen_geometry.json');
 
-CoordinateConvention _convention(Json json) => CoordinateConvention(
-  up: SpatialAxis.values.byName(json['up'] as String),
-  handedness: Handedness.values.byName(json['handedness'] as String),
-);
-
 /// One camera and viewport, read from a fixture view.
 class _Frame {
   _Frame(Json json, CoordinateConvention convention)
@@ -317,7 +312,7 @@ void main() {
 
     test('cover every factory, two up axes, and both handednesses', () {
       final conventions = {
-        for (final s in scenes) _convention(s['convention'] as Json),
+        for (final s in scenes) jsonConvention(s['convention']),
       };
       expect(conventions.map((c) => c.up).toSet(), hasLength(2));
       expect(conventions.map((c) => c.handedness).toSet(), Handedness.values);
@@ -362,7 +357,7 @@ void main() {
     test('match each scene rebuilt and projected through the package', () {
       expect(scenes, isNotEmpty);
       for (final scene in scenes) {
-        final convention = _convention(scene['convention'] as Json);
+        final convention = jsonConvention(scene['convention']);
         final build = scene['build'] as Json;
         for (final view in jsonList(scene['views'])) {
           final reason = '${scene['name']} / ${view['name']}';
@@ -389,7 +384,7 @@ void main() {
 
     test('agree with an independent pinhole projection', () {
       for (final scene in scenes) {
-        final convention = _convention(scene['convention'] as Json);
+        final convention = jsonConvention(scene['convention']);
         for (final view in jsonList(scene['views'])) {
           final frame = _Frame(view['camera'] as Json, convention);
           final primitives = _build(scene['build'] as Json, convention, frame);
