@@ -32,6 +32,11 @@ const _yUpRightHanded = CoordinateConvention(
   handedness: Handedness.right,
 );
 
+const _zUpRightHanded = CoordinateConvention(
+  up: SpatialAxis.z,
+  handedness: Handedness.right,
+);
+
 void _expectOrthonormal(CameraBasis basis) {
   expect(basis.right.length, closeTo(1.0, _tolerance));
   expect(basis.up.length, closeTo(1.0, _tolerance));
@@ -69,14 +74,10 @@ void main() {
     });
 
     test('orients a Z-up camera with +Z up on screen', () {
-      const zUp = CoordinateConvention(
-        up: SpatialAxis.z,
-        handedness: Handedness.right,
-      );
       final front = CameraBasis.lookAt(
         position: vm.Vector3(0, -100, 0),
         target: vm.Vector3.zero(),
-        convention: zUp,
+        convention: _zUpRightHanded,
       );
       expect(front.forward, _closeToVector(vm.Vector3(0, 1, 0)));
       expect(front.right, _closeToVector(vm.Vector3(1, 0, 0)));
@@ -84,14 +85,10 @@ void main() {
     });
 
     test('a Z-up top view keeps +Y up on screen', () {
-      const zUp = CoordinateConvention(
-        up: SpatialAxis.z,
-        handedness: Handedness.right,
-      );
       final top = CameraBasis.lookAt(
         position: vm.Vector3(0, 0, 100),
         target: vm.Vector3.zero(),
-        convention: zUp,
+        convention: _zUpRightHanded,
       );
       _expectOrthonormal(top);
       expect(top.up, _closeToVector(vm.Vector3(0, 1, 0)));
@@ -128,6 +125,7 @@ void main() {
             up: up,
             handedness: handedness,
           );
+          final reason = '$convention';
           final basis = CameraBasis.lookAt(
             position: eye,
             target: target,
@@ -137,12 +135,12 @@ void main() {
           expect(
             convention.cross(basis.right, basis.up),
             _closeToVector(basis.toViewer),
-            reason: '${up.label}-up ${handedness.name}-handed',
+            reason: reason,
           );
           expect(
-            basis.up.dot(convention.upVector),
+            basis.up.dot(convention.up.unitVector),
             greaterThan(0),
-            reason: '${up.label}-up ${handedness.name}-handed',
+            reason: reason,
           );
         }
       }

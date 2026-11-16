@@ -30,9 +30,6 @@ class CoordinateConvention {
   /// Handedness of the world axes.
   final Handedness handedness;
 
-  /// Unit vector along [up].
-  vm.Vector3 get upVector => up.unitVector;
-
   /// Axis that takes the place of [up] when a view looks straight along it.
   ///
   /// Returns the axis before [up] in the cycle X, Y, Z. A Z-up top view
@@ -55,23 +52,6 @@ class CoordinateConvention {
     Handedness.left => v.cross(u),
   };
 
-  /// Orders the triangle [a], [b], [c] of [positions] so its face points
-  /// along [outward].
-  ///
-  /// Returns the indices so that, read from the [outward] side, they turn
-  /// counter-clockwise in the declared handedness. The handed [cross] of
-  /// the first two edges then points along [outward]. A generated mesh
-  /// winds every face through this, so faces point outward under either
-  /// handedness.
-  (int, int, int) windOutward(
-    List<vm.Vector3> positions,
-    int a,
-    int b,
-    int c,
-    vm.Vector3 outward,
-  ) {
-    final origin = positions[a];
-    final normal = cross(positions[b] - origin, positions[c] - origin);
-    return normal.dot(outward) >= 0 ? (a, b, c) : (a, c, b);
-  }
+  @override
+  String toString() => '${up.label}-up ${handedness.name}-handed';
 }

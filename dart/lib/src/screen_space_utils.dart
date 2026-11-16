@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'coordinate_convention.dart';
@@ -38,7 +39,7 @@ class CameraBasis {
     required CoordinateConvention convention,
   }) {
     final forward = (target - position).normalized();
-    final preferredUp = convention.upVector;
+    final preferredUp = convention.up.unitVector;
     final upReference = forward.dot(preferredUp).abs() > _gimbalThreshold
         ? convention.fallbackAxis.unitVector
         : preferredUp;
