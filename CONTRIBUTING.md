@@ -20,11 +20,11 @@ This repo uses [Flywheel](https://github.com/point-source/flywheel) to orchestra
 
 **Auto-merge eligibility on `main`.** PRs whose title type is in `[chore, docs, style, test, ci, build, refactor]` get labeled `flywheel:auto-merge` and merge automatically once required checks pass. Any other type — `feat`, `fix`, `perf`, and every `!`-suffixed breaking variant — routes to human review and waits for an approval.
 
-**Required status checks.** Your PR must pass `quality / governance` and `quality / correctness` before merging. The first summarizes the governance lint; the second summarizes `tokens`, `dart`, `dart-publish-dry-run`, `python` and `actionlint`. The `dart` job runs the bug-free-happiness Dart check on Dart 3.14.0, plus its floor leg on the oldest SDK `environment.sdk` admits and its downgrade leg on the oldest dependency releases `pubspec.yaml` admits. Run the pinned checks locally before pushing:
+**Required status checks.** Your PR must pass `quality / governance` and `quality / correctness` before merging. The first summarizes the governance lint; the second summarizes `tokens`, `dart`, `dart-publish-dry-run` (which also checks the golden vectors), `python` and `actionlint`. The `dart` job runs the bug-free-happiness Dart check on Dart 3.14.0, plus its floor leg on the oldest SDK `environment.sdk` admits and its downgrade leg on the oldest dependency releases `pubspec.yaml` admits. Run the pinned checks locally before pushing:
 
 ```bash
 python3 tools/gen_tokens.py --check
-(cd dart && dart pub get && dart format --output=none --set-exit-if-changed . && dart analyze --fatal-infos && dart test)
+(cd dart && dart pub get && dart run tool/gen_vectors.dart --check && dart format --output=none --set-exit-if-changed . && dart analyze --fatal-infos && dart test)
 (cd python && uv sync && uv run ruff format --check . && uv run ruff check . && uv run pytest)
 ```
 

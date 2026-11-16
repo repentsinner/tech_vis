@@ -56,8 +56,9 @@ jobs:
       floor: true
       downgrade: true
 
-  # pub.dev's own checks on the package, which the shared check leaves to
-  # publishing projects.
+  # Package checks the shared check leaves to this project: the golden
+  # vectors, which need the pinned SDK to run the Dart reference, and
+  # pub.dev's own checks on the package.
   dart-publish-dry-run:
     needs: classify
     if: needs.classify.outputs.derived_release_commit != 'true' && needs.classify.outputs.promotion_pr != 'true'
@@ -72,10 +73,11 @@ jobs:
       - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
         with:
           sdk: 3.14.0
+      - run: dart pub get
+      - name: Committed fixtures in vectors/ match the Dart reference
+        run: dart run tool/gen_vectors.dart --check
       - name: Publish dry run
-        run: |
-          dart pub get
-          dart pub publish --dry-run
+        run: dart pub publish --dry-run
 
   python:
     needs: classify

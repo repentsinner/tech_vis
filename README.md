@@ -11,6 +11,8 @@ from one repository, so both draw the same style from the same data.
 | `dart/` | Pure Dart package | [`tech_vis` on pub.dev](https://pub.dev/packages/tech_vis) |
 | `python/` | Pure Python package | [`tech_vis` on PyPI](https://pypi.org/project/tech_vis/) |
 | `tools/gen_tokens.py` | Generates each package's token module | — |
+| `vectors/` | Golden vectors — inputs and expected outputs every port tests against | — |
+| `dart/tool/gen_vectors.dart` | Generates `vectors/` from the Dart reference | — |
 
 ## Installation
 
@@ -56,13 +58,17 @@ The Python package carries the tokens today. Layout functions follow; see
 
 ## Changing the style
 
-Edit `style/tokens.json`, then regenerate and commit the token modules:
+Edit `style/tokens.json`, then regenerate and commit the token modules.
+A token that shapes layout also changes the golden vectors, so regenerate
+those too:
 
 ```bash
 python3 tools/gen_tokens.py
+(cd dart && dart run tool/gen_vectors.dart)
 ```
 
-CI fails when a generated module is stale (§spec:style-tokens).
+CI fails when a generated module or a golden vector is stale
+(§spec:style-tokens, §spec:golden-vectors).
 
 ## License
 
