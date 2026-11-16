@@ -92,6 +92,23 @@ void main() {
       }
     });
 
+    test('formatNumberLabel', () {
+      final cases = jsonList(fixture['formatNumberLabel']);
+      expect(cases, isNotEmpty);
+      for (final c in cases) {
+        final input = c['input'] as Json;
+        expect(
+          formatNumberLabel(
+            jsonNumber(input['value']),
+            step: jsonNumber(input['step']),
+            numbers: jsonNumberFormatting(input['numbers']),
+          ),
+          (c['output'] as Json)['label'],
+          reason: '${input['value']} at ${input['step']}',
+        );
+      }
+    });
+
     test('formatDegreesLabel', () {
       final cases = jsonList(fixture['formatDegreesLabel']);
       expect(cases, isNotEmpty);

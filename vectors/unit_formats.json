@@ -985,6 +985,99 @@
       }
     }
   ],
+  "formatNumberLabel": [
+    {
+      "input": {
+        "value": 45.0,
+        "step": 1.0,
+        "numbers": {
+          "decimalMarker": "point",
+          "showLeadingZero": true
+        }
+      },
+      "output": {
+        "label": "45"
+      }
+    },
+    {
+      "input": {
+        "value": 12.345,
+        "step": 0.01,
+        "numbers": {
+          "decimalMarker": "point",
+          "showLeadingZero": true
+        }
+      },
+      "output": {
+        "label": "12.35"
+      }
+    },
+    {
+      "input": {
+        "value": -0.04,
+        "step": 0.1,
+        "numbers": {
+          "decimalMarker": "point",
+          "showLeadingZero": true
+        }
+      },
+      "output": {
+        "label": "0"
+      }
+    },
+    {
+      "input": {
+        "value": -17.5,
+        "step": 2.5,
+        "numbers": {
+          "decimalMarker": "point",
+          "showLeadingZero": true
+        }
+      },
+      "output": {
+        "label": "-17.5"
+      }
+    },
+    {
+      "input": {
+        "value": 7.0,
+        "step": 5.0,
+        "numbers": {
+          "decimalMarker": "point",
+          "showLeadingZero": true
+        }
+      },
+      "output": {
+        "label": "5"
+      }
+    },
+    {
+      "input": {
+        "value": 1250000.0,
+        "step": 500000.0,
+        "numbers": {
+          "decimalMarker": "point",
+          "showLeadingZero": true
+        }
+      },
+      "output": {
+        "label": "1500000"
+      }
+    },
+    {
+      "input": {
+        "value": 0.5,
+        "step": 0.1,
+        "numbers": {
+          "decimalMarker": "comma",
+          "showLeadingZero": false
+        }
+      },
+      "output": {
+        "label": ",5"
+      }
+    }
+  ],
   "formatDegreesLabel": [
     {
       "input": {
