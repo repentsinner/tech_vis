@@ -23,9 +23,6 @@ abstract final class StyleTokens {
   /// Screen-space offset from an axis endpoint to its label center. Unit: px.
   static const double axisLabelOffsetPixels = 12.0;
 
-  /// Default world-space height of a world-aligned label. Unit: mm.
-  static const double worldAlignedLabelHeightMm = 5.0;
-
   /// Gap between the anchor point and the start of the angled leader segment.
   /// Unit: px.
   static const double calloutGapPixels = 4.0;
@@ -68,7 +65,6 @@ abstract final class StyleTokens {
     'secondaryAxisThicknessScale': secondaryAxisThicknessScale,
     'defaultAxisLabelSize': defaultAxisLabelSize,
     'axisLabelOffsetPixels': axisLabelOffsetPixels,
-    'worldAlignedLabelHeightMm': worldAlignedLabelHeightMm,
     'calloutGapPixels': calloutGapPixels,
     'calloutAngledLengthPixels': calloutAngledLengthPixels,
     'calloutHorizontalLengthPixels': calloutHorizontalLengthPixels,

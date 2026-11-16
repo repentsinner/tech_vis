@@ -20,9 +20,6 @@ DEFAULT_AXIS_LABEL_SIZE: float = 24.0
 # Screen-space offset from an axis endpoint to its label center. Unit: px.
 AXIS_LABEL_OFFSET_PIXELS: float = 12.0
 
-# Default world-space height of a world-aligned label. Unit: mm.
-WORLD_ALIGNED_LABEL_HEIGHT_MM: float = 5.0
-
 # Gap between the anchor point and the start of the angled leader segment. Unit: px.
 CALLOUT_GAP_PIXELS: float = 4.0
 
@@ -64,7 +61,6 @@ ALL: dict[str, float] = {
     "secondaryAxisThicknessScale": SECONDARY_AXIS_THICKNESS_SCALE,
     "defaultAxisLabelSize": DEFAULT_AXIS_LABEL_SIZE,
     "axisLabelOffsetPixels": AXIS_LABEL_OFFSET_PIXELS,
-    "worldAlignedLabelHeightMm": WORLD_ALIGNED_LABEL_HEIGHT_MM,
     "calloutGapPixels": CALLOUT_GAP_PIXELS,
     "calloutAngledLengthPixels": CALLOUT_ANGLED_LENGTH_PIXELS,
     "calloutHorizontalLengthPixels": CALLOUT_HORIZONTAL_LENGTH_PIXELS,
