@@ -24,7 +24,6 @@ GroundGridStyle _style(Json json) => GroundGridStyle(
   minLineSpacingPixels: jsonNumber(json['minLineSpacingPixels']),
   stepMargin: jsonNumber(json['stepMargin']),
   maxLinesPerAxis: json['maxLinesPerAxis'] as int,
-  fadeSegments: json['fadeSegments'] as int,
   minorLineWidth: jsonNumber(json['minorLineWidth']),
   majorLineWidth: jsonNumber(json['majorLineWidth']),
   labelPixelSize: jsonNumber(json['labelPixelSize']),

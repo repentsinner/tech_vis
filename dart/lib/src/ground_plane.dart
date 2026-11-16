@@ -18,8 +18,11 @@ final vm.Vector2 _labelAlignment = vm.Vector2.zero();
 
 /// The area of the ground plane, centered on the plane's origin.
 ///
-/// The patch sets where the grid's lines end and how they fade: opacity
-/// falls from one at the center to zero at the patch edge.
+/// The patch sets where the grid's lines end and how the grid fades. The
+/// fade's opacity is `1 - smoothstep(0, 1, r)`, where `r` is a point's
+/// reach: its distance from the center as a fraction of the patch's size.
+/// Labels carry the fade at their anchors. A renderer fading lines per
+/// pixel uses the same curve, so lines and labels agree.
 sealed class GroundPatch {
   const GroundPatch();
 }
@@ -27,8 +30,8 @@ sealed class GroundPatch {
 /// A rectangle with half extents along the plane's two axes, `u` and `v`
 /// of [CoordinateConvention.planeAxes].
 ///
-/// Opacity falls with the larger of the two fractions of the half extent,
-/// so lines fade toward all four edges.
+/// A point's reach is the larger of its two fractions of the half extent,
+/// so the fade runs toward all four edges.
 final class RectangularGroundPatch extends GroundPatch {
   const RectangularGroundPatch({
     required this.halfExtentU,
@@ -44,7 +47,8 @@ final class RectangularGroundPatch extends GroundPatch {
 
 /// A disc of [radius] around the plane's origin.
 ///
-/// Opacity falls with distance from the center, so lines fade radially.
+/// A point's reach is its distance from the center over the radius, so
+/// the fade is radial.
 final class CircularGroundPatch extends GroundPatch {
   const CircularGroundPatch({required this.radius});
 
@@ -59,12 +63,10 @@ final class GroundGridStyle {
     this.minLineSpacingPixels = StyleTokens.groundGridMinLineSpacingPixels,
     this.stepMargin = StyleTokens.groundGridStepMargin,
     int? maxLinesPerAxis,
-    int? fadeSegments,
     this.minorLineWidth = StyleTokens.groundGridMinorLineWidth,
     this.majorLineWidth = StyleTokens.groundGridMajorLineWidth,
     this.labelPixelSize = StyleTokens.groundGridLabelPixelSize,
-  }) : _maxLinesPerAxis = maxLinesPerAxis,
-       _fadeSegments = fadeSegments;
+  }) : _maxLinesPerAxis = maxLinesPerAxis;
 
   /// Smallest screen distance between neighboring minor lines at the
   /// camera target, in pixels.
@@ -75,15 +77,10 @@ final class GroundGridStyle {
   final double stepMargin;
 
   final int? _maxLinesPerAxis;
-  final int? _fadeSegments;
 
   /// Most lines across the patch in each direction.
   int get maxLinesPerAxis =>
       _maxLinesPerAxis ?? StyleTokens.groundGridMaxLinesPerAxis.toInt();
-
-  /// Segments each line splits into, each with its own opacity.
-  int get fadeSegments =>
-      _fadeSegments ?? StyleTokens.groundGridFadeSegments.toInt();
 
   /// Width of a minor line, in screen pixels.
   final double minorLineWidth;
@@ -100,6 +97,8 @@ final class GroundGrid {
   const GroundGrid({
     required this.minorStep,
     required this.majorStep,
+    required this.origin,
+    required this.patch,
     required this.primitives,
   });
 
@@ -112,8 +111,13 @@ final class GroundGrid {
   /// Distance between major lines, in the display format's base unit.
   final double majorStep;
 
-  /// Minor line segments, then major line segments, then coordinate
-  /// labels.
+  /// World-space center of the patch, where the fade is at full opacity.
+  final vm.Vector3 origin;
+
+  /// The patch the grid covers, which sets the fade's reach.
+  final GroundPatch patch;
+
+  /// Minor lines, then major lines, then coordinate labels.
   final List<Primitive> primitives;
 }
 
@@ -167,14 +171,16 @@ abstract final class GroundPlaneFactory {
   /// either direction. The major step is the grid step of [format] above
   /// the minor step.
   ///
-  /// Each line splits into [GroundGridStyle.fadeSegments] equal segments.
-  /// A segment's opacity falls linearly from one at the patch center to
-  /// zero at its edge, evaluated at the segment's midpoint, and a segment
-  /// at zero opacity is left out. Each major line carries one coordinate
-  /// label where it crosses the perpendicular line through [origin], and
-  /// [origin] carries one label for zero. The labels form one set in
-  /// [format], written with [numbers], face the viewer, and fade like the
-  /// lines at their anchors.
+  /// Each line is one Line across the whole chord of the patch, at full
+  /// opacity, and a line whose chord is empty is left out. A renderer
+  /// fades the lines toward the patch edge per pixel, from
+  /// [GroundGrid.origin] and [GroundGrid.patch], with the curve
+  /// [GroundPatch] gives. Each major
+  /// line carries one coordinate label where it crosses the perpendicular
+  /// line through [origin], and [origin] carries one label for zero. The
+  /// labels form one set in [format], written with [numbers], and face the
+  /// viewer. Each label's opacity is the fade at its anchor, and a label at
+  /// zero opacity is left out.
   ///
   /// Throws an [ArgumentError] when [target] lies on or behind the camera
   /// plane.
@@ -216,13 +222,6 @@ abstract final class GroundPlaneFactory {
         'must be at least $_fewestLinesPerAxis',
       );
     }
-    if (style.fadeSegments < 1) {
-      throw ArgumentError.value(
-        style.fadeSegments,
-        'style.fadeSegments',
-        'must be at least 1',
-      );
-    }
     final shape = _PatchShape(patch);
     double toFormat(double world) =>
         worldUnits.convertTo(world, format.unitSystem);
@@ -261,27 +260,14 @@ abstract final class GroundPlaneFactory {
         final span = shape.span(offset, alongV: alongV);
         if (span <= 0) continue;
         final isMajor = k % linesPerMajor == 0;
-        final segments = style.fadeSegments;
-        for (var i = 0; i < segments; i++) {
-          final from = -span + 2 * span * i / segments;
-          final to = -span + 2 * span * (i + 1) / segments;
-          final mid = (from + to) / 2;
-          final opacity = alongV
-              ? shape.opacity(offset, mid)
-              : shape.opacity(mid, offset);
-          if (opacity <= 0) continue;
-          (isMajor ? majorLines : minorLines).add(
-            LinePrimitive(
-              start: alongV ? at(offset, from) : at(from, offset),
-              end: alongV ? at(offset, to) : at(to, offset),
-              widthPixels: isMajor
-                  ? style.majorLineWidth
-                  : style.minorLineWidth,
-              key: isMajor ? majorKey : minorKey,
-              opacity: opacity,
-            ),
-          );
-        }
+        (isMajor ? majorLines : minorLines).add(
+          LinePrimitive(
+            start: alongV ? at(offset, -span) : at(-span, offset),
+            end: alongV ? at(offset, span) : at(span, offset),
+            widthPixels: isMajor ? style.majorLineWidth : style.minorLineWidth,
+            key: isMajor ? majorKey : minorKey,
+          ),
+        );
       }
     }
 
@@ -327,6 +313,8 @@ abstract final class GroundPlaneFactory {
     return GroundGrid(
       minorStep: minor,
       majorStep: major,
+      origin: center.clone(),
+      patch: patch,
       primitives: [...minorLines, ...majorLines, ...labels],
     );
   }
@@ -378,14 +366,16 @@ final class _PatchShape {
     ),
   };
 
-  /// Opacity at plane coordinates ([a], [b]): one at the center, falling
-  /// linearly to zero at the edge.
+  /// Returns the fade at plane coordinates ([a], [b]): one minus the
+  /// smoothstep of the reach, so one at the center and zero from the edge
+  /// out.
   double opacity(double a, double b) {
     final reach = switch (patch) {
       RectangularGroundPatch(:final halfExtentU, :final halfExtentV) =>
         math.max(a.abs() / halfExtentU, b.abs() / halfExtentV),
       CircularGroundPatch(:final radius) => math.sqrt(a * a + b * b) / radius,
     };
-    return (1 - reach).clamp(0.0, 1.0);
+    final t = reach.clamp(0.0, 1.0);
+    return 1 - t * t * (3 - 2 * t);
   }
 }

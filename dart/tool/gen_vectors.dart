@@ -1311,8 +1311,8 @@ typedef _GroundCase = ({
   GroundGridStyle style,
 });
 
-/// Few segments and lines, so each case stays short enough to review.
-const _compactGrid = GroundGridStyle(fadeSegments: 3, maxLinesPerAxis: 41);
+/// Few lines, so each case stays short enough to review.
+const _compactGrid = GroundGridStyle(maxLinesPerAxis: 41);
 
 /// Ground grids under each convention and handedness, both patch shapes,
 /// each display format, a held step, and one case at the token defaults.
@@ -1378,7 +1378,6 @@ Map<String, Object?> _groundStyle(GroundGridStyle s) => {
   'minLineSpacingPixels': s.minLineSpacingPixels,
   'stepMargin': s.stepMargin,
   'maxLinesPerAxis': s.maxLinesPerAxis,
-  'fadeSegments': s.fadeSegments,
   'minorLineWidth': s.minorLineWidth,
   'majorLineWidth': s.majorLineWidth,
   'labelPixelSize': s.labelPixelSize,
