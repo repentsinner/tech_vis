@@ -8,15 +8,12 @@ Closes §spec:release.
 
 Both registries need a first step that automation cannot take.
 
-- Push a baseline `v0.1.0` tag before the tag ruleset exists. With no tag,
-  the first release computes `1.0.0`. Push it before registering either
-  publisher: the tag matches the publish trigger, and both manifests
-  already say `0.1.0`.
-- Publish `dart/` to pub.dev by hand once. Automated publishing can be
-  enabled only on a package that exists.
-- Register the PyPI pending publisher for `publish-pypi.yml`.
-- Install the Flywheel App, store its id and key, and add the branch and
-  tag rulesets.
+- Publish `dart/` to pub.dev by hand once, then enable automated
+  publishing for this repository with tag pattern `v{{version}}` and
+  environment `pub.dev`. Automated publishing can be enabled only on a
+  package that exists.
+- Register the PyPI pending publisher for `publish-pypi.yml`, environment
+  `pypi`.
 
 Done when a merged `feat:` PR publishes both packages with no manual step.
 
@@ -34,9 +31,70 @@ the opacity ramp. Test the Dart implementation against them.
 Port the leader-line functions to Python. Test them against the same
 fixtures. Depends on §road:leader-vectors.
 
+## Renderer contract §road:renderer-contract
+
+Closes §spec:scene-model, §spec:scene-color, §spec:coordinate-convention,
+and §spec:renderer-contract.
+
+### Coordinate convention §road:coordinate-convention
+
+Add the declared up axis and handedness, required by `CameraBasis.lookAt`
+and by every mesh the package generates, in
+`dart/lib/src/screen_space_utils.dart` and a new convention type
+(§spec:coordinate-convention).
+
+### Typed primitives §road:typed-primitives
+
+Replace `SceneObject`, its containers, `SceneTheme`, `SceneColor`, and
+`SceneRendererBackend` with the Line, Quad, Billboard, Marker, and Mesh
+primitives, and return them from `BoundingBoxFactory`,
+`FilledRectangleFactory`, and `CoordinateFrameFactory`
+(§spec:scene-model, §spec:scene-color). Depends on
+§road:coordinate-convention.
+
+### Billboard text requests §road:billboard-text-requests
+
+Emit composed text as text requests that come back as sized Billboards,
+and move `EnvelopeLabelFactory` and callout labels onto them, in
+`dart/lib/src/envelope_label_factory.dart` and
+`dart/lib/src/leader_line.dart` (§spec:scene-model). Depends on
+§road:typed-primitives.
+
+### Generated markers §road:generated-markers
+
+Generate the Marker's sphere mesh and its per-frame transform for a pixel
+diameter, in a new `dart/lib/src/marker.dart`
+(§spec:renderer-contract). Depends on §road:typed-primitives.
+
+### Reference screen geometry §road:reference-screen-geometry
+
+Record sample scenes with each primitive's expected screen position and
+pixel size as fixtures under `vectors/`, with the generating tool in
+`tools/` (§spec:renderer-contract, §spec:golden-vectors). Depends on
+§road:leader-vectors, §road:billboard-text-requests, and
+§road:generated-markers.
+
+### Renderer guide §road:renderer-guide
+
+Document what each primitive means to a renderer, the declared
+convention, and how to measure a frame against the reference fixtures,
+in `dart/README.md` and the root `README.md`
+(§spec:renderer-contract). Depends on §road:reference-screen-geometry.
+
+**Verify:** In `dart/`, run `dart test`, and confirm `grep -rn SceneObject
+lib/` finds nothing. Build the same box and coordinate frame under a
+Y-up and a Z-up convention, and confirm every output is one of the five
+primitives, each carrying its opacity and the app key passed in, and
+that mesh faces point outward in both. Place a marker at depths 10 and
+1000 and confirm its projected diameter matches its pixel diameter at
+both. Run the reference-geometry tool and confirm it reproduces the
+committed fixtures unchanged. Read the renderer guide and confirm it
+names every primitive with what a renderer shall do with it.
+
 ## Annotation primitives §road:annotation-primitives
 
-Closes §spec:annotation-primitives.
+Closes §spec:annotation-primitives. Every workstream here emits the
+typed primitives, so this section depends on §road:typed-primitives.
 
 ### Smart dimensions §road:smart-dimensions
 
@@ -57,5 +115,5 @@ Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
 
 ### Navigation cube §road:nav-cube
 
-Orientation indicator with click-to-snap views
-(§spec:navigation-cube).
+Passive orientation indicator whose Top face follows the declared up
+axis (§spec:navigation-cube). Depends on §road:coordinate-convention.
