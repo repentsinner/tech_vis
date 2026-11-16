@@ -21,27 +21,17 @@ Done when a merged `feat:` PR publishes both packages with no manual step.
 
 Closes §spec:golden-vectors and the layout half of §spec:python-package.
 
-### Python renderer contract §road:python-renderer-contract
-
-Port the typed primitives, the coordinate convention, the camera basis,
-`world_to_screen`, markers, and the box, frame, envelope, and callout
-factories, with the callout leader's line width (§spec:scene-model,
-§spec:coordinate-convention, §spec:renderer-contract), tested against
-`vectors/reference_screen_geometry.json`.
-
 ### Python overlay annotations §road:python-overlay-annotations
 
 Port the scale bar and the navigation cube (§spec:scale-bar,
 §spec:navigation-cube), tested against `vectors/scale_bar.json` and
-`vectors/navigation_cube.json`. Depends on
-§road:python-renderer-contract.
+`vectors/navigation_cube.json`.
 
 ### Python world annotations §road:python-world-annotations
 
 Port the ground plane and smart dimensions (§spec:ground-plane,
 §spec:smart-dimensions), tested against `vectors/ground_plane.json` and
-`vectors/smart_dimensions.json`. Depends on
-§road:python-renderer-contract.
+`vectors/smart_dimensions.json`.
 
 **Verify:** In `python/`, run `uv run pytest` and confirm every fixture
 family in `vectors/` has a passing Python test, with the same tolerance
