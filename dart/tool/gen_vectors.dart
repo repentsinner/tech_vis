@@ -871,6 +871,195 @@ Map<String, Object?> unitFormatsFixture() => {
   ],
 };
 
+typedef _ScaleBarCase = ({
+  String name,
+  CameraBasis camera,
+  vm.Vector3 target,
+  double verticalFovDegrees,
+  vm.Vector2 viewport,
+  UnitSystem worldUnits,
+  DisplayFormat format,
+  ViewportOverlayPlacement? placement,
+  double? previousStep,
+  NumberFormatting numbers,
+});
+
+final _scaleBarTarget = vm.Vector3(120, -40, 15);
+
+final _scaleBarViewport = vm.Vector2(1280, 720);
+
+/// A case whose camera sits [distance] from the target along an oblique
+/// direction of a Z-up scene, so the target's depth depends on every
+/// coordinate.
+_ScaleBarCase _scaleBarAt(
+  String name,
+  double distance, {
+  DisplayFormat format = DisplayFormat.metric,
+  UnitSystem worldUnits = UnitSystem.metric,
+  ViewportOverlayPlacement? placement,
+  double? previousStep,
+  NumberFormatting numbers = _defaultNumbers,
+  vm.Vector2? viewport,
+}) => (
+  name: name,
+  camera: CameraBasis.lookAt(
+    position: _scaleBarTarget + vm.Vector3(0.6, -0.48, 0.64) * distance,
+    target: _scaleBarTarget,
+    convention: _zUpRight,
+  ),
+  target: _scaleBarTarget,
+  verticalFovDegrees: 45,
+  viewport: viewport ?? _scaleBarViewport,
+  worldUnits: worldUnits,
+  format: format,
+  placement: placement,
+  previousStep: previousStep,
+  numbers: numbers,
+);
+
+List<_ScaleBarCase> _scaleBarCases() => [
+  for (final format in DisplayFormat.values)
+    for (final distance in [0.5, 40.0, 900.0, 25000.0, 4e6])
+      _scaleBarAt('${format.name}, $distance away', distance, format: format),
+  _scaleBarAt('inch world, metric format', 40, worldUnits: UnitSystem.imperial),
+  _scaleBarAt(
+    'inch world, fractional inch near its smallest step',
+    0.1,
+    worldUnits: UnitSystem.imperial,
+    format: DisplayFormat.fractionalInch,
+  ),
+  _scaleBarAt(
+    'fractional inch closer than its smallest step',
+    0.05,
+    worldUnits: UnitSystem.imperial,
+    format: DisplayFormat.fractionalInch,
+  ),
+  _scaleBarAt(
+    'top-right corner, custom offset and width',
+    900,
+    placement: const ViewportOverlayPlacement(
+      corner: ViewportCorner.topRight,
+      offsetXPixels: 24,
+      offsetYPixels: 10,
+      widthPixels: 240,
+      heightPixels: 40,
+    ),
+    viewport: vm.Vector2(390, 844),
+  ),
+  _scaleBarAt(
+    'comma, no leading zero',
+    0.5,
+    numbers: const NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+  // Distances either side of a step boundary, with and without a step
+  // carried from the previous frame.
+  for (final (distance, previous) in const [
+    (1130.0, null),
+    (1130.0, 100.0),
+    (1130.0, 200.0),
+    (1040.0, 200.0),
+    (1220.0, 100.0),
+    (1130.0, 150.0),
+  ])
+    _scaleBarAt(
+      'hysteresis, $distance away, previous step $previous',
+      distance,
+      previousStep: previous,
+    ),
+  (
+    name: 'target behind the camera',
+    camera: CameraBasis(
+      position: vm.Vector3(0, 0, 10),
+      forward: vm.Vector3(0, 0, -1),
+      right: vm.Vector3(1, 0, 0),
+      up: vm.Vector3(0, 1, 0),
+    ),
+    target: vm.Vector3(0, 0, 20),
+    verticalFovDegrees: 45,
+    viewport: _scaleBarViewport,
+    worldUnits: UnitSystem.metric,
+    format: DisplayFormat.metric,
+    placement: null,
+    previousStep: null,
+    numbers: _defaultNumbers,
+  ),
+];
+
+Map<String, Object?>? _scaleBarLayout(ScaleBarLayout? bar) => bar == null
+    ? null
+    : {
+        'rect': [bar.rect.left, bar.rect.top, bar.rect.right, bar.rect.bottom],
+        'step': bar.step,
+        'tickStep': bar.tickStep,
+        'startX': bar.startX,
+        'endX': bar.endX,
+        'baselineY': bar.baselineY,
+        'tickXs': bar.tickXs,
+        'label': {
+          'text': bar.label.text,
+          'heightPixels': bar.label.heightPixels,
+        },
+        'labelAnchor': _vector(bar.labelAnchor),
+      };
+
+/// The scale-bar fixture: the bar that a camera, viewport, and display
+/// format lay out at the camera target, under the style's default tick
+/// spacing, hysteresis, and label height.
+Map<String, Object?> scaleBarFixture() => {
+  'screenCoordinates':
+      'pixels from the top-left corner of the viewport, x right, y down',
+  'units':
+      "world lengths in worldUnits; step and tickStep in the format's "
+      'base unit: mm, or in for inch',
+  'ScaleBarLayout.atTarget': [
+    for (final c in _scaleBarCases())
+      {
+        'name': c.name,
+        'input': {
+          'camera': {
+            'position': _vector(c.camera.position),
+            'forward': _vector(c.camera.forward),
+            'right': _vector(c.camera.right),
+            'up': _vector(c.camera.up),
+          },
+          'target': _vector(c.target),
+          'verticalFovRadians': c.verticalFovDegrees * math.pi / 180,
+          'viewport': _vector(c.viewport),
+          'worldUnits': c.worldUnits.name,
+          'format': c.format.name,
+          'placement': _placement(
+            c.placement ??
+                ViewportOverlayPlacement.of(ViewportOverlayKind.scaleBar),
+          ),
+          'previousStep': c.previousStep,
+          'numbers': {
+            'decimalMarker': c.numbers.decimalMarker.name,
+            'showLeadingZero': c.numbers.showLeadingZero,
+          },
+          'minTickSpacingPixels': StyleTokens.scaleBarMinTickSpacingPixels,
+          'hysteresis': StyleTokens.scaleBarStepHysteresis,
+          'labelHeightPixels': StyleTokens.scaleBarLabelHeightPixels,
+        },
+        'output': _scaleBarLayout(
+          ScaleBarLayout.atTarget(
+            camera: c.camera,
+            target: c.target,
+            verticalFovRadians: c.verticalFovDegrees * math.pi / 180,
+            viewportSize: c.viewport,
+            worldUnits: c.worldUnits,
+            format: c.format,
+            placement: c.placement,
+            previousStep: c.previousStep,
+            numbers: c.numbers,
+          ),
+        ),
+      },
+  ],
+};
+
 /// Renders a fixture family under the header and style version every
 /// fixture file carries.
 String _render(Map<String, Object?> family) {
@@ -892,6 +1081,7 @@ void main(List<String> args) {
     'vectors/viewport_overlays.json': _render(viewportOverlaysFixture()),
     'vectors/unit_formats.json': _render(unitFormatsFixture()),
     'vectors/navigation_cube.json': _render(navigationCubeFixture()),
+    'vectors/scale_bar.json': _render(scaleBarFixture()),
   };
 
   final stale = [
