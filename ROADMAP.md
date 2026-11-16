@@ -31,27 +31,18 @@ Port the leader-line functions to Python. Test them against
 Closes §spec:scene-model, §spec:scene-color, §spec:coordinate-convention,
 and §spec:renderer-contract.
 
-### Typed primitives §road:typed-primitives
-
-Replace `SceneObject`, its containers, `SceneTheme`, `SceneColor`, and
-`SceneRendererBackend` with the Line, Quad, Billboard, Marker, and Mesh
-primitives, and return them from `BoundingBoxFactory`,
-`FilledRectangleFactory`, and `CoordinateFrameFactory`
-(§spec:scene-model, §spec:scene-color).
-
 ### Billboard text requests §road:billboard-text-requests
 
 Emit composed text as text requests that come back as sized Billboards,
 and move `EnvelopeLabelFactory` and callout labels onto them, in
 `dart/lib/src/envelope_label_factory.dart` and
-`dart/lib/src/leader_line.dart` (§spec:scene-model). Depends on
-§road:typed-primitives.
+`dart/lib/src/leader_line.dart` (§spec:scene-model).
 
 ### Generated markers §road:generated-markers
 
 Generate the Marker's sphere mesh and its per-frame transform for a pixel
 diameter, in a new `dart/lib/src/marker.dart`
-(§spec:renderer-contract). Depends on §road:typed-primitives.
+(§spec:renderer-contract).
 
 ### Reference screen geometry §road:reference-screen-geometry
 
@@ -81,7 +72,7 @@ names every primitive with what a renderer shall do with it.
 ## Annotation primitives §road:annotation-primitives
 
 Closes §spec:annotation-primitives. Every workstream here emits the
-typed primitives, so this section depends on §road:typed-primitives.
+typed primitives.
 
 ### Smart dimensions §road:smart-dimensions
 
