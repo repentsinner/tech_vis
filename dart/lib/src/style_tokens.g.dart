@@ -58,6 +58,55 @@ abstract final class StyleTokens {
   /// Callout opacity at the far distance. Unit: ratio.
   static const double calloutOpacityMin = 0.25;
 
+  /// Width of a dimension's witness, dimension, and arrowhead lines. Tied to
+  /// the callout leader width, so a referencing dimension's leader matches
+  /// its dimension line. Unit: px.
+  static const double dimensionLineWidth = calloutLeaderLineWidth;
+
+  /// Gap between a measured point and the start of its witness line under ISO
+  /// 129. Unit: px.
+  static const double dimensionWitnessGapIsoPixels = 2.0;
+
+  /// Gap between a measured point and the start of its witness line under
+  /// ASME Y14.5. Unit: px.
+  static const double dimensionWitnessGapAsmePixels = 4.0;
+
+  /// Length a witness line runs past the dimension line. Unit: px.
+  static const double dimensionWitnessExtensionPixels = 6.0;
+
+  /// Distance from the measured points to the dimension line, along the
+  /// witness lines. Unit: px.
+  static const double dimensionOffsetPixels = 24.0;
+
+  /// Length of a dimension arrowhead, from its tip along the dimension line.
+  /// Unit: px.
+  static const double dimensionArrowLengthPixels = 10.0;
+
+  /// Width of a dimension arrowhead across its two barbs. Unit: px.
+  static const double dimensionArrowWidthPixels = 4.0;
+
+  /// Pixel height of a dimension's value text. Unit: px.
+  static const double dimensionTextPixelSize = 14.0;
+
+  /// Gap between a dimension's text and its dimension line: below oriented
+  /// text, and either side of inlined text in the line's break. Unit: px.
+  static const double dimensionTextGapPixels = 4.0;
+
+  /// Largest offset along any other axis, as a fraction of the distance
+  /// between the points, at which a dimension still measures one axis. Unit:
+  /// ratio.
+  static const double dimensionAlignmentTolerance = 0.001;
+
+  /// Radius of an angular dimension's arc, from its vertex. Unit: px.
+  static const double dimensionArcRadiusPixels = 64.0;
+
+  /// Longest segment of an angular dimension's arc, measured along the arc at
+  /// the vertex's depth. Sets how many lines draw the arc. Unit: px.
+  static const double dimensionArcSegmentPixels = 4.0;
+
+  /// Step an angular dimension's value rounds to. Unit: deg.
+  static const double dimensionAngleResolutionDegrees = 0.1;
+
   /// Default marker diameter in screen-space logical pixels. Unit: px.
   static const double markerDiameterPixels = 8.0;
 
@@ -84,6 +133,18 @@ abstract final class StyleTokens {
   /// Default height of the scale bar overlay. Unit: px.
   static const double scaleBarHeightPixels = 32.0;
 
+  /// Least distance between adjacent scale bar ticks. The bar subdivides into
+  /// the most clean parts that keep its ticks this far apart. Unit: px.
+  static const double scaleBarMinTickSpacingPixels = 16.0;
+
+  /// Fraction of the scale bar's maximum length that a longer step must clear
+  /// before the bar adopts it, so the value does not flicker at a step
+  /// boundary. Unit: ratio.
+  static const double scaleBarStepHysteresis = 0.1;
+
+  /// Pixel height of the scale bar's value label. Unit: px.
+  static const double scaleBarLabelHeightPixels = 12.0;
+
   /// Default viewport corner of the color ramp legend overlay. Bottom-right,
   /// clear of the scale bar and the navigation cube. Codes: 0 top-left, 1
   /// top-right, 2 bottom-left, 3 bottom-right. Unit: corner.
@@ -102,6 +163,21 @@ abstract final class StyleTokens {
 
   /// Default height of the color ramp legend overlay. Unit: px.
   static const double colorRampLegendHeightPixels = 200.0;
+
+  /// Thickness of the color ramp legend's gradient bar, across its length.
+  /// The bar sits on the overlay rectangle's edge nearer its corner. Unit:
+  /// px.
+  static const double colorRampLegendBarThicknessPixels = 12.0;
+
+  /// Least distance between adjacent automatic ticks along the color ramp
+  /// legend's bar. Unit: px.
+  static const double colorRampLegendMinTickSpacingPixels = 32.0;
+
+  /// Gap between the color ramp legend's bar and its tick labels. Unit: px.
+  static const double colorRampLegendLabelGapPixels = 4.0;
+
+  /// Text height of the color ramp legend's tick labels. Unit: px.
+  static const double colorRampLegendLabelHeightPixels = 12.0;
 
   /// Default viewport corner of the navigation cube overlay. Top-right, where
   /// CAD tools place their view cube. Codes: 0 top-left, 1 top-right, 2
@@ -122,6 +198,34 @@ abstract final class StyleTokens {
   /// Default height of the navigation cube overlay. Unit: px.
   static const double navigationCubeHeightPixels = 96.0;
 
+  /// Smallest screen distance between neighboring minor ground-grid lines,
+  /// measured at the camera target. Unit: px.
+  static const double groundGridMinLineSpacingPixels = 12.0;
+
+  /// Fraction by which the minor line spacing passes a step boundary before
+  /// the ground grid changes step, and passes back before it changes back.
+  /// Unit: ratio.
+  static const double groundGridStepMargin = 0.15;
+
+  /// Most ground-grid lines across the patch in each direction. A finer minor
+  /// step coarsens until the lines fit. Unit: count.
+  static const double groundGridMaxLinesPerAxis = 101.0;
+
+  /// Segments each ground-grid line splits into, each with its own opacity,
+  /// so the line fades toward the patch edge. Unit: count.
+  static const double groundGridFadeSegments = 16.0;
+
+  /// Width of a minor ground-grid line in screen-space logical pixels. Unit:
+  /// px.
+  static const double groundGridMinorLineWidth = 0.5;
+
+  /// Width of a major ground-grid line in screen-space logical pixels. Unit:
+  /// px.
+  static const double groundGridMajorLineWidth = 1.0;
+
+  /// Pixel height of a ground-grid coordinate label. Unit: px.
+  static const double groundGridLabelPixelSize = 12.0;
+
   /// Every token by its name in style/tokens.json.
   static const Map<String, double> all = {
     'axisLength': axisLength,
@@ -140,6 +244,19 @@ abstract final class StyleTokens {
     'calloutOpacityFarDistance': calloutOpacityFarDistance,
     'calloutOpacityMax': calloutOpacityMax,
     'calloutOpacityMin': calloutOpacityMin,
+    'dimensionLineWidth': dimensionLineWidth,
+    'dimensionWitnessGapIsoPixels': dimensionWitnessGapIsoPixels,
+    'dimensionWitnessGapAsmePixels': dimensionWitnessGapAsmePixels,
+    'dimensionWitnessExtensionPixels': dimensionWitnessExtensionPixels,
+    'dimensionOffsetPixels': dimensionOffsetPixels,
+    'dimensionArrowLengthPixels': dimensionArrowLengthPixels,
+    'dimensionArrowWidthPixels': dimensionArrowWidthPixels,
+    'dimensionTextPixelSize': dimensionTextPixelSize,
+    'dimensionTextGapPixels': dimensionTextGapPixels,
+    'dimensionAlignmentTolerance': dimensionAlignmentTolerance,
+    'dimensionArcRadiusPixels': dimensionArcRadiusPixels,
+    'dimensionArcSegmentPixels': dimensionArcSegmentPixels,
+    'dimensionAngleResolutionDegrees': dimensionAngleResolutionDegrees,
     'markerDiameterPixels': markerDiameterPixels,
     'markerSubdivisions': markerSubdivisions,
     'scaleBarCorner': scaleBarCorner,
@@ -147,15 +264,29 @@ abstract final class StyleTokens {
     'scaleBarOffsetYPixels': scaleBarOffsetYPixels,
     'scaleBarWidthPixels': scaleBarWidthPixels,
     'scaleBarHeightPixels': scaleBarHeightPixels,
+    'scaleBarMinTickSpacingPixels': scaleBarMinTickSpacingPixels,
+    'scaleBarStepHysteresis': scaleBarStepHysteresis,
+    'scaleBarLabelHeightPixels': scaleBarLabelHeightPixels,
     'colorRampLegendCorner': colorRampLegendCorner,
     'colorRampLegendOffsetXPixels': colorRampLegendOffsetXPixels,
     'colorRampLegendOffsetYPixels': colorRampLegendOffsetYPixels,
     'colorRampLegendWidthPixels': colorRampLegendWidthPixels,
     'colorRampLegendHeightPixels': colorRampLegendHeightPixels,
+    'colorRampLegendBarThicknessPixels': colorRampLegendBarThicknessPixels,
+    'colorRampLegendMinTickSpacingPixels': colorRampLegendMinTickSpacingPixels,
+    'colorRampLegendLabelGapPixels': colorRampLegendLabelGapPixels,
+    'colorRampLegendLabelHeightPixels': colorRampLegendLabelHeightPixels,
     'navigationCubeCorner': navigationCubeCorner,
     'navigationCubeOffsetXPixels': navigationCubeOffsetXPixels,
     'navigationCubeOffsetYPixels': navigationCubeOffsetYPixels,
     'navigationCubeWidthPixels': navigationCubeWidthPixels,
     'navigationCubeHeightPixels': navigationCubeHeightPixels,
+    'groundGridMinLineSpacingPixels': groundGridMinLineSpacingPixels,
+    'groundGridStepMargin': groundGridStepMargin,
+    'groundGridMaxLinesPerAxis': groundGridMaxLinesPerAxis,
+    'groundGridFadeSegments': groundGridFadeSegments,
+    'groundGridMinorLineWidth': groundGridMinorLineWidth,
+    'groundGridMajorLineWidth': groundGridMajorLineWidth,
+    'groundGridLabelPixelSize': groundGridLabelPixelSize,
   };
 }

@@ -84,15 +84,44 @@ void main() {
               .formatLabels(
                 jsonNumbers(input['values']),
                 step: step == null ? null : jsonNumber(step),
-                numbers: NumberFormatting(
-                  decimalMarker: DecimalMarker.values.byName(
-                    numbers['decimalMarker'] as String,
-                  ),
-                  showLeadingZero: numbers['showLeadingZero'] as bool,
-                ),
+                numbers: jsonNumberFormatting(numbers),
               ),
           (c['output'] as Json)['labels'],
           reason: c['name'] as String,
+        );
+      }
+    });
+
+    test('formatNumberLabel', () {
+      final cases = jsonList(fixture['formatNumberLabel']);
+      expect(cases, isNotEmpty);
+      for (final c in cases) {
+        final input = c['input'] as Json;
+        expect(
+          formatNumberLabel(
+            jsonNumber(input['value']),
+            step: jsonNumber(input['step']),
+            numbers: jsonNumberFormatting(input['numbers']),
+          ),
+          (c['output'] as Json)['label'],
+          reason: '${input['value']} at ${input['step']}',
+        );
+      }
+    });
+
+    test('formatDegreesLabel', () {
+      final cases = jsonList(fixture['formatDegreesLabel']);
+      expect(cases, isNotEmpty);
+      for (final c in cases) {
+        final input = c['input'] as Json;
+        expect(
+          formatDegreesLabel(
+            jsonNumber(input['degrees']),
+            step: jsonNumber(input['step']),
+            numbers: jsonNumberFormatting(input['numbers']),
+          ),
+          (c['output'] as Json)['label'],
+          reason: '${input['degrees']} at ${input['step']}',
         );
       }
     });
