@@ -2,11 +2,33 @@
 
 from tech_vis import tokens
 from tech_vis._vec import Vector2, Vector3
+from tech_vis.bounding_box import BoundingBox, create_bounding_box
 from tech_vis.coordinate_convention import (
     CoordinateConvention,
     Handedness,
     SignedAxis,
     SpatialAxis,
+)
+from tech_vis.coordinate_frame import (
+    AxisLineDescriptor,
+    CoordinateFrameDescriptor,
+    create_coordinate_frame,
+)
+from tech_vis.envelope_label import (
+    ENVELOPE_LABEL_OFFSET_PIXELS,
+    ENVELOPE_LABEL_PIXEL_SIZE,
+    LabelAlignment,
+    LabelCorner,
+    LabelEdge,
+    create_coplanar_billboard_label,
+    create_edge_tab_label,
+    create_envelope_label,
+)
+from tech_vis.filled_rectangle import (
+    RectanglePlane,
+    create_filled_rectangle,
+    create_rectangle_outline,
+    rectangle_corners,
 )
 from tech_vis.leader_line import (
     CalloutLeaderGeometry,
@@ -15,6 +37,28 @@ from tech_vis.leader_line import (
     callout_anchor_alignment,
     compute_callout_leader_geometry,
     compute_callout_opacity,
+)
+from tech_vis.marker import (
+    Matrix4,
+    create_marker,
+    marker_sphere_mesh,
+    marker_transform,
+)
+from tech_vis.primitives import (
+    BillboardContent,
+    BillboardOrientation,
+    BillboardPrimitive,
+    CoplanarOrientation,
+    LinePrimitive,
+    MarkerPrimitive,
+    MeshPrimitive,
+    Primitive,
+    QuadPrimitive,
+    ScreenOffset,
+    TextRequest,
+    TextResolver,
+    TriangleMesh,
+    ViewerFacingOrientation,
 )
 from tech_vis.screen_space import (
     CameraBasis,
@@ -37,20 +81,44 @@ from tech_vis.viewport_overlay import (
 )
 
 __all__ = [
+    "ENVELOPE_LABEL_OFFSET_PIXELS",
+    "ENVELOPE_LABEL_PIXEL_SIZE",
+    "AxisLineDescriptor",
+    "BillboardContent",
+    "BillboardOrientation",
+    "BillboardPrimitive",
+    "BoundingBox",
     "CalloutLeaderGeometry",
     "CalloutQuadrant",
     "CameraBasis",
     "CoordinateConvention",
+    "CoordinateFrameDescriptor",
+    "CoplanarOrientation",
     "DecimalMarker",
     "DisplayFormat",
     "Handedness",
+    "LabelAlignment",
+    "LabelCorner",
+    "LabelEdge",
     "LeaderLineStyle",
+    "LinePrimitive",
+    "MarkerPrimitive",
+    "Matrix4",
+    "MeshPrimitive",
     "NumberFormatting",
+    "Primitive",
+    "QuadPrimitive",
+    "RectanglePlane",
+    "ScreenOffset",
     "SignedAxis",
     "SpatialAxis",
+    "TextRequest",
+    "TextResolver",
+    "TriangleMesh",
     "UnitSystem",
     "Vector2",
     "Vector3",
+    "ViewerFacingOrientation",
     "ViewportCorner",
     "ViewportOverlayKind",
     "ViewportOverlayPlacement",
@@ -59,7 +127,18 @@ __all__ = [
     "callout_anchor_alignment",
     "compute_callout_leader_geometry",
     "compute_callout_opacity",
+    "create_bounding_box",
+    "create_coordinate_frame",
+    "create_coplanar_billboard_label",
+    "create_edge_tab_label",
+    "create_envelope_label",
+    "create_filled_rectangle",
+    "create_marker",
+    "create_rectangle_outline",
+    "marker_sphere_mesh",
+    "marker_transform",
     "project_onto_screen_plane",
+    "rectangle_corners",
     "tokens",
     "world_to_screen",
     "world_units_per_pixel_at",
