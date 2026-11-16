@@ -10,9 +10,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from tech_vis import tokens
-
-type Vector2 = tuple[float, float]
-type Vector3 = tuple[float, float, float]
+from tech_vis._vec import Vector2, Vector3, along, scale
 
 
 class CalloutQuadrant(StrEnum):
@@ -73,18 +71,6 @@ _LEFT_EDGE_MIDDLE: Vector2 = (0.0, 0.5)
 _RIGHT_EDGE_MIDDLE: Vector2 = (1.0, 0.5)
 
 
-def _scale(v: Vector3, k: float) -> Vector3:
-    return (v[0] * k, v[1] * k, v[2] * k)
-
-
-def _along(origin: Vector3, direction: Vector3, distance: float) -> Vector3:
-    return (
-        origin[0] + direction[0] * distance,
-        origin[1] + direction[1] * distance,
-        origin[2] + direction[2] * distance,
-    )
-
-
 def compute_callout_leader_geometry(
     *,
     anchor: Vector3,
@@ -105,12 +91,12 @@ def compute_callout_leader_geometry(
     right_scale = math.cos(angle) * h_sign
     up_scale = math.sin(angle) * v_sign
 
-    angled = _along(_scale(camera_right, right_scale), camera_up, up_scale)
-    horizontal = _scale(camera_right, h_sign)
+    angled = along(scale(camera_right, right_scale), camera_up, up_scale)
+    horizontal = scale(camera_right, h_sign)
 
-    gap_end = _along(anchor, angled, style.gap_pixels * world_units_per_pixel)
-    elbow = _along(gap_end, angled, style.angled_length_pixels * world_units_per_pixel)
-    label_edge = _along(
+    gap_end = along(anchor, angled, style.gap_pixels * world_units_per_pixel)
+    elbow = along(gap_end, angled, style.angled_length_pixels * world_units_per_pixel)
+    label_edge = along(
         elbow, horizontal, style.horizontal_length_pixels * world_units_per_pixel
     )
     return CalloutLeaderGeometry(gap_end=gap_end, elbow=elbow, label_edge=label_edge)
