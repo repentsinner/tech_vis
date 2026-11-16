@@ -43,7 +43,7 @@ List<Primitive> _angular(
   vm.Vector3 first,
   vm.Vector3 second, {
   vm.Vector3? vertex,
-  DraftingConvention convention = DraftingConvention.isoOriented,
+  DraftingConvention drafting = DraftingConvention.isoOriented,
   CameraBasis? camera,
   NumberFormatting numbers = const NumberFormatting(),
   DimensionStyle style = const DimensionStyle(),
@@ -53,7 +53,7 @@ List<Primitive> _angular(
   vertex: vertex ?? vm.Vector3.zero(),
   first: first,
   second: second,
-  convention: convention,
+  drafting: drafting,
   camera: camera ?? _topView,
   verticalFovRadians: _fovRadians,
   viewportSize: _viewport,
@@ -161,7 +161,7 @@ void main() {
           _angular(
             _x * 100,
             c.second * 100,
-            convention: DraftingConvention.isoReferencing,
+            drafting: DraftingConvention.isoReferencing,
           ),
           radius,
         );
@@ -190,7 +190,7 @@ void main() {
       final primitives = _angular(
         _x * 100,
         _y * 100,
-        convention: DraftingConvention.asmeInlined,
+        drafting: DraftingConvention.asmeInlined,
       );
       final arc = _arc(primitives, radius);
       final label = billboardsOf(primitives).single;
@@ -232,7 +232,7 @@ void main() {
         _angular(
           _x * leg,
           _y * 100,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
         ),
       );
       final witness = lines.first;
@@ -250,7 +250,7 @@ void main() {
       final primitives = _angular(
         _x * 100,
         _y * 100,
-        convention: DraftingConvention.isoReferencing,
+        drafting: DraftingConvention.isoReferencing,
       );
       final arc = _arc(primitives, radius);
       expect(identical(linesOf(primitives).first, arc.first), isTrue);
@@ -262,7 +262,7 @@ void main() {
         _angular(
           _x * leg,
           _y * 100,
-          convention: DraftingConvention.asmeReferencing,
+          drafting: DraftingConvention.asmeReferencing,
         ),
       ).first;
       final gap = StyleTokens.dimensionWitnessGapAsmePixels * _pixel;
@@ -275,7 +275,7 @@ void main() {
       final primitives = _angular(
         _x * 100,
         _y * 100,
-        convention: DraftingConvention.isoReferencing,
+        drafting: DraftingConvention.isoReferencing,
       );
       final lines = linesOf(primitives);
       final arcCount = _arc(primitives, radius).length;
@@ -324,7 +324,7 @@ void main() {
     ];
     for (final convention in referencing) {
       test('${convention.name} leads the text off the arc midpoint', () {
-        final primitives = _angular(_x * 100, _y * 100, convention: convention);
+        final primitives = _angular(_x * 100, _y * 100, drafting: convention);
         final label = billboardsOf(primitives).single;
         final lines = linesOf(primitives);
         final leader = lines.sublist(lines.length - 2);
@@ -346,7 +346,7 @@ void main() {
         final primitives = _angular(
           _x * 100,
           _at(5) * 100,
-          convention: convention,
+          drafting: convention,
         );
         final lines = linesOf(primitives);
         final arc = _arc(primitives, radius);
@@ -402,7 +402,7 @@ void main() {
           measure: c.measure,
           format: c.format,
           worldUnits: c.worldUnits,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
         );
         expect(textsOf(primitives), [c.text]);
         final lines = linesOf(primitives);
@@ -428,7 +428,7 @@ void main() {
         _radial(
           50,
           direction: vm.Vector3(0, -1, 5),
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
         ),
       ).first;
       expectVector3(line.end, _y * -50, 'rim');
@@ -440,17 +440,14 @@ void main() {
         _radial(
           50,
           normal: normal,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
         ),
       ).first;
       expectVector3(line.end, vm.Vector3(1, -1, 0).normalized() * 50, 'rim');
     });
 
     test('an inlined line breaks around its midpoint for the text', () {
-      final primitives = _radial(
-        50,
-        convention: DraftingConvention.asmeInlined,
-      );
+      final primitives = _radial(50, drafting: DraftingConvention.asmeInlined);
       final lines = linesOf(primitives);
       final label = billboardsOf(primitives).single;
       final middle = rim / 2;
@@ -479,7 +476,7 @@ void main() {
       test(
         '${convention.name} falls back to referencing on a small circle',
         () {
-          final primitives = _radial(5, convention: convention);
+          final primitives = _radial(5, drafting: convention);
           // Line, two barbs, two leader lines.
           expect(linesOf(primitives), hasLength(5));
           expect(
@@ -527,7 +524,7 @@ List<Primitive> _radial(
   vm.Vector3? center,
   vm.Vector3? normal,
   RadialMeasure measure = RadialMeasure.radius,
-  DraftingConvention convention = DraftingConvention.isoOriented,
+  DraftingConvention drafting = DraftingConvention.isoOriented,
   DisplayFormat format = DisplayFormat.metric,
   UnitSystem worldUnits = UnitSystem.metric,
   vm.Vector3? direction,
@@ -538,7 +535,7 @@ List<Primitive> _radial(
   radius: radius,
   normal: normal ?? _z,
   measure: measure,
-  convention: convention,
+  drafting: drafting,
   format: format,
   worldUnits: worldUnits,
   camera: _topView,

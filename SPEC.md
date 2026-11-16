@@ -996,9 +996,20 @@ legend handles layout, ticks, and labels, and formats them through
 Orientation (horizontal or vertical), tick intervals, and unit-labeled
 endpoints are configurable.
 
-*Open*: how the gradient itself reaches the renderer is undecided. The
-choice is between color stops that the renderer interpolates and
-pre-sampled solid bands.
+- The gradient reaches the renderer as ordered color stops: each stop
+  has a position from 0 to 1 along the bar and the app's key. The app
+  resolves each key to a color and interpolates between neighboring
+  stops, in the color space its renderer needs.
+- The legend describes the bar's rectangle in viewport pixels, its
+  stops, and its ticks, each tick with a position along the bar and a
+  label request. The labels form one set in the display format.
+
+*Why stops by key*: the package holds no color and converts none
+(§spec:scene-color), so a stop names the app's color by key, as every
+primitive does. Interpolating in the renderer lets each app blend in
+the space it draws in. Pre-sampled bands were rejected: they fix the
+band count in the package and still need a color per band from the
+app.
 
 *Why an app-provided color map*: the legend is a display primitive,
 not a data interpreter. Keeping the scalar-to-color mapping outside lets
@@ -1029,8 +1040,9 @@ respond to input (§req:priorities).
 - It returns only the faces turned toward the viewer, least direct
   first, each as four pixel corners in label order (bottom-left,
   bottom-right, top-right, top-left) and the cosine it faces the viewer
-  by. Facings within 1e-9 tie, and ties keep face order. The app draws
-  each label onto its face with an affine map.
+  by. Faces whose facings lie within 1e-9 of the least direct face of
+  their group tie, and ties keep face order. The app draws each label
+  onto its face with an affine map.
 - `vectors/navigation_cube.json` pins face frames and visible faces in
   Y-up and Z-up, both handednesses, and an app-named front
   (§spec:golden-vectors).
@@ -1074,9 +1086,15 @@ the work splits between app and package is an open question
 *Status: in progress*
 
 Pure Python, no runtime dependencies (§req:constraints). It provides
-the style tokens and, in time, every layout function and annotation
-primitive the Dart package provides (§req:user-stories).
+the style tokens, the typed primitives of §spec:scene-model with the
+factories and screen-space math of §spec:renderer-contract, the scale bar
+and navigation cube of §spec:viewport-overlays, the ground plane of
+§spec:ground-plane, the smart dimensions of §spec:smart-dimensions, and,
+in time, every layout function and annotation primitive the Dart package
+provides (§req:user-stories).
 
+- Points cross the API as plain tuples of floats. Mesh buffers are
+  read-only 32-bit memoryviews, matching the Dart package's buffers.
 - A Python function may trail its Dart counterpart by any number of
   releases. Where both exist, they agree on every fixture of
   §spec:golden-vectors.
@@ -1086,6 +1104,11 @@ primitive the Dart package provides (§req:user-stories).
 *Why let Python trail*: the first applications are Dart apps, and the
 primitives they need first should not wait on a second port
 (§req:priorities). The fixtures keep a late port honest.
+
+*Why tuples*: a vector library would be a runtime dependency
+(§req:constraints). A tuple of floats passes unchanged into whatever
+numeric library a caller already uses. A small vector class was rejected
+because callers would convert it at every boundary.
 
 ## Versioning and release §spec:release
 

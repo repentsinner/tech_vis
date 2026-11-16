@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from conftest import load_vectors
+from conftest import JSON_CORNERS, TOLERANCE, json_placement, load_vectors
 from tech_vis import (
     ViewportCorner,
     ViewportOverlayKind,
@@ -12,25 +12,7 @@ from tech_vis import (
     ViewportRect,
 )
 
-TOLERANCE = 1e-9
 VECTORS = "viewport_overlays.json"
-
-_CORNERS = {
-    "topLeft": ViewportCorner.TOP_LEFT,
-    "topRight": ViewportCorner.TOP_RIGHT,
-    "bottomLeft": ViewportCorner.BOTTOM_LEFT,
-    "bottomRight": ViewportCorner.BOTTOM_RIGHT,
-}
-
-
-def _placement(p: dict) -> ViewportOverlayPlacement:
-    return ViewportOverlayPlacement(
-        corner=_CORNERS[p["corner"]],
-        offset_x_pixels=p["offsetXPixels"],
-        offset_y_pixels=p["offsetYPixels"],
-        width_pixels=p["widthPixels"],
-        height_pixels=p["heightPixels"],
-    )
 
 
 @pytest.mark.parametrize(
@@ -38,7 +20,7 @@ def _placement(p: dict) -> ViewportOverlayPlacement:
     [(0.0, "topLeft"), (1.0, "topRight"), (2.0, "bottomLeft"), (3.0, "bottomRight")],
 )
 def test_from_token_maps_codes(code, corner):
-    assert ViewportCorner.from_token(code) is _CORNERS[corner]
+    assert ViewportCorner.from_token(code) is JSON_CORNERS[corner]
 
 
 @pytest.mark.parametrize("code", [-1.0, 4.0, 0.5, math.nan, math.inf])
@@ -77,13 +59,13 @@ def test_of_replaces_only_the_given_values():
 def test_vectors_of():
     for case in load_vectors(VECTORS)["ViewportOverlayPlacement.of"]:
         kind = ViewportOverlayKind(case["input"]["kind"])
-        want = _placement(case["output"])
+        want = json_placement(case["output"])
         assert ViewportOverlayPlacement.of(kind) == want, case["name"]
 
 
 def test_vectors_rect():
     for case in load_vectors(VECTORS)["ViewportOverlayPlacement.rect"]:
-        placement = _placement(case["input"]["placement"])
+        placement = json_placement(case["input"]["placement"])
         got = placement.rect(tuple(case["input"]["viewport"]))
         assert isinstance(got, ViewportRect)
         want = case["output"]["rect"]

@@ -5,9 +5,14 @@ from collections.abc import Callable
 
 import pytest
 
-from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, UnitSystem
-
-TOLERANCE = 1e-9
+from conftest import TOLERANCE
+from tech_vis import (
+    DecimalMarker,
+    DisplayFormat,
+    NumberFormatting,
+    UnitSystem,
+    format_degrees_label,
+)
 
 METRIC = DisplayFormat.METRIC
 DECIMAL_INCH = DisplayFormat.DECIMAL_INCH
@@ -491,3 +496,38 @@ def test_format_labels_returns_no_labels_for_no_values(
     display_format: DisplayFormat,
 ) -> None:
     assert display_format.format_labels([]) == []
+
+
+@pytest.mark.parametrize(
+    ("degrees", "step", "numbers", "label"),
+    [
+        (45.0, 0.1, NumberFormatting(), "45°"),
+        (30.04, 0.1, NumberFormatting(), "30°"),
+        (30.06, 0.1, NumberFormatting(), "30.1°"),
+        (12.345, 0.01, NumberFormatting(), "12.35°"),
+        (89.6, 1.0, NumberFormatting(), "90°"),
+        (179.96, 0.1, NumberFormatting(), "180°"),
+        (0.25, 0.05, NO_LEADING_ZERO, ".25°"),
+        (0.5, 0.1, COMMA, "0,5°"),
+        (22.5, 0.1, COMMA, "22,5°"),
+    ],
+)
+def test_format_degrees_label(
+    degrees: float, step: float, numbers: NumberFormatting, label: str
+) -> None:
+    assert format_degrees_label(degrees, step=step, numbers=numbers) == label
+
+
+def test_format_degrees_label_rounds_ties_away_from_zero() -> None:
+    # Dart's roundToDouble rounds a tie away from zero; Python's round() would
+    # write 2° and -2°.
+    assert format_degrees_label(2.5, step=1.0) == "3°"
+    assert format_degrees_label(-2.5, step=1.0) == "-3°"
+
+
+@pytest.mark.parametrize("step", NOT_POSITIVE_AND_FINITE)
+def test_format_degrees_label_rejects_a_step_not_positive_and_finite(
+    step: float,
+) -> None:
+    with pytest.raises(ValueError):
+        format_degrees_label(1.0, step=step)
