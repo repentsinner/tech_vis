@@ -6,13 +6,9 @@ import 'style_tokens.g.dart';
 import 'unit_system.dart';
 import 'viewport_overlay.dart';
 
-/// Relative slack when comparing steps, so a step computed one way still
-/// matches the same step computed another.
-const _relativeSlack = 1e-9;
-
-/// Factor below a step that reaches only steps strictly shorter than it,
-/// well clear of the step queries' own slack.
-const _belowStep = 1 - 1e-6;
+/// Relative slack when testing whether a step divides another into whole
+/// parts, since a ratio such as 0.5 / 0.1 lands off a whole number.
+const _ratioSlack = 1e-9;
 
 /// A scale bar described in viewport pixels, for the app to draw in its 2D
 /// layer above the scene.
@@ -46,7 +42,8 @@ final class ScaleBarLayout {
   /// keep the value from flickering at a step boundary: the bar keeps that
   /// step while it fits, and adopts a longer step only once the longer
   /// step fits within the width less a [hysteresis] fraction of it. A
-  /// [previousStep] that is not a step of [format] is ignored.
+  /// [previousStep] that is not a step of [format], including one that is
+  /// not positive, is ignored.
   ///
   /// The bar subdivides into the most equal parts, each itself a scale-bar
   /// step of [format], whose ticks stay at least [minTickSpacingPixels]
@@ -56,8 +53,7 @@ final class ScaleBarLayout {
   /// Returns null when [target] is on or behind the camera plane, or when
   /// even the shortest step of [format] is longer than the width. Throws
   /// an [ArgumentError] when [minTickSpacingPixels] is not positive, or
-  /// when [hysteresis] is not in [0, 1), or when [previousStep] is not
-  /// positive.
+  /// when [hysteresis] is not in [0, 1).
   static ScaleBarLayout? atTarget({
     required CameraBasis camera,
     required vm.Vector3 target,
@@ -105,9 +101,8 @@ final class ScaleBarLayout {
     final fitting = format.scaleBarStepAtMost(maxLength);
     if (fitting == null) return null;
 
-    final step = _keepsPrevious(format, previousStep, maxLength, hysteresis)
-        ? previousStep!
-        : fitting;
+    final step =
+        _kept(format, previousStep, fitting, maxLength, hysteresis) ?? fitting;
     final tickStep = _tickStep(
       format,
       step,
@@ -165,23 +160,25 @@ final class ScaleBarLayout {
   final vm.Vector2 labelAnchor;
 }
 
-/// Whether the bar keeps [previous]: it is a step of [format], it fits
-/// within [maxLength], and no longer step fits with the [hysteresis]
-/// margin to spare.
-bool _keepsPrevious(
+/// The step the bar keeps from [previous], or null when it moves to
+/// [fitting], the longest step that fits within [maxLength].
+///
+/// The bar keeps [previous] when it is a step of [format] that still fits
+/// and no longer step fits with the [hysteresis] margin to spare. Every
+/// comparison is between steps of [format], which the step queries return
+/// exactly, so none needs slack.
+double? _kept(
   DisplayFormat format,
   double? previous,
+  double fitting,
   double maxLength,
   double hysteresis,
 ) {
-  if (previous == null) return false;
-  final asStep = format.scaleBarStepAtMost(previous);
-  if (asStep == null || (asStep - previous).abs() > previous * _relativeSlack) {
-    return false;
-  }
-  if (previous > maxLength * (1 + _relativeSlack)) return false;
+  if (previous == null || !format.isScaleBarStep(previous)) return null;
+  final step = format.scaleBarStepAtMost(previous)!;
+  if (step > fitting) return null;
   final clearing = format.scaleBarStepAtMost(maxLength * (1 - hysteresis));
-  return clearing == null || clearing <= previous * (1 + _relativeSlack);
+  return clearing == null || clearing <= step ? step : null;
 }
 
 /// The shortest scale-bar step of [format] that divides [step] into whole
@@ -189,12 +186,12 @@ bool _keepsPrevious(
 double _tickStep(DisplayFormat format, double step, double minSpacing) {
   var best = step;
   for (
-    var part = format.scaleBarStepAtMost(step * _belowStep);
+    var part = format.scaleBarStepBelow(step);
     part != null && part >= minSpacing;
-    part = format.scaleBarStepAtMost(part * _belowStep)
+    part = format.scaleBarStepBelow(part)
   ) {
     final ratio = step / part;
-    if ((ratio - ratio.roundToDouble()).abs() <= ratio * _relativeSlack) {
+    if ((ratio - ratio.roundToDouble()).abs() <= ratio * _ratioSlack) {
       best = part;
     }
   }

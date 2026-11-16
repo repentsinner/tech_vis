@@ -186,6 +186,58 @@ void main() {
       ], (format, length) => format.gridStepAbove(length));
     });
 
+    test('scaleBarStepBelow returns the next shorter scale-bar step', () {
+      _expectSteps([
+        for (final format in [_metric, _decimalInch]) ...[
+          (format: format, length: 10, step: 5),
+          (format: format, length: 5, step: 2),
+          (format: format, length: 2, step: 1),
+          (format: format, length: 1, step: 0.5),
+          (format: format, length: 7, step: 5),
+        ],
+        (format: _fractionalInch, length: 1 / 64, step: null),
+        (format: _fractionalInch, length: 1 / 32, step: 1 / 64),
+        (format: _fractionalInch, length: 1, step: 0.5),
+        (format: _fractionalInch, length: 6, step: 1),
+        (format: _fractionalInch, length: 12, step: 6),
+        (format: _fractionalInch, length: 24, step: 12),
+        (format: _fractionalInch, length: 60, step: 24),
+      ], (format, length) => format.scaleBarStepBelow(length));
+    });
+
+    test('isScaleBarStep accepts exactly the scale-bar steps', () {
+      final cases = <(DisplayFormat, double, bool)>[
+        for (final format in [_metric, _decimalInch]) ...[
+          (format, 5, true),
+          (format, 0.2, true),
+          (format, 0.1 + 0.2, false),
+          (format, 3, false),
+          (format, 2000, true),
+        ],
+        (_fractionalInch, 1 / 64, true),
+        (_fractionalInch, 1 / 128, false),
+        (_fractionalInch, 0.375, false),
+        (_fractionalInch, 6, true),
+        (_fractionalInch, 60, true),
+        (_fractionalInch, 36, false),
+      ];
+      for (final (format, length, expected) in cases) {
+        expect(
+          format.isScaleBarStep(length),
+          expected,
+          reason: '${format.name} at $length',
+        );
+      }
+    });
+
+    test('isScaleBarStep rejects a length that is not positive and finite', () {
+      for (final format in DisplayFormat.values) {
+        for (final length in [0.0, -5.0, double.nan, double.infinity]) {
+          expect(format.isScaleBarStep(length), isFalse, reason: '$length');
+        }
+      }
+    });
+
     test('each grid step is a whole multiple of the one before', () {
       for (final format in DisplayFormat.values) {
         var step = format.gridStepAtLeast(1e-3);
@@ -209,6 +261,7 @@ void main() {
           expect(() => format.scaleBarStepAtMost(length), throwsArgumentError);
           expect(() => format.gridStepAtLeast(length), throwsArgumentError);
           expect(() => format.gridStepAbove(length), throwsArgumentError);
+          expect(() => format.scaleBarStepBelow(length), throwsArgumentError);
         }
       }
     });

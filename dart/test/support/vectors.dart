@@ -28,6 +28,18 @@ List<double> jsonNumbers(Object? json) =>
 
 vm.Vector3 jsonVector3(Object? json) => vm.Vector3.array(jsonNumbers(json));
 
+/// Decodes a fixture's viewport-overlay placement record.
+ViewportOverlayPlacement jsonPlacement(Object? json) {
+  final p = json! as Json;
+  return ViewportOverlayPlacement(
+    corner: ViewportCorner.values.byName(p['corner'] as String),
+    offsetXPixels: jsonNumber(p['offsetXPixels']),
+    offsetYPixels: jsonNumber(p['offsetYPixels']),
+    widthPixels: jsonNumber(p['widthPixels']),
+    heightPixels: jsonNumber(p['heightPixels']),
+  );
+}
+
 /// Decodes a fixture's `{up, handedness}` convention record.
 CoordinateConvention jsonConvention(Object? json) {
   final c = json! as Json;

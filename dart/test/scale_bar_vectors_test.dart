@@ -7,17 +7,6 @@ import 'support/vectors.dart';
 
 final _fixture = vectorFixture('scale_bar.json');
 
-ViewportOverlayPlacement _placement(Object? json) {
-  final p = json! as Json;
-  return ViewportOverlayPlacement(
-    corner: ViewportCorner.values.byName(p['corner'] as String),
-    offsetXPixels: jsonNumber(p['offsetXPixels']),
-    offsetYPixels: jsonNumber(p['offsetYPixels']),
-    widthPixels: jsonNumber(p['widthPixels']),
-    heightPixels: jsonNumber(p['heightPixels']),
-  );
-}
-
 CameraBasis _camera(Object? json) {
   final c = json! as Json;
   return CameraBasis(
@@ -64,7 +53,7 @@ void main() {
           viewportSize: jsonVector2(input['viewport']),
           worldUnits: UnitSystem.values.byName(input['worldUnits'] as String),
           format: DisplayFormat.values.byName(input['format'] as String),
-          placement: _placement(input['placement']),
+          placement: jsonPlacement(input['placement']),
           previousStep: previous == null ? null : jsonNumber(previous),
           numbers: _numbers(input['numbers']),
           minTickSpacingPixels: jsonNumber(input['minTickSpacingPixels']),

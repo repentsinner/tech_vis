@@ -154,6 +154,20 @@ enum DisplayFormat {
   double? scaleBarStepAtMost(double length) =>
       _scaleBarSteps.atMost(_positive(length, 'length'));
 
+  /// Returns the largest scale-bar step shorter than [step], or null when
+  /// [step] is the smallest.
+  double? scaleBarStepBelow(double step) =>
+      _scaleBarSteps.below(_positive(step, 'step'));
+
+  /// Whether [length] is one of the scale-bar steps.
+  ///
+  /// Returns false for a [length] that is not positive and finite.
+  bool isScaleBarStep(double length) {
+    if (!length.isFinite || length <= 0) return false;
+    final step = _scaleBarSteps.atMost(length);
+    return step != null && (step - length).abs() <= length * _relativeSlack;
+  }
+
   /// Returns the smallest grid step at least [length] long.
   ///
   /// Grid steps are every power of ten, except fractional inch, which
@@ -271,6 +285,15 @@ final class _StepSequence {
       if (step <= length * (1 + _relativeSlack) && step > (best ?? 0)) {
         best = step;
       }
+    }
+    return best;
+  }
+
+  double? below(double step) {
+    final bound = step * (1 - _relativeSlack);
+    double? best;
+    for (final candidate in _near(bound)) {
+      if (candidate < bound && candidate > (best ?? 0)) best = candidate;
     }
     return best;
   }
