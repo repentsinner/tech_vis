@@ -9,6 +9,7 @@ export 'src/coordinate_frame.dart';
 export 'src/coordinate_frame_factory.dart';
 export 'src/envelope_label_factory.dart';
 export 'src/filled_rectangle_factory.dart';
+export 'src/ground_plane.dart';
 export 'src/leader_line.dart';
 export 'src/marker.dart';
 export 'src/navigation_cube.dart';

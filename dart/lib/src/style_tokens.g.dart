@@ -134,6 +134,34 @@ abstract final class StyleTokens {
   /// Default height of the navigation cube overlay. Unit: px.
   static const double navigationCubeHeightPixels = 96.0;
 
+  /// Smallest screen distance between neighboring minor ground-grid lines,
+  /// measured at the camera target. Unit: px.
+  static const double groundGridMinLineSpacingPixels = 12.0;
+
+  /// Fraction by which the minor line spacing passes a step boundary before
+  /// the ground grid changes step, and passes back before it changes back.
+  /// Unit: ratio.
+  static const double groundGridStepMargin = 0.15;
+
+  /// Most ground-grid lines across the patch in each direction. A finer minor
+  /// step coarsens until the lines fit. Unit: count.
+  static const double groundGridMaxLinesPerAxis = 101.0;
+
+  /// Segments each ground-grid line splits into, each with its own opacity,
+  /// so the line fades toward the patch edge. Unit: count.
+  static const double groundGridFadeSegments = 16.0;
+
+  /// Width of a minor ground-grid line in screen-space logical pixels. Unit:
+  /// px.
+  static const double groundGridMinorLineWidth = 0.5;
+
+  /// Width of a major ground-grid line in screen-space logical pixels. Unit:
+  /// px.
+  static const double groundGridMajorLineWidth = 1.0;
+
+  /// Pixel height of a ground-grid coordinate label. Unit: px.
+  static const double groundGridLabelPixelSize = 12.0;
+
   /// Every token by its name in style/tokens.json.
   static const Map<String, double> all = {
     'axisLength': axisLength,
@@ -172,5 +200,12 @@ abstract final class StyleTokens {
     'navigationCubeOffsetYPixels': navigationCubeOffsetYPixels,
     'navigationCubeWidthPixels': navigationCubeWidthPixels,
     'navigationCubeHeightPixels': navigationCubeHeightPixels,
+    'groundGridMinLineSpacingPixels': groundGridMinLineSpacingPixels,
+    'groundGridStepMargin': groundGridStepMargin,
+    'groundGridMaxLinesPerAxis': groundGridMaxLinesPerAxis,
+    'groundGridFadeSegments': groundGridFadeSegments,
+    'groundGridMinorLineWidth': groundGridMinorLineWidth,
+    'groundGridMajorLineWidth': groundGridMajorLineWidth,
+    'groundGridLabelPixelSize': groundGridLabelPixelSize,
   };
 }

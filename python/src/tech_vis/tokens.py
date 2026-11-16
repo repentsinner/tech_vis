@@ -129,6 +129,31 @@ NAVIGATION_CUBE_WIDTH_PIXELS: float = 96.0
 # Default height of the navigation cube overlay. Unit: px.
 NAVIGATION_CUBE_HEIGHT_PIXELS: float = 96.0
 
+# Smallest screen distance between neighboring minor ground-grid lines, measured at
+# the camera target. Unit: px.
+GROUND_GRID_MIN_LINE_SPACING_PIXELS: float = 12.0
+
+# Fraction by which the minor line spacing passes a step boundary before the ground
+# grid changes step, and passes back before it changes back. Unit: ratio.
+GROUND_GRID_STEP_MARGIN: float = 0.15
+
+# Most ground-grid lines across the patch in each direction. A finer minor step
+# coarsens until the lines fit. Unit: count.
+GROUND_GRID_MAX_LINES_PER_AXIS: float = 101.0
+
+# Segments each ground-grid line splits into, each with its own opacity, so the line
+# fades toward the patch edge. Unit: count.
+GROUND_GRID_FADE_SEGMENTS: float = 16.0
+
+# Width of a minor ground-grid line in screen-space logical pixels. Unit: px.
+GROUND_GRID_MINOR_LINE_WIDTH: float = 0.5
+
+# Width of a major ground-grid line in screen-space logical pixels. Unit: px.
+GROUND_GRID_MAJOR_LINE_WIDTH: float = 1.0
+
+# Pixel height of a ground-grid coordinate label. Unit: px.
+GROUND_GRID_LABEL_PIXEL_SIZE: float = 12.0
+
 # Every token by its name in style/tokens.json.
 ALL: dict[str, float] = {
     "axisLength": AXIS_LENGTH,
@@ -167,4 +192,11 @@ ALL: dict[str, float] = {
     "navigationCubeOffsetYPixels": NAVIGATION_CUBE_OFFSET_YPIXELS,
     "navigationCubeWidthPixels": NAVIGATION_CUBE_WIDTH_PIXELS,
     "navigationCubeHeightPixels": NAVIGATION_CUBE_HEIGHT_PIXELS,
+    "groundGridMinLineSpacingPixels": GROUND_GRID_MIN_LINE_SPACING_PIXELS,
+    "groundGridStepMargin": GROUND_GRID_STEP_MARGIN,
+    "groundGridMaxLinesPerAxis": GROUND_GRID_MAX_LINES_PER_AXIS,
+    "groundGridFadeSegments": GROUND_GRID_FADE_SEGMENTS,
+    "groundGridMinorLineWidth": GROUND_GRID_MINOR_LINE_WIDTH,
+    "groundGridMajorLineWidth": GROUND_GRID_MAJOR_LINE_WIDTH,
+    "groundGridLabelPixelSize": GROUND_GRID_LABEL_PIXEL_SIZE,
 }
