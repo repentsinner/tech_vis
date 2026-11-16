@@ -365,25 +365,12 @@ class _DimensionBuilder {
     final content = resolveText(
       TextRequest(text: label, heightPixels: style.textPixelSize),
     );
-
-    // The line's direction on screen, y up, and its length in pixels.
-    final screenLength = screenTo.distanceTo(screenFrom);
     final lineOnScreen = _onScreen(direction);
-    final screenDirection = lineOnScreen.length > _epsilon
-        ? lineOnScreen.normalized()
-        : vm.Vector2.zero();
-    final textExtent = convention.placement == DimensionTextPlacement.oriented
-        ? content.widthPixels
-        : content.widthPixels * screenDirection.x.abs() +
-              content.heightPixels * screenDirection.y.abs();
-    // A line seen end-on has no screen direction to set text along.
-    final fits =
-        lineOnScreen.length > _epsilon &&
-        textExtent + 2 * (style.arrowLengthPixels + style.textGapPixels) <=
-            screenLength;
-    final placement = fits
-        ? convention.placement
-        : DimensionTextPlacement.referencing;
+    final (placement, extent) = _fit(
+      content,
+      lineOnScreen,
+      screenTo.distanceTo(screenFrom),
+    );
 
     final primitives = <Primitive>[
       witness(from, footFrom, fromPixel, footFromPixel),
@@ -391,12 +378,7 @@ class _DimensionBuilder {
     ];
 
     if (placement == DimensionTextPlacement.inlined) {
-      // Half the break, converted from pixels along the line's screen
-      // direction to world units along the line.
-      final halfBreak =
-          (textExtent / 2 + style.textGapPixels) *
-          middlePixel /
-          lineOnScreen.length;
+      final halfBreak = _halfBreak(extent, middlePixel, lineOnScreen);
       primitives
         ..add(_line(footFrom, middle - direction * halfBreak))
         ..add(_line(middle + direction * halfBreak, footTo));
@@ -404,24 +386,80 @@ class _DimensionBuilder {
       primitives.add(_line(footFrom, footTo));
     }
 
-    primitives
+    return primitives
       ..addAll(_arrowhead(footFrom, direction, footFromPixel))
-      ..addAll(_arrowhead(footTo, -direction, footToPixel));
+      ..addAll(_arrowhead(footTo, -direction, footToPixel))
+      ..addAll(
+        _text(placement, content, middle, lineOnScreen, offset, middlePixel),
+      );
+  }
 
+  /// The placement of [content] on a dimension line whose unit direction
+  /// shows on screen as [lineOnScreen], with [screenLength] pixels between
+  /// its ends, and the text's extent along it in pixels.
+  ///
+  /// Oriented and inlined text that does not fit, with an arrowhead and a
+  /// text gap at each end, falls back to referencing.
+  (DimensionTextPlacement, double) _fit(
+    BillboardContent content,
+    vm.Vector2 lineOnScreen,
+    double screenLength,
+  ) {
+    final screenDirection = lineOnScreen.length > _epsilon
+        ? lineOnScreen.normalized()
+        : vm.Vector2.zero();
+    final extent = convention.placement == DimensionTextPlacement.oriented
+        ? content.widthPixels
+        : content.widthPixels * screenDirection.x.abs() +
+              content.heightPixels * screenDirection.y.abs();
+    // A line seen end-on has no screen direction to set text along.
+    final fits =
+        lineOnScreen.length > _epsilon &&
+        extent + 2 * (style.arrowLengthPixels + style.textGapPixels) <=
+            screenLength;
+    return (
+      fits ? convention.placement : DimensionTextPlacement.referencing,
+      extent,
+    );
+  }
+
+  /// Half the break inlined text of [extent] pixels makes, in world units
+  /// along a dimension line whose unit direction shows on screen as
+  /// [lineOnScreen], at [middlePixel] world units per pixel.
+  double _halfBreak(
+    double extent,
+    double middlePixel,
+    vm.Vector2 lineOnScreen,
+  ) => (extent / 2 + style.textGapPixels) * middlePixel / lineOnScreen.length;
+
+  /// The text of a dimension at [middle] of its dimension line, under
+  /// [placement]: a billboard, led off the line by a callout leader toward
+  /// [outward] when referencing.
+  List<Primitive> _text(
+    DimensionTextPlacement placement,
+    BillboardContent content,
+    vm.Vector3 middle,
+    vm.Vector2 lineOnScreen,
+    vm.Vector3 outward,
+    double middlePixel,
+  ) {
     switch (placement) {
       case DimensionTextPlacement.oriented:
-        primitives.add(_orientedText(content, middle, lineOnScreen));
+        return [_orientedText(content, middle, lineOnScreen)];
       case DimensionTextPlacement.inlined:
-        primitives.add(
+        return [
           BillboardPrimitive(
             content: content,
             anchor: middle,
             key: key,
             opacity: opacity,
           ),
-        );
+        ];
       case DimensionTextPlacement.referencing:
-        final quadrant = _referenceQuadrant(screenDirection, _onScreen(offset));
+        final along = lineOnScreen.length > _epsilon
+            ? lineOnScreen.normalized()
+            : vm.Vector2.zero();
+        final quadrant = _referenceQuadrant(along, _onScreen(outward));
         final leader = computeCalloutLeaderGeometry(
           anchor: middle,
           cameraRight: camera.right,
@@ -430,25 +468,21 @@ class _DimensionBuilder {
           quadrant: quadrant,
           style: style.leader,
         );
-        primitives
-          ..addAll(
-            createCalloutLeaderLines(
-              leader: leader,
-              key: key,
-              opacity: opacity,
-            ),
-          )
-          ..add(
-            createCalloutLabel(
-              leader: leader,
-              quadrant: quadrant,
-              content: content,
-              key: key,
-              opacity: opacity,
-            ),
-          );
+        return [
+          ...createCalloutLeaderLines(
+            leader: leader,
+            key: key,
+            opacity: opacity,
+          ),
+          createCalloutLabel(
+            leader: leader,
+            quadrant: quadrant,
+            content: content,
+            key: key,
+            opacity: opacity,
+          ),
+        ];
     }
-    return primitives;
   }
 
   /// The two barbs of an open arrowhead whose tip is [tip], its shaft
