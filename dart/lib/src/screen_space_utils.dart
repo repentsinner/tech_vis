@@ -1,8 +1,11 @@
 import 'dart:math' as math;
+
 import 'package:vector_math/vector_math_64.dart' as vm;
 
-/// Above this |forward · worldUp|, the view is treated as looking along
-/// the world up axis and [CameraBasis.lookAt] switches to its fallback.
+import 'coordinate_convention.dart';
+
+/// Above this |forward · up|, the view is treated as looking along the
+/// declared up axis and [CameraBasis.lookAt] switches to its fallback.
 const double _gimbalThreshold = 0.99;
 
 /// Depth at or below which a point is treated as on or behind the camera
@@ -22,24 +25,26 @@ class CameraBasis {
     required this.up,
   });
 
-  /// Builds the basis of a camera at [position] looking at [target].
+  /// Builds the basis of a camera at [position] looking at [target], in
+  /// the space that [convention] declares.
   ///
-  /// [worldUp] orients the camera. When the view direction is nearly
-  /// parallel to it, the cross product degenerates, so [fallbackUp] takes
-  /// its place to keep the basis well defined.
+  /// The declared up axis orients the camera. When the view direction is
+  /// nearly parallel to it, the cross product degenerates, so the
+  /// convention's fallback axis takes its place to keep the basis well
+  /// defined. The handedness decides which way screen right points, so
+  /// right, up, and toward-viewer follow the declared hand rule.
   factory CameraBasis.lookAt({
     required vm.Vector3 position,
     required vm.Vector3 target,
-    vm.Vector3? worldUp,
-    vm.Vector3? fallbackUp,
+    required CoordinateConvention convention,
   }) {
     final forward = (target - position).normalized();
-    final preferredUp = worldUp ?? vm.Vector3(0, 1, 0);
+    final preferredUp = convention.up.unitVector;
     final upReference = forward.dot(preferredUp).abs() > _gimbalThreshold
-        ? (fallbackUp ?? vm.Vector3(1, 0, 0))
+        ? convention.fallbackAxis.unitVector
         : preferredUp;
-    final right = forward.cross(upReference).normalized();
-    final up = right.cross(forward).normalized();
+    final right = convention.cross(forward, upReference).normalized();
+    final up = convention.cross(right, forward).normalized();
     return CameraBasis(
       position: position.clone(),
       forward: forward,
@@ -70,11 +75,11 @@ class CameraBasis {
   double depthOf(vm.Vector3 point) => (point - position).dot(forward);
 }
 
-/// Utility class for screen-space calculations shared between renderers.
+/// Screen-space math that every renderer shares: the world size of a
+/// pixel at a point, and where a point lands in the viewport.
 ///
-/// Provides methods for converting between pixel sizes and world sizes
-/// based on camera parameters, similar to how Three.js handles screen-space
-/// calculations. Pure math — no Flutter dependency.
+/// Every method assumes one perspective camera model, so a size and a
+/// position computed for the same frame agree.
 class ScreenSpaceUtils {
   /// Convert a target pixel size to world size based on camera distance and
   /// field of view.
@@ -111,6 +116,39 @@ class ScreenSpaceUtils {
     final depth = camera.depthOf(point);
     if (depth <= _minVisibleDepth) return null;
     return 2.0 * depth * math.tan(verticalFovRadians / 2.0) / viewportHeight;
+  }
+
+  /// Pixel position of [point] in a [viewportSize] viewport, seen by a
+  /// perspective [camera] with vertical field of view [verticalFovRadians].
+  ///
+  /// The origin is the viewport's top-left corner, x runs right and y runs
+  /// down, and (width, height) is the bottom-right corner. Pixels are
+  /// square and the view axis passes through the viewport center, the
+  /// projection [worldUnitsPerPixelAt] assumes. A renderer measures a frame
+  /// in these coordinates to compare it with the reference fixtures.
+  /// Returns null for a point on or behind the camera plane, which has no
+  /// screen position.
+  static vm.Vector2? worldToScreen(
+    vm.Vector3 point,
+    CameraBasis camera,
+    double verticalFovRadians,
+    vm.Vector2 viewportSize,
+  ) {
+    // One pixel spans worldUnitsPerPixelAt at the point's depth, so the
+    // projection and the pixel scale agree, and null the same, by
+    // construction.
+    final worldUnitsPerPixel = worldUnitsPerPixelAt(
+      point,
+      camera,
+      verticalFovRadians,
+      viewportSize.y,
+    );
+    if (worldUnitsPerPixel == null) return null;
+    final relative = point - camera.position;
+    return vm.Vector2(
+      viewportSize.x / 2.0 + relative.dot(camera.right) / worldUnitsPerPixel,
+      viewportSize.y / 2.0 - relative.dot(camera.up) / worldUnitsPerPixel,
+    );
   }
 
   /// Convert pixel coordinates to Normalized Device Coordinates (NDC).

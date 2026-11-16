@@ -25,20 +25,11 @@ class SceneLayoutConstants {
   static const double secondaryAxisThicknessScale =
       StyleTokens.secondaryAxisThicknessScale;
 
-  /// Default axis label size in world units (mm).
-  ///
-  /// Prefer [SceneTheme.axisLabelSize] when a theme is available.
-  /// This constant serves as the fallback for theme-less contexts.
+  /// Default axis label height in screen pixels.
   static const double defaultAxisLabelSize = StyleTokens.defaultAxisLabelSize;
 
   /// Screen-space offset in pixels from axis endpoint to label center.
   static const double axisLabelOffsetPixels = StyleTokens.axisLabelOffsetPixels;
-
-  // ==================== LABEL SETTINGS ====================
-
-  /// Default world-space height in mm for world-aligned labels.
-  static const double worldAlignedLabelHeightMm =
-      StyleTokens.worldAlignedLabelHeightMm;
 
   // ==================== CALLOUT BILLBOARD SETTINGS ====================
 

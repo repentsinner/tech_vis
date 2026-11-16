@@ -5,56 +5,6 @@ import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 void main() {
-  group('ViewportSize', () {
-    test('equality by value', () {
-      const a = ViewportSize(800, 600);
-      const b = ViewportSize(800, 600);
-      const c = ViewportSize(1024, 768);
-
-      expect(a, equals(b));
-      expect(a.hashCode, equals(b.hashCode));
-      expect(a, isNot(equals(c)));
-    });
-
-    test('width and height accessible', () {
-      const v = ViewportSize(1920, 1080);
-      expect(v.width, 1920);
-      expect(v.height, 1080);
-    });
-  });
-
-  group('RenderMode', () {
-    test('has canvas and widget variants', () {
-      expect(
-        RenderMode.values,
-        containsAll([RenderMode.canvas, RenderMode.widget]),
-      );
-    });
-  });
-
-  group('FrameContext', () {
-    test('stores viewport and DPR', () {
-      const ctx = FrameContext(
-        viewportSize: ViewportSize(800, 600),
-        devicePixelRatio: 2.0,
-      );
-      expect(ctx.viewportSize.width, 800);
-      expect(ctx.devicePixelRatio, 2.0);
-    });
-
-    test('is generic — no domain-specific fields', () {
-      // FrameContext contains only viewport and DPR.
-      // Domain-specific fields (tracked positions, playback progress)
-      // live in a domain-specific subclass in the consumer's package.
-      const ctx = FrameContext(
-        viewportSize: ViewportSize(800, 600),
-        devicePixelRatio: 1.0,
-      );
-      expect(ctx.viewportSize.width, 800);
-      expect(ctx.devicePixelRatio, 1.0);
-    });
-  });
-
   group('ScreenSpaceUtils', () {
     test('pixelToNDC maps pixel size to NDC range', () {
       // Half the viewport height → NDC 1.0
@@ -135,55 +85,4 @@ void main() {
       expect(SceneLayoutConstants.calloutLabelPixelSize, greaterThan(0));
     });
   });
-
-  group('SceneTheme', () {
-    test('is generic — requires axisLineThickness and resolveLineColor', () {
-      // SceneTheme requires axisLineThickness, axisLabelSize, and
-      // resolveLineColor. Line weights for a consumer's own line
-      // categories live in a domain-specific theme in its package.
-      final theme = _TestSceneTheme();
-      expect(theme.axisLineThickness, 0.5);
-      expect(theme.axisLabelSize, 24.0);
-    });
-
-    test('resolveLineColor returns SceneColor', () {
-      final theme = _TestSceneTheme();
-      final color = theme.resolveLineColor('test');
-      expect(color, isA<SceneColor>());
-      expect(color.r, 1.0);
-      expect(color.g, 1.0);
-      expect(color.b, 1.0);
-      expect(color.a, 1.0);
-    });
-  });
-
-  group('SceneColor', () {
-    test('equality by value', () {
-      const a = SceneColor(1.0, 0.0, 0.0, 1.0);
-      const b = SceneColor(1.0, 0.0, 0.0, 1.0);
-      const c = SceneColor(0.0, 1.0, 0.0, 1.0);
-
-      expect(a, equals(b));
-      expect(a.hashCode, equals(b.hashCode));
-      expect(a, isNot(equals(c)));
-    });
-
-    test('toString includes components', () {
-      const color = SceneColor(0.5, 0.6, 0.7, 0.8);
-      expect(color.toString(), contains('0.5'));
-      expect(color.toString(), contains('0.8'));
-    });
-  });
-}
-
-class _TestSceneTheme implements SceneTheme {
-  @override
-  double get axisLineThickness => 0.5;
-
-  @override
-  double get axisLabelSize => 24.0;
-
-  @override
-  SceneColor resolveLineColor(Object lineCategory) =>
-      const SceneColor(1.0, 1.0, 1.0, 1.0);
 }

@@ -2,52 +2,36 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'bounding_box.dart';
 import 'filled_rectangle_factory.dart';
-import 'scene_object.dart';
+import 'primitives.dart';
 
 /// Factory for axis-aligned boxes drawn around an object.
 ///
-/// A box is twelve edge lines and, when it has a fill, six face
-/// rectangles. The [lineCategory] parameter accepts any domain-specific
-/// semantic category type; each consumer passes its own category enum.
+/// A box is twelve edge lines and, when it has a fill, six face quads. The
+/// app key passes through to every primitive untouched.
 class BoundingBoxFactory {
-  /// Create the scene objects that draw [bounds].
+  /// Returns the primitives that draw [bounds].
   ///
-  /// Emits each of the box's twelve edges once, as a line of thickness
-  /// [edgeWidth]. When [opacity] is above zero, also emits the six faces at
-  /// that opacity. The faces carry no edge of their own, so a renderer
-  /// that outlines filled rectangles does not draw any box edge twice.
-  ///
-  /// [idPrefix] prefixes every object's id: `<prefix>_edge_<n>` for edges
-  /// and `<prefix>_<plane>_<side>` for faces.
-  static List<SceneObject> createCube({
+  /// Emits each of the box's twelve edges once, as a line [edgeWidth]
+  /// screen pixels wide. When [fillOpacity] is above zero, also emits the
+  /// six faces as quads at that opacity. A box outlined from its faces
+  /// would draw every edge twice, so the faces carry no edges.
+  static List<Primitive> createCube({
     required BoundingBox bounds,
-    required Object? lineCategory,
-    double opacity = 1.0,
+    required Object? key,
+    double fillOpacity = 1.0,
     double edgeWidth = 1.0,
-    String idPrefix = 'cube',
   }) {
     return [
-      if (opacity > 0)
-        ..._faces(
-          bounds: bounds,
-          lineCategory: lineCategory,
-          opacity: opacity,
-          idPrefix: idPrefix,
-        ),
-      ..._edges(
-        bounds: bounds,
-        lineCategory: lineCategory,
-        edgeWidth: edgeWidth,
-        idPrefix: idPrefix,
-      ),
+      if (fillOpacity > 0)
+        ..._faces(bounds: bounds, key: key, opacity: fillOpacity),
+      ..._edges(bounds: bounds, key: key, edgeWidth: edgeWidth),
     ];
   }
 
-  static List<SceneObject> _edges({
+  static List<LinePrimitive> _edges({
     required BoundingBox bounds,
-    required Object? lineCategory,
+    required Object? key,
     required double edgeWidth,
-    required String idPrefix,
   }) {
     final lo = bounds.minBounds;
     final hi = bounds.maxBounds;
@@ -66,62 +50,38 @@ class BoundingBoxFactory {
           (vm.Vector3(x, y, lo.z), vm.Vector3(x, y, hi.z)),
     ];
     return [
-      for (var i = 0; i < segments.length; i++)
-        SceneObject(
-          type: .line,
-          lineCategory: lineCategory,
-          id: '${idPrefix}_edge_$i',
-          startPoint: segments[i].$1,
-          endPoint: segments[i].$2,
-          thickness: edgeWidth,
-        ),
+      for (final (start, end) in segments)
+        LinePrimitive(start: start, end: end, widthPixels: edgeWidth, key: key),
     ];
   }
 
-  static List<SceneObject> _faces({
+  static List<QuadPrimitive> _faces({
     required BoundingBox bounds,
-    required Object? lineCategory,
+    required Object? key,
     required double opacity,
-    required String idPrefix,
   }) {
     final lo = bounds.minBounds;
     final hi = bounds.maxBounds;
     final center = bounds.center;
     final size = bounds.size;
+    // Each pair of opposite faces lies in one plane, at the low and high
+    // bound of the axis normal to it.
+    final planes = [
+      (plane: RectanglePlane.xy, normal: 2, width: size.x, height: size.y),
+      (plane: RectanglePlane.xz, normal: 1, width: size.x, height: size.z),
+      (plane: RectanglePlane.yz, normal: 0, width: size.y, height: size.z),
+    ];
     return [
-      // XY plane faces (bottom and top)
-      for (final (z, side) in [(lo.z, 'bottom'), (hi.z, 'top')])
-        FilledRectangleFactory.createXYFilledRectangle(
-          center: vm.Vector3(center.x, center.y, z),
-          width: size.x.abs(),
-          height: size.y.abs(),
-          lineCategory: lineCategory,
-          edgeWidth: 0,
-          opacity: opacity,
-          id: '${idPrefix}_xy_$side',
-        ),
-      // XZ plane faces (front and back)
-      for (final (y, side) in [(lo.y, 'front'), (hi.y, 'back')])
-        FilledRectangleFactory.createXZFilledRectangle(
-          center: vm.Vector3(center.x, y, center.z),
-          width: size.x.abs(),
-          height: size.z.abs(),
-          lineCategory: lineCategory,
-          edgeWidth: 0,
-          opacity: opacity,
-          id: '${idPrefix}_xz_$side',
-        ),
-      // YZ plane faces (left and right)
-      for (final (x, side) in [(lo.x, 'left'), (hi.x, 'right')])
-        FilledRectangleFactory.createYZFilledRectangle(
-          center: vm.Vector3(x, center.y, center.z),
-          width: size.y.abs(),
-          height: size.z.abs(),
-          lineCategory: lineCategory,
-          edgeWidth: 0,
-          opacity: opacity,
-          id: '${idPrefix}_yz_$side',
-        ),
+      for (final (:plane, :normal, :width, :height) in planes)
+        for (final bound in [lo, hi])
+          FilledRectangleFactory.createFilledRectangle(
+            center: center.clone()..[normal] = bound[normal],
+            width: width.abs(),
+            height: height.abs(),
+            plane: plane,
+            key: key,
+            opacity: opacity,
+          ),
     ];
   }
 }

@@ -2,7 +2,10 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'scene_layout_constants.dart';
 
-/// Spatial axis in a right-handed coordinate system.
+/// World coordinate axis.
+///
+/// Which axis points up, and the handedness of the axes, come from the
+/// app's declared coordinate convention.
 enum SpatialAxis {
   /// X axis (typically right).
   x,
@@ -22,6 +25,35 @@ enum SpatialAxis {
 
   /// Single-character uppercase label.
   String get label => name.toUpperCase();
+}
+
+/// A world axis and the direction along it, such as -Y.
+final class SignedAxis {
+  /// Creates the direction along [axis], toward its negative end when
+  /// [negative] is true.
+  const SignedAxis(this.axis, {this.negative = false});
+
+  /// The axis the direction runs along.
+  final SpatialAxis axis;
+
+  /// Whether the direction points toward the axis's negative end.
+  final bool negative;
+
+  /// Unit vector in this direction.
+  vm.Vector3 get unitVector => negative ? -axis.unitVector : axis.unitVector;
+
+  /// The opposite direction along the same axis.
+  SignedAxis operator -() => SignedAxis(axis, negative: !negative);
+
+  @override
+  bool operator ==(Object other) =>
+      other is SignedAxis && other.axis == axis && other.negative == negative;
+
+  @override
+  int get hashCode => Object.hash(axis, negative);
+
+  @override
+  String toString() => '${negative ? '-' : '+'}${axis.label}';
 }
 
 /// Describes a single axis line within a coordinate frame.
@@ -58,8 +90,8 @@ class AxisLineDescriptor {
 /// Renderer-agnostic description of a coordinate frame (origin marker
 /// with colored axis lines and labels).
 ///
-/// Produces [AxisLineDescriptor]s that the scene composition layer
-/// converts to renderer-specific primitives (e.g. [SceneObject]).
+/// Produces [AxisLineDescriptor]s, which `CoordinateFrameFactory` turns
+/// into primitives.
 class CoordinateFrameDescriptor {
   CoordinateFrameDescriptor({
     vm.Vector3? origin,

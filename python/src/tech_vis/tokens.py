@@ -20,9 +20,6 @@ DEFAULT_AXIS_LABEL_SIZE: float = 24.0
 # Screen-space offset from an axis endpoint to its label center. Unit: px.
 AXIS_LABEL_OFFSET_PIXELS: float = 12.0
 
-# Default world-space height of a world-aligned label. Unit: mm.
-WORLD_ALIGNED_LABEL_HEIGHT_MM: float = 5.0
-
 # Gap between the anchor point and the start of the angled leader segment. Unit: px.
 CALLOUT_GAP_PIXELS: float = 4.0
 
@@ -57,6 +54,167 @@ CALLOUT_OPACITY_MAX: float = 0.95
 # Callout opacity at the far distance. Unit: ratio.
 CALLOUT_OPACITY_MIN: float = 0.25
 
+# Width of a dimension's witness, dimension, and arrowhead lines. Tied to the callout
+# leader width, so a referencing dimension's leader matches its dimension line. Unit:
+# px.
+DIMENSION_LINE_WIDTH: float = CALLOUT_LEADER_LINE_WIDTH
+
+# Gap between a measured point and the start of its witness line under ISO 129. Unit:
+# px.
+DIMENSION_WITNESS_GAP_ISO_PIXELS: float = 2.0
+
+# Gap between a measured point and the start of its witness line under ASME Y14.5.
+# Unit: px.
+DIMENSION_WITNESS_GAP_ASME_PIXELS: float = 4.0
+
+# Length a witness line runs past the dimension line. Unit: px.
+DIMENSION_WITNESS_EXTENSION_PIXELS: float = 6.0
+
+# Distance from the measured points to the dimension line, along the witness lines.
+# Unit: px.
+DIMENSION_OFFSET_PIXELS: float = 24.0
+
+# Length of a dimension arrowhead, from its tip along the dimension line. Unit: px.
+DIMENSION_ARROW_LENGTH_PIXELS: float = 10.0
+
+# Width of a dimension arrowhead across its two barbs. Unit: px.
+DIMENSION_ARROW_WIDTH_PIXELS: float = 4.0
+
+# Pixel height of a dimension's value text. Unit: px.
+DIMENSION_TEXT_PIXEL_SIZE: float = 14.0
+
+# Gap between a dimension's text and its dimension line: below oriented text, and
+# either side of inlined text in the line's break. Unit: px.
+DIMENSION_TEXT_GAP_PIXELS: float = 4.0
+
+# Largest offset along any other axis, as a fraction of the distance between the
+# points, at which a dimension still measures one axis. Unit: ratio.
+DIMENSION_ALIGNMENT_TOLERANCE: float = 0.001
+
+# Radius of an angular dimension's arc, from its vertex. Unit: px.
+DIMENSION_ARC_RADIUS_PIXELS: float = 64.0
+
+# Longest segment of an angular dimension's arc, measured along the arc at the
+# vertex's depth. Sets how many lines draw the arc. Unit: px.
+DIMENSION_ARC_SEGMENT_PIXELS: float = 4.0
+
+# Step an angular dimension's value rounds to. Unit: deg.
+DIMENSION_ANGLE_RESOLUTION_DEGREES: float = 0.1
+
+# Default marker diameter in screen-space logical pixels. Unit: px.
+MARKER_DIAMETER_PIXELS: float = 8.0
+
+# Icosphere subdivision level of the marker mesh. Each level quadruples the
+# icosahedron's 20 triangles. Unit: count.
+MARKER_SUBDIVISIONS: float = 2.0
+
+# Default viewport corner of the scale bar overlay. Bottom-left, where a reader looks
+# for a drawing's scale. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-
+# right. Unit: corner.
+SCALE_BAR_CORNER: float = 2.0
+
+# Default horizontal offset of the scale bar overlay from its corner, toward the
+# viewport center. Unit: px.
+SCALE_BAR_OFFSET_XPIXELS: float = 16.0
+
+# Default vertical offset of the scale bar overlay from its corner, toward the
+# viewport center. Unit: px.
+SCALE_BAR_OFFSET_YPIXELS: float = 16.0
+
+# Default width of the scale bar overlay. Unit: px.
+SCALE_BAR_WIDTH_PIXELS: float = 160.0
+
+# Default height of the scale bar overlay. Unit: px.
+SCALE_BAR_HEIGHT_PIXELS: float = 32.0
+
+# Least distance between adjacent scale bar ticks. The bar subdivides into the most
+# clean parts that keep its ticks this far apart. Unit: px.
+SCALE_BAR_MIN_TICK_SPACING_PIXELS: float = 16.0
+
+# Fraction of the scale bar's maximum length that a longer step must clear before the
+# bar adopts it, so the value does not flicker at a step boundary. Unit: ratio.
+SCALE_BAR_STEP_HYSTERESIS: float = 0.1
+
+# Pixel height of the scale bar's value label. Unit: px.
+SCALE_BAR_LABEL_HEIGHT_PIXELS: float = 12.0
+
+# Default viewport corner of the color ramp legend overlay. Bottom-right, clear of the
+# scale bar and the navigation cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3
+# bottom-right. Unit: corner.
+COLOR_RAMP_LEGEND_CORNER: float = 3.0
+
+# Default horizontal offset of the color ramp legend overlay from its corner, toward
+# the viewport center. Unit: px.
+COLOR_RAMP_LEGEND_OFFSET_XPIXELS: float = 16.0
+
+# Default vertical offset of the color ramp legend overlay from its corner, toward the
+# viewport center. Unit: px.
+COLOR_RAMP_LEGEND_OFFSET_YPIXELS: float = 16.0
+
+# Default width of the color ramp legend overlay. Unit: px.
+COLOR_RAMP_LEGEND_WIDTH_PIXELS: float = 48.0
+
+# Default height of the color ramp legend overlay. Unit: px.
+COLOR_RAMP_LEGEND_HEIGHT_PIXELS: float = 200.0
+
+# Thickness of the color ramp legend's gradient bar, across its length. The bar sits
+# on the overlay rectangle's edge nearer its corner. Unit: px.
+COLOR_RAMP_LEGEND_BAR_THICKNESS_PIXELS: float = 12.0
+
+# Least distance between adjacent automatic ticks along the color ramp legend's bar.
+# Unit: px.
+COLOR_RAMP_LEGEND_MIN_TICK_SPACING_PIXELS: float = 32.0
+
+# Gap between the color ramp legend's bar and its tick labels. Unit: px.
+COLOR_RAMP_LEGEND_LABEL_GAP_PIXELS: float = 4.0
+
+# Text height of the color ramp legend's tick labels. Unit: px.
+COLOR_RAMP_LEGEND_LABEL_HEIGHT_PIXELS: float = 12.0
+
+# Default viewport corner of the navigation cube overlay. Top-right, where CAD tools
+# place their view cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-
+# right. Unit: corner.
+NAVIGATION_CUBE_CORNER: float = 1.0
+
+# Default horizontal offset of the navigation cube overlay from its corner, toward the
+# viewport center. Unit: px.
+NAVIGATION_CUBE_OFFSET_XPIXELS: float = 16.0
+
+# Default vertical offset of the navigation cube overlay from its corner, toward the
+# viewport center. Unit: px.
+NAVIGATION_CUBE_OFFSET_YPIXELS: float = 16.0
+
+# Default width of the navigation cube overlay. Unit: px.
+NAVIGATION_CUBE_WIDTH_PIXELS: float = 96.0
+
+# Default height of the navigation cube overlay. Unit: px.
+NAVIGATION_CUBE_HEIGHT_PIXELS: float = 96.0
+
+# Smallest screen distance between neighboring minor ground-grid lines, measured at
+# the camera target. Unit: px.
+GROUND_GRID_MIN_LINE_SPACING_PIXELS: float = 12.0
+
+# Fraction by which the minor line spacing passes a step boundary before the ground
+# grid changes step, and passes back before it changes back. Unit: ratio.
+GROUND_GRID_STEP_MARGIN: float = 0.15
+
+# Most ground-grid lines across the patch in each direction. A finer minor step
+# coarsens until the lines fit. Unit: count.
+GROUND_GRID_MAX_LINES_PER_AXIS: float = 101.0
+
+# Segments each ground-grid line splits into, each with its own opacity, so the line
+# fades toward the patch edge. Unit: count.
+GROUND_GRID_FADE_SEGMENTS: float = 16.0
+
+# Width of a minor ground-grid line in screen-space logical pixels. Unit: px.
+GROUND_GRID_MINOR_LINE_WIDTH: float = 0.5
+
+# Width of a major ground-grid line in screen-space logical pixels. Unit: px.
+GROUND_GRID_MAJOR_LINE_WIDTH: float = 1.0
+
+# Pixel height of a ground-grid coordinate label. Unit: px.
+GROUND_GRID_LABEL_PIXEL_SIZE: float = 12.0
+
 # Every token by its name in style/tokens.json.
 ALL: dict[str, float] = {
     "axisLength": AXIS_LENGTH,
@@ -64,7 +222,6 @@ ALL: dict[str, float] = {
     "secondaryAxisThicknessScale": SECONDARY_AXIS_THICKNESS_SCALE,
     "defaultAxisLabelSize": DEFAULT_AXIS_LABEL_SIZE,
     "axisLabelOffsetPixels": AXIS_LABEL_OFFSET_PIXELS,
-    "worldAlignedLabelHeightMm": WORLD_ALIGNED_LABEL_HEIGHT_MM,
     "calloutGapPixels": CALLOUT_GAP_PIXELS,
     "calloutAngledLengthPixels": CALLOUT_ANGLED_LENGTH_PIXELS,
     "calloutHorizontalLengthPixels": CALLOUT_HORIZONTAL_LENGTH_PIXELS,
@@ -76,4 +233,48 @@ ALL: dict[str, float] = {
     "calloutOpacityFarDistance": CALLOUT_OPACITY_FAR_DISTANCE,
     "calloutOpacityMax": CALLOUT_OPACITY_MAX,
     "calloutOpacityMin": CALLOUT_OPACITY_MIN,
+    "dimensionLineWidth": DIMENSION_LINE_WIDTH,
+    "dimensionWitnessGapIsoPixels": DIMENSION_WITNESS_GAP_ISO_PIXELS,
+    "dimensionWitnessGapAsmePixels": DIMENSION_WITNESS_GAP_ASME_PIXELS,
+    "dimensionWitnessExtensionPixels": DIMENSION_WITNESS_EXTENSION_PIXELS,
+    "dimensionOffsetPixels": DIMENSION_OFFSET_PIXELS,
+    "dimensionArrowLengthPixels": DIMENSION_ARROW_LENGTH_PIXELS,
+    "dimensionArrowWidthPixels": DIMENSION_ARROW_WIDTH_PIXELS,
+    "dimensionTextPixelSize": DIMENSION_TEXT_PIXEL_SIZE,
+    "dimensionTextGapPixels": DIMENSION_TEXT_GAP_PIXELS,
+    "dimensionAlignmentTolerance": DIMENSION_ALIGNMENT_TOLERANCE,
+    "dimensionArcRadiusPixels": DIMENSION_ARC_RADIUS_PIXELS,
+    "dimensionArcSegmentPixels": DIMENSION_ARC_SEGMENT_PIXELS,
+    "dimensionAngleResolutionDegrees": DIMENSION_ANGLE_RESOLUTION_DEGREES,
+    "markerDiameterPixels": MARKER_DIAMETER_PIXELS,
+    "markerSubdivisions": MARKER_SUBDIVISIONS,
+    "scaleBarCorner": SCALE_BAR_CORNER,
+    "scaleBarOffsetXPixels": SCALE_BAR_OFFSET_XPIXELS,
+    "scaleBarOffsetYPixels": SCALE_BAR_OFFSET_YPIXELS,
+    "scaleBarWidthPixels": SCALE_BAR_WIDTH_PIXELS,
+    "scaleBarHeightPixels": SCALE_BAR_HEIGHT_PIXELS,
+    "scaleBarMinTickSpacingPixels": SCALE_BAR_MIN_TICK_SPACING_PIXELS,
+    "scaleBarStepHysteresis": SCALE_BAR_STEP_HYSTERESIS,
+    "scaleBarLabelHeightPixels": SCALE_BAR_LABEL_HEIGHT_PIXELS,
+    "colorRampLegendCorner": COLOR_RAMP_LEGEND_CORNER,
+    "colorRampLegendOffsetXPixels": COLOR_RAMP_LEGEND_OFFSET_XPIXELS,
+    "colorRampLegendOffsetYPixels": COLOR_RAMP_LEGEND_OFFSET_YPIXELS,
+    "colorRampLegendWidthPixels": COLOR_RAMP_LEGEND_WIDTH_PIXELS,
+    "colorRampLegendHeightPixels": COLOR_RAMP_LEGEND_HEIGHT_PIXELS,
+    "colorRampLegendBarThicknessPixels": COLOR_RAMP_LEGEND_BAR_THICKNESS_PIXELS,
+    "colorRampLegendMinTickSpacingPixels": COLOR_RAMP_LEGEND_MIN_TICK_SPACING_PIXELS,
+    "colorRampLegendLabelGapPixels": COLOR_RAMP_LEGEND_LABEL_GAP_PIXELS,
+    "colorRampLegendLabelHeightPixels": COLOR_RAMP_LEGEND_LABEL_HEIGHT_PIXELS,
+    "navigationCubeCorner": NAVIGATION_CUBE_CORNER,
+    "navigationCubeOffsetXPixels": NAVIGATION_CUBE_OFFSET_XPIXELS,
+    "navigationCubeOffsetYPixels": NAVIGATION_CUBE_OFFSET_YPIXELS,
+    "navigationCubeWidthPixels": NAVIGATION_CUBE_WIDTH_PIXELS,
+    "navigationCubeHeightPixels": NAVIGATION_CUBE_HEIGHT_PIXELS,
+    "groundGridMinLineSpacingPixels": GROUND_GRID_MIN_LINE_SPACING_PIXELS,
+    "groundGridStepMargin": GROUND_GRID_STEP_MARGIN,
+    "groundGridMaxLinesPerAxis": GROUND_GRID_MAX_LINES_PER_AXIS,
+    "groundGridFadeSegments": GROUND_GRID_FADE_SEGMENTS,
+    "groundGridMinorLineWidth": GROUND_GRID_MINOR_LINE_WIDTH,
+    "groundGridMajorLineWidth": GROUND_GRID_MAJOR_LINE_WIDTH,
+    "groundGridLabelPixelSize": GROUND_GRID_LABEL_PIXEL_SIZE,
 }
