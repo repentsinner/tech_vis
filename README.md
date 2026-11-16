@@ -59,13 +59,18 @@ final leader = computeCalloutLeaderGeometry(
 Python:
 
 ```python
-from tech_vis import tokens
+from tech_vis import DisplayFormat, UnitSystem, tokens
 
 gap_px = tokens.CALLOUT_GAP_PIXELS
+
+# Display formats take lengths in their unit system's base unit.
+inches = UnitSystem.METRIC.convert_to(1500, UnitSystem.IMPERIAL)
+DisplayFormat.FRACTIONAL_INCH.format_labels([inches])  # ['4\' 11 1/16"']
+step = DisplayFormat.METRIC.scale_bar_step_at_most(130)  # 100.0
 ```
 
-The Python package carries the tokens today. Layout functions follow; see
-[ROADMAP.md](ROADMAP.md).
+The Python package carries the tokens and the display formats. More layout
+functions follow; see [ROADMAP.md](ROADMAP.md).
 
 ## Renderer guide
 
