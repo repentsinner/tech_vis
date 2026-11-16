@@ -19,13 +19,24 @@ dart pub add tech_vis
 ```dart
 import 'package:tech_vis/tech_vis.dart';
 
+final camera = CameraBasis.lookAt(position: eye, target: target);
+
+// The world size of one pixel at the anchor, by its depth along the view
+// axis. Null when the anchor is behind the camera.
+final worldUnitsPerPixel = ScreenSpaceUtils.worldUnitsPerPixelAt(
+  anchor,
+  camera,
+  verticalFovRadians,
+  viewportHeight,
+);
+
 // A gap, an angled segment, then a horizontal segment, sized in pixels
 // and returned in world space on the camera's screen plane.
 final leader = computeCalloutLeaderGeometry(
   anchor: anchor,
-  cameraRight: cameraRight,
-  cameraUp: cameraUp,
-  worldUnitsPerPixel: worldUnitsPerPixel,
+  cameraRight: camera.right,
+  cameraUp: camera.up,
+  worldUnitsPerPixel: worldUnitsPerPixel!,
   quadrant: CalloutQuadrant.topRight,
 );
 

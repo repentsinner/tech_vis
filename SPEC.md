@@ -137,6 +137,41 @@ no color decision of its own.
 means. The composition layer holds that meaning; the backend holds only
 geometry.
 
+## Screen-space placement §spec:screen-space-placement
+
+*Status: complete*
+
+A label, callout, or leader that sits at a world-space point but draws
+at a fixed pixel size needs the world size of one pixel at that point.
+The package computes it, along with the transforms that turn a quad to
+face the viewer, so every renderer places these elements the same way.
+
+- `CameraBasis` holds a camera's position and its forward, right, and up
+  axes. When the view direction nearly parallels world up, it builds the
+  axes from a fallback up axis instead.
+- `worldUnitsPerPixelAt` sizes by the point's depth along the view axis.
+  A screen-space element therefore keeps its pixel size anywhere in the
+  view. It returns null for a point on or behind the camera plane.
+- Billboard helpers return a viewer-facing rotation and model transform,
+  a pixel offset along a screen-projected direction, and the corners of a
+  callout's label quad.
+- `lineSegmentTransform` maps one canonical unit segment onto any world
+  segment, so a renderer reuses one line mesh.
+- `drawRanksByDistance` orders callouts so nearer ones draw over farther
+  ones, with ties broken by id. The renderer supplies its own rank range.
+
+*Why depth, not distance*: perspective divides by depth along the view
+axis. Straight-line distance exceeds depth by 1/cos of the angle off the
+axis, so sizing by it grows an element toward the edges of the view, by
+26% at the edge of a 46° view and more beyond it. A callout whose anchor
+moves off screen while its label stays visible shows the error most.
+Straight-line distance still suits distance-based effects such as the
+callout opacity ramp and draw order.
+
+*Why the package owns this*: the size of a pixel at a point is the same
+math in every engine. Left to each renderer, it is the kind of constant
+and formula that drifts between copies (§req:problem-statement).
+
 ## Unit system §spec:unit-system
 
 *Status: in progress*
