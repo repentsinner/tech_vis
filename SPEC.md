@@ -118,8 +118,10 @@ too, which spares a Flutter-based renderer a conversion per transform.
 The package produces scenes as data and never renders them. A renderer
 implements `SceneRendererBackend` and maps each `SceneObject` in a
 `SceneDescription` to its engine's draw calls. Factories such as
-`BoundingBoxFactory`, `EnvelopeLabelFactory`, and
-`FilledRectangleFactory` compose scene objects from geometry.
+`BoundingBoxFactory`, `CoordinateFrameFactory`, `EnvelopeLabelFactory`,
+and `FilledRectangleFactory` compose scene objects from geometry.
+`CoordinateFrameFactory` draws an axis indicator at any origin, and the
+consumer maps each axis to its own line category.
 
 - `SceneObject` is a generic base. A consumer that needs its own object
   types subclasses it. No type in the package shall reference a
