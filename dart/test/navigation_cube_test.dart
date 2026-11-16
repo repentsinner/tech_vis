@@ -82,11 +82,10 @@ vm.Vector2 _center(List<vm.Vector2> corners) =>
 void main() {
   group('NavigationCube faces', () {
     for (final (:convention, :front, :right) in _normals) {
-      final cube = NavigationCube(convention: convention);
+      final cube = NavigationCube(convention: convention, front: front);
       final up = convention.up.unitVector;
 
-      test('$convention: Top is the up axis, Front faces away from the '
-          'fallback axis', () {
+      test('$convention: Top is the up axis, Front is the named front', () {
         final expected = {
           NavigationCubeFace.top: up,
           NavigationCubeFace.bottom: -up,
@@ -127,7 +126,10 @@ void main() {
 
   group('NavigationCube.visibleFaces', () {
     for (final convention in _conventions) {
-      final cube = NavigationCube(convention: convention);
+      final cube = NavigationCube(
+        convention: convention,
+        front: -convention.fallbackAxis.unitVector,
+      );
       final up = convention.up.unitVector;
       final front = cube.normal(NavigationCubeFace.front);
       final right = cube.normal(NavigationCubeFace.right);
@@ -229,7 +231,7 @@ void main() {
   });
 
   group('NavigationCube front', () {
-    test('an app-named front replaces the derived one', () {
+    test('a front along another horizontal axis turns the side faces', () {
       final cube = NavigationCube(
         convention: _yUpRight,
         front: vm.Vector3(0, 0, 1),

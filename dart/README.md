@@ -440,13 +440,16 @@ share a corner. The rectangle is not clipped to the viewport.
 ### Navigation cube
 
 A `NavigationCube` shows which side of the scene faces the viewer. Top
-is the convention's up axis. Front faces away from the convention's
-fallback axis, so a top view shows TOP upright with FRONT along its
-bottom edge. Right is the face a viewer of Front sees on their right.
-Pass `front` to name another horizontal world axis:
+is the convention's up axis, and Front faces along the horizontal
+world axis the app names. Right is the face a viewer of Front sees on
+their right. Naming the axis opposite the convention's fallback axis
+puts FRONT along the bottom edge of TOP in a top view:
 
 ```dart
-final cube = NavigationCube(convention: convention);
+final cube = NavigationCube(
+  convention: convention,
+  front: -convention.fallbackAxis.unitVector,
+);
 final rect = ViewportOverlayPlacement.of(
   ViewportOverlayKind.navigationCube,
 ).rect(Vector2(1280, 720));

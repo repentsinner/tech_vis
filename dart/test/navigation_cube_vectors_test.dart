@@ -18,7 +18,7 @@ CoordinateConvention _convention(Object? json) {
 
 NavigationCube _cube(Json input) => NavigationCube(
   convention: _convention(input['convention']),
-  front: input['front'] == null ? null : jsonVector3(input['front']),
+  front: jsonVector3(input['front']),
 );
 
 List<double> _numbers(vm.Vector v) => List.of(v.storage);

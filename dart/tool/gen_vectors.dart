@@ -647,13 +647,18 @@ final _cubeViewOffsets = <({String name, vm.Vector3 offset})>[
 typedef _Cube = ({
   String name,
   CoordinateConvention convention,
-  vm.Vector3? front,
+  vm.Vector3 front,
 });
 
-/// Each convention's cube with its derived front, plus one app-named front.
+/// Each convention's cube with Front opposite its fallback axis, which
+/// puts Front at the bottom of a top view, plus a Y-up cube facing +Z.
 List<_Cube> _cubes() => [
   for (final convention in [_yUpRight, _yUpLeft, _zUpRight, _zUpLeft])
-    (name: '$convention', convention: convention, front: null),
+    (
+      name: '$convention',
+      convention: convention,
+      front: -convention.fallbackAxis.unitVector,
+    ),
   (
     name: '$_yUpRight, front +Z',
     convention: _yUpRight,
@@ -666,7 +671,7 @@ Map<String, Object?> _cubeInput(_Cube c) => {
     'up': c.convention.up.name,
     'handedness': c.convention.handedness.name,
   },
-  'front': c.front == null ? null : _vector(c.front!),
+  'front': _vector(c.front),
 };
 
 Map<String, Object?> _cubeFaces(_Cube c) {

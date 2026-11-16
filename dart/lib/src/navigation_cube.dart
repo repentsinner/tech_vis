@@ -55,9 +55,10 @@ final class NavigationCubeFaceView {
 /// A passive orientation indicator: a cube whose labeled faces show which
 /// side of the scene faces the viewer.
 ///
-/// Top is the convention's up axis. Front faces away from the convention's
-/// fallback axis unless the app names another [front], so the top view of
-/// `CameraBasis.lookAt` shows Top upright with Front along its bottom edge.
+/// Top is the convention's up axis, and Front faces along the [front] the
+/// app names. A top view shows Top upright with Front along its bottom
+/// edge, as `CameraBasis.lookAt` holds a top view, when [front] is the
+/// opposite of the convention's fallback axis.
 class NavigationCube {
   /// Creates the cube for a space in [convention], with the Front face's
   /// outward normal along [front].
@@ -66,10 +67,10 @@ class NavigationCube {
   /// perpendicular to the up axis.
   factory NavigationCube({
     required CoordinateConvention convention,
-    vm.Vector3? front,
+    required vm.Vector3 front,
   }) {
     final up = convention.up.unitVector;
-    final frontNormal = front ?? -convention.fallbackAxis.unitVector;
+    final frontNormal = front;
     final components = frontNormal.storage;
     final isSignedAxis =
         components.where((c) => c == 0).length == 2 &&

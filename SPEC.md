@@ -799,10 +799,10 @@ respond to input (§req:priorities).
 - `NavigationCube` names six faces, TOP, BOTTOM, FRONT, BACK, LEFT, and
   RIGHT, each with a world normal and a label frame: the directions its
   text runs and points up.
-- Top is the up axis of §spec:coordinate-convention. Front faces away
-  from the convention's fallback axis, unless the app names another
-  horizontal world axis. Right is the face a viewer of Front sees on
-  their right, by the declared hand rule.
+- Top is the up axis of §spec:coordinate-convention. The app names the
+  front axis, a signed horizontal world axis, and has no default. Right
+  is the face a viewer of Front sees on their right, by the declared
+  hand rule.
 - Side labels stand upright. Top and Bottom labels point away from
   Front, as the top and bottom views of `CameraBasis.lookAt` hold them,
   so a top view shows TOP upright with FRONT along its bottom edge.
@@ -827,11 +827,12 @@ looking from.
 fixed up axis would label a scene's floor as its front in the other
 convention.
 
-*Why Front faces away from the fallback axis*: the fallback axis is the
-screen-up direction of a top view, so Front then sits at the bottom of
-TOP, where CAD view cubes put it. In Z-up this makes -Y the front, as
-plan views use. A Y-up scene gets -X, which is why the app may name
-another front instead.
+*Why the app names the front*: no rule picks a front that suits every
+scene. Facing away from the fallback axis gives -Y in Z-up, as plan
+views use, but -X in Y-up, where many scenes face +Z. A default would
+fail silently there, as a default up axis would, so the app names
+Front. Naming the axis opposite the fallback axis puts Front at the
+bottom of TOP in a top view, where CAD view cubes put it.
 
 *Why the overlay owns the projection*: the overlay is pixel output
 (§spec:viewport-overlays). Handing the app a rotation and leaving it a
