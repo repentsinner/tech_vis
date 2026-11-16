@@ -54,6 +54,31 @@ final leader = computeCalloutLeaderGeometry(
 final opacity = computeCalloutOpacity(distanceToCamera);
 ```
 
+Factories return typed primitives, which a renderer maps into its own
+scene graph. The set is closed, so a `switch` over a `Primitive` has
+exactly five cases. Each primitive carries an opacity and the app's key,
+passed through untouched. The package holds no palette, so the app
+resolves each primitive's color from its key.
+
+```dart
+final box = BoundingBoxFactory.createCube(
+  bounds: bounds,
+  key: MyStyle.selection,
+  fillOpacity: 0.2,
+);
+
+for (final primitive in box) {
+  switch (primitive) {
+    case LinePrimitive(:final start, :final end, :final widthPixels):
+      drawLine(start, end, widthPixels, colorFor(primitive.key));
+    case QuadPrimitive(:final corners):
+      fillQuad(corners, colorFor(primitive.key), primitive.opacity);
+    case BillboardPrimitive() || MarkerPrimitive() || MeshPrimitive():
+      break; // A box emits only lines and quads.
+  }
+}
+```
+
 `StyleTokens` holds every style constant, generated from the repository's
 `style/tokens.json`. `StyleTokens.styleVersion` identifies the token set.
 

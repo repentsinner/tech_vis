@@ -1,158 +1,94 @@
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'bounding_box.dart';
-import 'scene_layout_constants.dart';
-import 'scene_object.dart';
+import 'primitives.dart';
 
-/// Factory for creating camera-facing text labels attached to bounding box
-/// corners and edges.
+/// Factory for text labels attached to bounding box corners and edges.
 ///
-/// Labels use [SceneObjectType.textBillboard] and are positioned at a
-/// selected corner or edge of the top face of a bounding box.
-///
-/// The [lineCategory] and [labelType] parameters accept domain-specific
-/// semantic types defined by the consumer. Infrastructure resolvers
-/// cast to the expected type for color/style resolution.
+/// Each label is a [BillboardPrimitive] whose content is the label text as
+/// a [String], at a pixel height, for the app to set in its own typeface.
+/// The label's width is null until the app measures the text. The app key
+/// passes through to the label untouched.
 class EnvelopeLabelFactory {
-  /// Creates a text billboard [SceneObject] positioned at a corner of the
-  /// given bounding box top face.
-  ///
-  /// - [text]: Label content (e.g., a device name or filename).
-  /// - [bounds]: The bounding box whose corner hosts the label.
-  /// - [corner]: Which corner of the top face to use.
-  /// - [lineCategory]: Semantic category for background color resolution.
-  /// - [idPrefix]: Unique ID prefix for the scene object.
-  /// - [pixelSize]: Billboard pixel size for the label.
-  /// - [offsetPixels]: Screen-space offset from the corner.
-  /// Default billboard pixel size for envelope labels.
+  /// Default pixel height of an envelope label.
   static const double defaultPixelSize = 20.0;
 
-  /// Default screen-space pixel offset from bounding box corner.
+  /// Default screen-space pixel offset from a bounding box corner.
   static const double defaultOffsetPixels = 8.0;
 
-  static SceneObject createEnvelopeLabel({
+  /// Returns a viewer-facing label at [corner] of the top face of
+  /// [bounds].
+  ///
+  /// The label is [pixelSize] pixels tall and sits [offsetPixels] pixels
+  /// from the corner on screen, outward from the box.
+  static BillboardPrimitive createEnvelopeLabel({
     required String text,
     required BoundingBox bounds,
     required LabelCorner corner,
-    required Object? lineCategory,
-    required String idPrefix,
+    required Object? key,
     double pixelSize = defaultPixelSize,
     double offsetPixels = defaultOffsetPixels,
-    Object? labelType,
   }) {
-    final position = _cornerPosition(bounds, corner);
-    final anchorDirection = _anchorDirection(corner);
-
-    return SceneObject(
-      type: .textBillboard,
-      lineCategory: lineCategory,
-      id: '${idPrefix}_label',
-      center: position,
-      text: text,
-      labelType: labelType,
-      worldSize: pixelSize,
-      billboardAnchorDirection: anchorDirection,
-      billboardOffsetPixels: offsetPixels,
+    return BillboardPrimitive(
+      content: text,
+      heightPixels: pixelSize,
+      anchor: _cornerPosition(bounds, corner),
+      offset: ScreenOffset(
+        direction: _anchorDirection(corner),
+        pixels: offsetPixels,
+      ),
+      key: key,
     );
   }
 
-  /// Creates a world-aligned text label [SceneObject] positioned at the given
-  /// world coordinate, lying flat on the plane defined by [surfaceNormal].
+  /// Returns a label at [position] that lies flat in the plane with normal
+  /// [surfaceNormal], its text running along [textDirection].
   ///
-  /// Unlike [createEnvelopeLabel], the label follows perspective distortion
-  /// naturally (Fusion 360-style) rather than always facing the camera.
-  static SceneObject createWorldAlignedLabel({
+  /// The label is [pixelSize] pixels tall when viewed along the normal and
+  /// foreshortens with perspective at oblique angles. [anchorAlignment] is
+  /// the point of the label that sits on [position], and defaults to its
+  /// center.
+  static BillboardPrimitive createCoplanarBillboardLabel({
     required String text,
     required vm.Vector3 position,
-    required Object? lineCategory,
-    required String idPrefix,
-    double? worldHeight,
-    vm.Vector3? surfaceNormal,
-    vm.Vector3? textDirection,
-    Object? labelType,
-  }) {
-    final normal = surfaceNormal ?? vm.Vector3(0, 0, 1);
-    final right = textDirection ?? vm.Vector3(1, 0, 0);
-    final height =
-        worldHeight ?? SceneLayoutConstants.worldAlignedLabelHeightMm;
-
-    return SceneObject(
-      type: .textBillboard,
-      lineCategory: lineCategory,
-      id: '${idPrefix}_label',
-      center: position,
-      text: text,
-      labelType: labelType,
-      worldSize: height,
-      labelMode: .worldAligned,
-      worldNormal: normal,
-      worldRight: right,
-    );
-  }
-
-  /// Creates a coplanar billboard text label [SceneObject] positioned at the
-  /// given world coordinate, lying flat on the plane defined by
-  /// [surfaceNormal].
-  ///
-  /// Maintains a constant screen-pixel height when viewed head-on along the
-  /// surface normal but foreshortens naturally via perspective projection at
-  /// oblique viewing angles.
-  static SceneObject createCoplanarBillboardLabel({
-    required String text,
-    required vm.Vector3 position,
-    required Object? lineCategory,
-    required String idPrefix,
+    required Object? key,
     double pixelSize = defaultPixelSize,
     vm.Vector3? surfaceNormal,
     vm.Vector3? textDirection,
     vm.Vector2? anchorAlignment,
-    Object? labelType,
   }) {
-    final normal = surfaceNormal ?? vm.Vector3(0, 0, 1);
-    final right = textDirection ?? vm.Vector3(1, 0, 0);
-
-    return SceneObject(
-      type: .textBillboard,
-      lineCategory: lineCategory,
-      id: '${idPrefix}_label',
-      center: position,
-      text: text,
-      labelType: labelType,
-      worldSize: pixelSize,
-      labelMode: .coplanarBillboard,
-      worldNormal: normal,
-      worldRight: right,
-      anchorAlignment: anchorAlignment,
+    return BillboardPrimitive(
+      content: text,
+      heightPixels: pixelSize,
+      anchor: position,
+      orientation: CoplanarOrientation(
+        normal: surfaceNormal ?? vm.Vector3(0, 0, 1),
+        right: textDirection ?? vm.Vector3(1, 0, 0),
+      ),
+      alignment: anchorAlignment,
+      key: key,
     );
   }
 
-  /// Creates a coplanar billboard label positioned on a specific edge of the
-  /// top face of [bounds], like a colored tab attached to the envelope
-  /// boundary.
+  /// Returns a coplanar label on [edge] of the top face of [bounds], like a
+  /// tab attached to the envelope boundary.
   ///
-  /// The label's edge (not its center) aligns with the bounding-box boundary,
-  /// so the tab extends outward from the plane — matching Fusion 360 style.
-  static SceneObject createEdgeTabLabel({
+  /// The label's edge, not its center, sits on the boundary, so the tab
+  /// extends outward from the box.
+  static BillboardPrimitive createEdgeTabLabel({
     required String text,
     required BoundingBox bounds,
     required LabelEdge edge,
     required LabelAlignment alignment,
-    required Object? lineCategory,
-    required String idPrefix,
-    double? pixelSize,
-    Object? labelType,
+    required Object? key,
+    double pixelSize = defaultPixelSize,
   }) {
-    final position = _edgeTabPosition(bounds, edge, alignment);
-    final anchor = _anchorAlignmentForEdgeTab(edge, alignment);
-
     return createCoplanarBillboardLabel(
       text: text,
-      position: position,
-      lineCategory: lineCategory,
-      idPrefix: idPrefix,
-      pixelSize: pixelSize ?? 20.0,
-      anchorAlignment: anchor,
-      labelType: labelType,
+      position: _edgeTabPosition(bounds, edge, alignment),
+      key: key,
+      pixelSize: pixelSize,
+      anchorAlignment: _anchorAlignmentForEdgeTab(edge, alignment),
     );
   }
 

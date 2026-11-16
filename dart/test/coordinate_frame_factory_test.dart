@@ -11,62 +11,68 @@ void main() {
       labelPixelSize: 18,
       labelOffsetPixels: 6,
     );
-    String category(SpatialAxis axis) => 'axis_${axis.name}';
-    final objects = CoordinateFrameFactory.create(
+    String axisKey(SpatialAxis axis) => 'axis_${axis.name}';
+    String labelKey(SpatialAxis axis) => 'label_${axis.name}';
+    final primitives = CoordinateFrameFactory.create(
       frame,
-      lineCategoryFor: category,
-      labelType: 'axisLabel',
-      idPrefix: 'work',
+      keyFor: axisKey,
+      labelKeyFor: labelKey,
     );
-    final lines = objects.where((o) => o.type == SceneObjectType.line).toList();
-    final labels = objects
-        .where((o) => o.type == SceneObjectType.textBillboard)
-        .toList();
+    final lines = primitives.whereType<LinePrimitive>().toList();
+    final labels = primitives.whereType<BillboardPrimitive>().toList();
+
+    test('emits only lines and billboards', () {
+      expect(primitives, hasLength(6));
+      expect(lines, hasLength(3));
+      expect(labels, hasLength(3));
+    });
 
     test('draws one line per axis from the origin', () {
-      expect(lines.map((l) => l.id), ['work_x', 'work_y', 'work_z']);
       for (final (i, axis) in SpatialAxis.values.indexed) {
-        expect(lines[i].startPoint, Vector3(10, 20, 30));
-        expect(lines[i].endPoint, Vector3(10, 20, 30) + axis.unitVector * 5);
-        expect(lines[i].thickness, 0.4);
-        expect(lines[i].lineCategory, category(axis));
+        expect(lines[i].start, Vector3(10, 20, 30));
+        expect(lines[i].end, Vector3(10, 20, 30) + axis.unitVector * 5);
+        expect(lines[i].widthPixels, 0.4);
+        expect(lines[i].key, axisKey(axis));
       }
     });
 
     test('labels each axis end, offset in pixels along the axis', () {
-      expect(labels.map((l) => l.text), ['X', 'Y', 'Z']);
-      expect(labels.map((l) => l.id), [
-        'work_label_x',
-        'work_label_y',
-        'work_label_z',
-      ]);
+      expect(labels.map((l) => l.content), ['X', 'Y', 'Z']);
       for (final (i, axis) in SpatialAxis.values.indexed) {
-        expect(labels[i].center, lines[i].endPoint);
-        expect(labels[i].billboardAnchorDirection, axis.unitVector);
-        expect(labels[i].billboardOffsetPixels, 6);
-        expect(labels[i].worldSize, 18);
-        expect(labels[i].labelType, 'axisLabel');
-        expect(labels[i].lineCategory, category(axis));
+        final label = labels[i];
+        expect(label.anchor, lines[i].end);
+        expect(label.orientation, isA<ViewerFacingOrientation>());
+        expect(label.offset!.direction, axis.unitVector);
+        expect(label.offset!.pixels, 6);
+        expect(label.heightPixels, 18);
+        expect(label.widthPixels, isNull);
+        expect(label.key, labelKey(axis));
       }
+    });
+
+    test('keys labels by their axis key when given no label key', () {
+      final keyed = CoordinateFrameFactory.create(frame, keyFor: axisKey);
+      final keys = keyed.whereType<BillboardPrimitive>().map((l) => l.key);
+      expect(keys, ['axis_x', 'axis_y', 'axis_z']);
     });
 
     test('omits labels when the frame hides them', () {
       final bare = CoordinateFrameFactory.create(
         CoordinateFrameDescriptor(showLabels: false),
-        lineCategoryFor: category,
+        keyFor: axisKey,
       );
       expect(bare, hasLength(3));
-      expect(bare.every((o) => o.type == SceneObjectType.line), isTrue);
-      expect(bare.first.id, 'frame_x');
+      expect(bare, everyElement(isA<LinePrimitive>()));
     });
 
     test('places a frame at any origin', () {
       final at = CoordinateFrameFactory.create(
         CoordinateFrameDescriptor(origin: Vector3(-1, -2, -3), length: 1),
-        lineCategoryFor: category,
+        keyFor: axisKey,
       );
-      expect(at.first.startPoint, Vector3(-1, -2, -3));
-      expect(at.first.endPoint, Vector3(0, -2, -3));
+      final first = at.first as LinePrimitive;
+      expect(first.start, Vector3(-1, -2, -3));
+      expect(first.end, Vector3(0, -2, -3));
     });
   });
 }

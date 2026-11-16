@@ -12,11 +12,11 @@ Matcher _closeToVector(vm.Vector3 expected) => predicate<vm.Vector3>(
 );
 
 /// An edge as an order-independent pair of rounded endpoints.
-String _edgeKey(SceneObject line) {
+String _edgeKey(LinePrimitive line) {
   String point(vm.Vector3 p) =>
       '${p.x.toStringAsFixed(6)},${p.y.toStringAsFixed(6)},'
       '${p.z.toStringAsFixed(6)}';
-  final ends = [point(line.startPoint!), point(line.endPoint!)]..sort();
+  final ends = [point(line.start), point(line.end)]..sort();
   return ends.join('|');
 }
 
@@ -66,53 +66,84 @@ void main() {
     });
   });
 
+  group('FilledRectangleFactory', () {
+    final cases = <(String, QuadPrimitive Function(), vm.Vector3)>[
+      (
+        'XY',
+        () => FilledRectangleFactory.createXYFilledRectangle(
+          center: vm.Vector3.zero(),
+          width: 4,
+          height: 2,
+          key: 'fill',
+          opacity: 0.5,
+        ),
+        vm.Vector3(2, 1, 0),
+      ),
+      (
+        'XZ',
+        () => FilledRectangleFactory.createXZFilledRectangle(
+          center: vm.Vector3.zero(),
+          width: 4,
+          height: 2,
+          key: 'fill',
+          opacity: 0.5,
+        ),
+        vm.Vector3(2, 0, 1),
+      ),
+      (
+        'YZ',
+        () => FilledRectangleFactory.createYZFilledRectangle(
+          center: vm.Vector3.zero(),
+          width: 4,
+          height: 2,
+          key: 'fill',
+          opacity: 0.5,
+        ),
+        vm.Vector3(0, 2, 1),
+      ),
+    ];
+    for (final (plane, create, thirdCorner) in cases) {
+      test('creates a $plane quad carrying its key and opacity', () {
+        final quad = create();
+        expect(quad.key, 'fill');
+        expect(quad.opacity, 0.5);
+        expect(quad.corners, hasLength(4));
+        expect(quad.corners[2], _closeToVector(thirdCorner));
+      });
+    }
+  });
+
   group('FilledRectangleFactory.createOutline', () {
     final rectangle = FilledRectangleFactory.createXYFilledRectangle(
       center: vm.Vector3.zero(),
       width: 4,
       height: 2,
-      lineCategory: 'edge',
-      edgeWidth: 0.5,
-      id: 'r',
+      key: 'fill',
     );
 
-    test('emits the four perimeter lines with the edge width', () {
-      final outline = FilledRectangleFactory.createOutline(rectangle);
+    test('emits the four perimeter lines at the width in pixels', () {
+      final outline = FilledRectangleFactory.createOutline(
+        rectangle,
+        widthPixels: 0.5,
+        key: 'edge',
+      );
       expect(outline, hasLength(4));
       for (final line in outline) {
-        expect(line.type, SceneObjectType.line);
-        expect(line.thickness, 0.5);
-        expect(line.lineCategory, 'edge');
+        expect(line.widthPixels, 0.5);
+        expect(line.key, 'edge');
+        expect(line.opacity, 1.0);
       }
-      expect(outline.map((l) => l.id), [
-        'r_edge_0',
-        'r_edge_1',
-        'r_edge_2',
-        'r_edge_3',
-      ]);
-      expect(outline[0].startPoint, _closeToVector(vm.Vector3(-2, -1, 0)));
-      expect(outline[3].endPoint, _closeToVector(vm.Vector3(-2, -1, 0)));
+      expect(outline[0].start, _closeToVector(vm.Vector3(-2, -1, 0)));
+      expect(outline[0].end, _closeToVector(vm.Vector3(2, -1, 0)));
+      expect(outline[3].end, _closeToVector(vm.Vector3(-2, -1, 0)));
     });
 
-    test('emits nothing for a rectangle without an edge', () {
-      final bare = FilledRectangleFactory.createXYFilledRectangle(
-        center: vm.Vector3.zero(),
-        width: 4,
-        height: 2,
-        lineCategory: 'edge',
-        edgeWidth: 0,
+    test('takes the quad key when given none', () {
+      final outline = FilledRectangleFactory.createOutline(
+        rectangle,
+        widthPixels: 1,
       );
-      expect(FilledRectangleFactory.createOutline(bare), isEmpty);
-    });
-
-    test('emits nothing for an object that is not a filled rectangle', () {
-      const line = SceneObject(
-        type: SceneObjectType.line,
-        lineCategory: null,
-        id: 'l',
-        edgeWidth: 1,
-      );
-      expect(FilledRectangleFactory.createOutline(line), isEmpty);
+      expect(outline.map((l) => l.key), everyElement('fill'));
     });
   });
 
@@ -123,20 +154,22 @@ void main() {
     );
     final cube = BoundingBoxFactory.createCube(
       bounds: bounds,
-      lineCategory: 'box',
-      opacity: 0.25,
+      key: 'box',
+      fillOpacity: 0.25,
       edgeWidth: 0.3,
-      idPrefix: 'b',
     );
-    final faces = cube.where((o) => o.type == SceneObjectType.filledRectangle);
-    final edges = cube.where((o) => o.type == SceneObjectType.line).toList();
+    final faces = cube.whereType<QuadPrimitive>().toList();
+    final edges = cube.whereType<LinePrimitive>().toList();
 
-    test('emits six faces carrying the opacity and no edge of their own', () {
+    test('emits only lines and quads', () {
+      expect(cube, hasLength(faces.length + edges.length));
+    });
+
+    test('emits six faces carrying the fill opacity and key', () {
       expect(faces, hasLength(6));
       for (final face in faces) {
         expect(face.opacity, 0.25);
-        expect(face.edgeWidth, 0);
-        expect(FilledRectangleFactory.createOutline(face), isEmpty);
+        expect(face.key, 'box');
       }
     });
 
@@ -144,9 +177,9 @@ void main() {
       expect(edges, hasLength(12));
       expect(edges.map(_edgeKey).toSet(), hasLength(12));
       for (final edge in edges) {
-        expect(edge.thickness, 0.3);
-        expect(edge.lineCategory, 'box');
-        expect(edge.id, startsWith('b_edge_'));
+        expect(edge.widthPixels, 0.3);
+        expect(edge.key, 'box');
+        expect(edge.opacity, 1.0);
       }
     });
 
@@ -158,22 +191,31 @@ void main() {
       };
       String key(vm.Vector3 p) => '${p.x},${p.y},${p.z}';
       for (final edge in edges) {
-        expect(corners, contains(key(edge.startPoint!)));
-        expect(corners, contains(key(edge.endPoint!)));
+        expect(corners, contains(key(edge.start)));
+        expect(corners, contains(key(edge.end)));
         // An edge runs along exactly one axis.
-        final d = edge.endPoint! - edge.startPoint!;
+        final d = edge.end - edge.start;
         final axesMoved = [d.x, d.y, d.z].where((c) => c != 0).length;
         expect(axesMoved, 1);
+      }
+    });
+
+    test('puts every face corner on a corner of the box', () {
+      for (final face in faces) {
+        for (final corner in face.corners) {
+          expect(bounds.contains(corner), isTrue);
+          expect(bounds.closestPointTo(corner), _closeToVector(corner));
+        }
       }
     });
 
     test('omits the faces when the box has no fill', () {
       final wire = BoundingBoxFactory.createCube(
         bounds: bounds,
-        lineCategory: 'box',
-        opacity: 0,
+        key: 'box',
+        fillOpacity: 0,
       );
-      expect(wire.every((o) => o.type == SceneObjectType.line), isTrue);
+      expect(wire, everyElement(isA<LinePrimitive>()));
       expect(wire, hasLength(12));
     });
   });
