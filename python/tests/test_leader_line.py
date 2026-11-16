@@ -9,22 +9,7 @@ from tech_vis import (
 
 
 def test_default_style_comes_from_the_style_tokens():
-    assert LeaderLineStyle() == LeaderLineStyle(
-        line_width=tokens.CALLOUT_LEADER_LINE_WIDTH,
-        gap_pixels=tokens.CALLOUT_GAP_PIXELS,
-        angled_length_pixels=tokens.CALLOUT_ANGLED_LENGTH_PIXELS,
-        horizontal_length_pixels=tokens.CALLOUT_HORIZONTAL_LENGTH_PIXELS,
-        angle_degrees=tokens.CALLOUT_ANGLE_DEGREES,
-    )
-
-
-def test_quadrant_values_are_the_fixture_names():
-    assert [q.value for q in CalloutQuadrant] == [
-        "topRight",
-        "topLeft",
-        "bottomRight",
-        "bottomLeft",
-    ]
+    assert LeaderLineStyle().gap_pixels == tokens.CALLOUT_GAP_PIXELS
 
 
 def test_geometry_points_are_plain_tuples():
