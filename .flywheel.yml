@@ -29,3 +29,10 @@ flywheel:
     - path: dart/CHANGELOG.md
       pattern: '^Current version: .*'
       replacement: 'Current version: ${version}'
+    # uv.lock records the project's own version, and CI's `uv sync --locked`
+    # fails when it lags pyproject.toml. Every package in the lockfile has a
+    # `version =` line, so a single-line pattern cannot pick out ours: this
+    # finds the tech-vis entry and rewrites the line after it.
+    - path: python/uv.lock
+      cmd: >-
+        sed -i -E '/^name = "tech-vis"$/{n;s/^version = ".*"$/version = "${version}"/}' python/uv.lock
