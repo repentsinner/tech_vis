@@ -1,0 +1,4 @@
+# Repository tooling. It reads and writes files outside the package root,
+# so it has nothing to do in a published archive. This file replaces no
+# .gitignore: dart/ has none, and the root .gitignore still applies.
+/tool/
