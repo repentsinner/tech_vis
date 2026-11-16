@@ -84,6 +84,18 @@ abstract final class StyleTokens {
   /// Default height of the scale bar overlay. Unit: px.
   static const double scaleBarHeightPixels = 32.0;
 
+  /// Least distance between adjacent scale bar ticks. The bar subdivides into
+  /// the most clean parts that keep its ticks this far apart. Unit: px.
+  static const double scaleBarMinTickSpacingPixels = 16.0;
+
+  /// Fraction of the scale bar's maximum length that a longer step must clear
+  /// before the bar adopts it, so the value does not flicker at a step
+  /// boundary. Unit: ratio.
+  static const double scaleBarStepHysteresis = 0.1;
+
+  /// Pixel height of the scale bar's value label. Unit: px.
+  static const double scaleBarLabelHeightPixels = 12.0;
+
   /// Default viewport corner of the color ramp legend overlay. Bottom-right,
   /// clear of the scale bar and the navigation cube. Codes: 0 top-left, 1
   /// top-right, 2 bottom-left, 3 bottom-right. Unit: corner.
@@ -147,6 +159,9 @@ abstract final class StyleTokens {
     'scaleBarOffsetYPixels': scaleBarOffsetYPixels,
     'scaleBarWidthPixels': scaleBarWidthPixels,
     'scaleBarHeightPixels': scaleBarHeightPixels,
+    'scaleBarMinTickSpacingPixels': scaleBarMinTickSpacingPixels,
+    'scaleBarStepHysteresis': scaleBarStepHysteresis,
+    'scaleBarLabelHeightPixels': scaleBarLabelHeightPixels,
     'colorRampLegendCorner': colorRampLegendCorner,
     'colorRampLegendOffsetXPixels': colorRampLegendOffsetXPixels,
     'colorRampLegendOffsetYPixels': colorRampLegendOffsetYPixels,

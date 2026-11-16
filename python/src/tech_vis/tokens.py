@@ -80,6 +80,17 @@ SCALE_BAR_WIDTH_PIXELS: float = 160.0
 # Default height of the scale bar overlay. Unit: px.
 SCALE_BAR_HEIGHT_PIXELS: float = 32.0
 
+# Least distance between adjacent scale bar ticks. The bar subdivides into the most
+# clean parts that keep its ticks this far apart. Unit: px.
+SCALE_BAR_MIN_TICK_SPACING_PIXELS: float = 16.0
+
+# Fraction of the scale bar's maximum length that a longer step must clear before the
+# bar adopts it, so the value does not flicker at a step boundary. Unit: ratio.
+SCALE_BAR_STEP_HYSTERESIS: float = 0.1
+
+# Pixel height of the scale bar's value label. Unit: px.
+SCALE_BAR_LABEL_HEIGHT_PIXELS: float = 12.0
+
 # Default viewport corner of the color ramp legend overlay. Bottom-right, clear of the
 # scale bar and the navigation cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3
 # bottom-right. Unit: corner.
@@ -143,6 +154,9 @@ ALL: dict[str, float] = {
     "scaleBarOffsetYPixels": SCALE_BAR_OFFSET_YPIXELS,
     "scaleBarWidthPixels": SCALE_BAR_WIDTH_PIXELS,
     "scaleBarHeightPixels": SCALE_BAR_HEIGHT_PIXELS,
+    "scaleBarMinTickSpacingPixels": SCALE_BAR_MIN_TICK_SPACING_PIXELS,
+    "scaleBarStepHysteresis": SCALE_BAR_STEP_HYSTERESIS,
+    "scaleBarLabelHeightPixels": SCALE_BAR_LABEL_HEIGHT_PIXELS,
     "colorRampLegendCorner": COLOR_RAMP_LEGEND_CORNER,
     "colorRampLegendOffsetXPixels": COLOR_RAMP_LEGEND_OFFSET_XPIXELS,
     "colorRampLegendOffsetYPixels": COLOR_RAMP_LEGEND_OFFSET_YPIXELS,
