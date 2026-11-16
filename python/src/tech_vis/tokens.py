@@ -54,6 +54,13 @@ CALLOUT_OPACITY_MAX: float = 0.95
 # Callout opacity at the far distance. Unit: ratio.
 CALLOUT_OPACITY_MIN: float = 0.25
 
+# Default marker diameter in screen-space logical pixels. Unit: px.
+MARKER_DIAMETER_PIXELS: float = 8.0
+
+# Icosphere subdivision level of the marker mesh. Each level quadruples the
+# icosahedron's 20 triangles. Unit: count.
+MARKER_SUBDIVISIONS: float = 2.0
+
 # Every token by its name in style/tokens.json.
 ALL: dict[str, float] = {
     "axisLength": AXIS_LENGTH,
@@ -72,4 +79,6 @@ ALL: dict[str, float] = {
     "calloutOpacityFarDistance": CALLOUT_OPACITY_FAR_DISTANCE,
     "calloutOpacityMax": CALLOUT_OPACITY_MAX,
     "calloutOpacityMin": CALLOUT_OPACITY_MIN,
+    "markerDiameterPixels": MARKER_DIAMETER_PIXELS,
+    "markerSubdivisions": MARKER_SUBDIVISIONS,
 }

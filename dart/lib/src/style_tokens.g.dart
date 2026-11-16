@@ -58,6 +58,13 @@ abstract final class StyleTokens {
   /// Callout opacity at the far distance. Unit: ratio.
   static const double calloutOpacityMin = 0.25;
 
+  /// Default marker diameter in screen-space logical pixels. Unit: px.
+  static const double markerDiameterPixels = 8.0;
+
+  /// Icosphere subdivision level of the marker mesh. Each level quadruples
+  /// the icosahedron's 20 triangles. Unit: count.
+  static const double markerSubdivisions = 2.0;
+
   /// Every token by its name in style/tokens.json.
   static const Map<String, double> all = {
     'axisLength': axisLength,
@@ -76,5 +83,7 @@ abstract final class StyleTokens {
     'calloutOpacityFarDistance': calloutOpacityFarDistance,
     'calloutOpacityMax': calloutOpacityMax,
     'calloutOpacityMin': calloutOpacityMin,
+    'markerDiameterPixels': markerDiameterPixels,
+    'markerSubdivisions': markerSubdivisions,
   };
 }
