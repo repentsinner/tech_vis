@@ -1060,6 +1060,218 @@ Map<String, Object?> scaleBarFixture() => {
   ],
 };
 
+typedef _GroundCase = ({
+  String name,
+  CoordinateConvention convention,
+  GroundPatch patch,
+  DisplayFormat format,
+  UnitSystem worldUnits,
+  vm.Vector3 origin,
+  _View view,
+  double? previousMinorStep,
+  GroundGridStyle style,
+});
+
+/// Few segments and lines, so each case stays short enough to review.
+const _compactGrid = GroundGridStyle(fadeSegments: 3, maxLinesPerAxis: 41);
+
+/// Ground grids under each convention and handedness, both patch shapes,
+/// each display format, a held step, and one case at the token defaults.
+List<_GroundCase> _groundCases() => [
+  (
+    name: 'rectangle, metric',
+    convention: _zUpRight,
+    patch: const RectangularGroundPatch(halfExtentU: 12, halfExtentV: 3),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3.zero(),
+    view: _view('off-axis', [20, -30, 40], [2, 1, 0], 45, [1280, 720]),
+    previousMinorStep: null,
+    style: _compactGrid,
+  ),
+  (
+    name: 'circle, decimal inch over millimeters',
+    convention: _zUpLeft,
+    patch: const CircularGroundPatch(radius: 26),
+    format: DisplayFormat.decimalInch,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3(10, -5, 2),
+    view: _view('off-axis', [-60, -50, 120], [10, -5, 2], 40, [1024, 768]),
+    previousMinorStep: null,
+    style: _compactGrid,
+  ),
+  (
+    name: 'rectangle, fractional inch',
+    convention: _yUpRight,
+    patch: const RectangularGroundPatch(halfExtentU: 1.5, halfExtentV: 3),
+    format: DisplayFormat.fractionalInch,
+    worldUnits: UnitSystem.imperial,
+    origin: vm.Vector3.zero(),
+    view: _view('off-axis', [6, 10, 8], [0, 0, 0], 50, [1920, 1080]),
+    previousMinorStep: null,
+    style: _compactGrid,
+  ),
+  (
+    name: 'circle, metric, previous step held inside the margin',
+    convention: _yUpLeft,
+    patch: const CircularGroundPatch(radius: 105),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3(0, -20, 0),
+    view: _view('off-axis', [300, 680, 300], [0, -20, 0], 45, [1280, 720]),
+    previousMinorStep: 10,
+    style: _compactGrid,
+  ),
+  (
+    name: 'rectangle, metric, style defaults',
+    convention: _zUpRight,
+    patch: const RectangularGroundPatch(halfExtentU: 80, halfExtentV: 60),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3.zero(),
+    view: _view('far', [2000, -3000, 4000], [0, 0, 0], 45, [1280, 720]),
+    previousMinorStep: null,
+    style: const GroundGridStyle(),
+  ),
+];
+
+Map<String, Object?> _groundStyle(GroundGridStyle s) => {
+  'minLineSpacingPixels': s.minLineSpacingPixels,
+  'stepMargin': s.stepMargin,
+  'maxLinesPerAxis': s.maxLinesPerAxis,
+  'fadeSegments': s.fadeSegments,
+  'minorLineWidth': s.minorLineWidth,
+  'majorLineWidth': s.majorLineWidth,
+  'labelPixelSize': s.labelPixelSize,
+};
+
+Map<String, Object?> _groundPatch(GroundPatch p) => switch (p) {
+  RectangularGroundPatch(:final halfExtentU, :final halfExtentV) => {
+    'shape': 'rectangle',
+    'halfExtentU': halfExtentU,
+    'halfExtentV': halfExtentV,
+  },
+  CircularGroundPatch(:final radius) => {'shape': 'circle', 'radius': radius},
+};
+
+/// A ground-grid primitive in world coordinates, with the key the case
+/// gave it.
+Map<String, Object?> _groundPrimitive(Primitive p) => switch (p) {
+  LinePrimitive() => {
+    'type': 'line',
+    'key': p.key,
+    'start': _vector(p.start),
+    'end': _vector(p.end),
+    'widthPixels': p.widthPixels,
+    'opacity': p.opacity,
+  },
+  BillboardPrimitive(content: BillboardContent(value: final TextRequest t)) => {
+    'type': 'billboard',
+    'key': p.key,
+    'anchor': _vector(p.anchor),
+    'alignment': _vector(p.alignment),
+    'textRequest': {'text': t.text, 'heightPixels': t.heightPixels},
+    'opacity': p.opacity,
+  },
+  _ => throw UnsupportedError('a ground grid emits lines and text labels'),
+};
+
+Map<String, Object?> _groundCase(_GroundCase c) {
+  final camera = CameraBasis.lookAt(
+    position: c.view.position,
+    target: c.view.target,
+    convention: c.convention,
+  );
+  final grid = GroundPlaneFactory.create(
+    convention: c.convention,
+    patch: c.patch,
+    format: c.format,
+    worldUnits: c.worldUnits,
+    camera: camera,
+    target: c.view.target,
+    verticalFovRadians: c.view.verticalFovDegrees * math.pi / 180,
+    viewportHeight: c.view.viewport.y,
+    resolveText: fakeTextResolver,
+    minorKey: 'minor',
+    majorKey: 'major',
+    labelKey: 'label',
+    origin: c.origin,
+    previousMinorStep: c.previousMinorStep,
+    style: c.style,
+  );
+  return {
+    'name':
+        '${c.name}, ${c.convention.up.label}-up '
+        '${c.convention.handedness.name}-handed',
+    'input': {
+      'convention': {
+        'up': c.convention.up.name,
+        'handedness': c.convention.handedness.name,
+      },
+      'patch': _groundPatch(c.patch),
+      'format': c.format.name,
+      'worldUnits': c.worldUnits.name,
+      'origin': _vector(c.origin),
+      'camera': {
+        'position': _vector(c.view.position),
+        'target': _vector(c.view.target),
+        'verticalFovDegrees': c.view.verticalFovDegrees,
+        'viewportHeight': c.view.viewport.y,
+      },
+      'previousMinorStep': c.previousMinorStep,
+      'style': _groundStyle(c.style),
+    },
+    'output': {
+      'minorStep': grid.minorStep,
+      'majorStep': grid.majorStep,
+      'primitives': [for (final p in grid.primitives) _groundPrimitive(p)],
+    },
+  };
+}
+
+/// Spacings either side of a step boundary, by the margin and within it,
+/// with and without a previous step.
+List<({DisplayFormat format, double spacing, double? previous})>
+_minorStepCases() => [
+  for (final (format, boundary, below, above) in [
+    (DisplayFormat.metric, 10.0, 1.0, 100.0),
+    (DisplayFormat.decimalInch, 0.1, 0.01, 1.0),
+    (DisplayFormat.fractionalInch, 1.0, 0.25, 12.0),
+  ])
+    for (final factor in [0.8, 0.95, 1.05, 1.2])
+      for (final previous in [null, below, boundary, above])
+        (format: format, spacing: boundary * factor, previous: previous),
+];
+
+/// The ground-plane fixture: minor-step choice with its margin, and whole
+/// grids in world coordinates.
+Map<String, Object?> groundPlaneFixture() => {
+  'units':
+      "steps are in the display format's base unit; points and extents "
+      'are in world units',
+  'GroundPlaneFactory.minorStep': [
+    for (final c in _minorStepCases())
+      {
+        'name':
+            '${c.format.name}, spacing ${c.spacing}, previous ${c.previous}',
+        'input': {
+          'format': c.format.name,
+          'minimumSpacing': c.spacing,
+          'previousStep': c.previous,
+          'margin': StyleTokens.groundGridStepMargin,
+        },
+        'output': {
+          'step': GroundPlaneFactory.minorStep(
+            format: c.format,
+            minimumSpacing: c.spacing,
+            previousStep: c.previous,
+          ),
+        },
+      },
+  ],
+  'GroundPlaneFactory.create': [for (final c in _groundCases()) _groundCase(c)],
+};
+
 /// Renders a fixture family under the header and style version every
 /// fixture file carries.
 String _render(Map<String, Object?> family) {
@@ -1082,6 +1294,7 @@ void main(List<String> args) {
     'vectors/unit_formats.json': _render(unitFormatsFixture()),
     'vectors/navigation_cube.json': _render(navigationCubeFixture()),
     'vectors/scale_bar.json': _render(scaleBarFixture()),
+    'vectors/ground_plane.json': _render(groundPlaneFixture()),
   };
 
   final stale = [
