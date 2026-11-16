@@ -1,3 +1,13 @@
+# [0.5.0](https://github.com/repentsinner/tech_vis/compare/v0.4.0...v0.5.0) (2026-11-16)
+
+
+### Features
+
+* **dart:** draw ground grid lines whole and leave the fade to the renderer ([5198f1f](https://github.com/repentsinner/tech_vis/commit/5198f1f123277d48931323b06f5428d9a651a226))
+* **dart:** expose the ground grid fade as GroundFade ([5661ed4](https://github.com/repentsinner/tech_vis/commit/5661ed42258852b5c5f266beaf5d3b3a8d294c67))
+* **python:** draw ground grid lines whole and leave the fade to the renderer ([18105c1](https://github.com/repentsinner/tech_vis/commit/18105c13c437f9114ba52db6f3fca02c6bd4f5ee))
+* **python:** expose the ground grid fade as GroundFade ([5eeb6d2](https://github.com/repentsinner/tech_vis/commit/5eeb6d2ac2ee85cd0a5ece82fa8a470fab236e90))
+
 # [0.4.0](https://github.com/repentsinner/tech_vis/compare/v0.3.0...v0.4.0) (2026-11-16)
 
 
