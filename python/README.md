@@ -208,10 +208,15 @@ report the same style version produce the same layout.
 
 A ground grid lies in the plane across the declared up axis. Its minor
 lines keep a minimum pixel spacing at the camera target, so the step
-changes with zoom, and its lines fade toward the patch edge. A dimension
-measures between points the app supplies: a length, an angle, or a radius
-or diameter. Both are sized in screen pixels, so the app rebuilds them each
-frame the camera moves:
+changes with zoom. Each line spans the whole patch at full opacity, and
+the renderer fades it per pixel by `grid.fade.opacity_at(point)`. A
+shader takes the fade's `center`, plane axes `u` and `v`, and `patch`,
+and the `GroundFade.opacity_at` docstring gives the formula. Each label's
+opacity is the same fade at its anchor.
+
+A dimension measures between points the app supplies: a length, an
+angle, or a radius or diameter. Both are sized in screen pixels, so the
+app rebuilds them each frame the camera moves:
 
 ```python
 from tech_vis import (

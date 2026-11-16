@@ -104,7 +104,6 @@ void main() {
         style.maxLinesPerAxis,
         StyleTokens.groundGridMaxLinesPerAxis.toInt(),
       );
-      expect(style.fadeSegments, StyleTokens.groundGridFadeSegments.toInt());
       expect(style.minorLineWidth, StyleTokens.groundGridMinorLineWidth);
       expect(style.majorLineWidth, StyleTokens.groundGridMajorLineWidth);
       expect(style.labelPixelSize, StyleTokens.groundGridLabelPixelSize);
@@ -246,10 +245,7 @@ void main() {
               halfExtentU: 1e4,
               halfExtentV: 1e4,
             ),
-            style: const GroundGridStyle(
-              maxLinesPerAxis: 10001,
-              fadeSegments: 1,
-            ),
+            style: const GroundGridStyle(maxLinesPerAxis: 10001),
           );
           final perPixel = ScreenSpaceUtils.worldUnitsPerPixelAt(
             vm.Vector3.zero(),
@@ -326,70 +322,193 @@ void main() {
       expect(grid.minorStep, closeTo(100, _tolerance));
     });
 
-    group('rectangular fade', () {
-      final grid = _grid(style: const GroundGridStyle(fadeSegments: 4));
+    group('rectangular patch', () {
       const hu = 500.0;
       const hv = 300.0;
+      final origin = vm.Vector3(3, -4, 0);
+      // The default patch has these half extents.
+      final grid = _grid(origin: origin);
 
-      test('splits each line into equal segments across the patch', () {
+      test('draws each line whole, edge to edge, at full opacity', () {
         final centerLine = [
           for (final l in _lines(grid, _majorKey))
-            if (l.start.x == 0 && l.end.x == 0) l,
+            if (l.start.x == origin.x && l.end.x == origin.x) l,
         ];
-        expect(centerLine, hasLength(4));
-        expect(centerLine.first.start.y, closeTo(-hv, _tolerance));
-        expect(centerLine.last.end.y, closeTo(hv, _tolerance));
-      });
-
-      test('opacity falls linearly to the edge, evaluated mid-segment', () {
+        expect(centerLine, hasLength(1));
+        expect(centerLine.single.start.y, closeTo(origin.y - hv, _tolerance));
+        expect(centerLine.single.end.y, closeTo(origin.y + hv, _tolerance));
         for (final l in _lines(grid)) {
-          final mid = (l.start + l.end) * 0.5;
-          final expected = 1 - math.max(mid.x.abs() / hu, mid.y.abs() / hv);
-          expect(l.opacity, closeTo(expected, _tolerance));
-          expect(l.opacity, greaterThan(0));
-        }
-      });
-
-      test('lines stay inside the patch', () {
-        for (final l in _lines(grid)) {
-          for (final p in [l.start, l.end]) {
-            expect(p.x.abs(), lessThanOrEqualTo(hu + _tolerance));
-            expect(p.y.abs(), lessThanOrEqualTo(hv + _tolerance));
-          }
+          expect(l.opacity, 1);
+          final d = l.end - l.start;
+          final alongV = d.x == 0;
+          expect(d.length, closeTo(alongV ? 2 * hv : 2 * hu, _tolerance));
         }
       });
     });
 
-    group('circular fade', () {
+    group('circular patch', () {
       const radius = 400.0;
-      final grid = _grid(
-        patch: const CircularGroundPatch(radius: radius),
-        style: const GroundGridStyle(fadeSegments: 4),
-      );
+      const patch = CircularGroundPatch(radius: radius);
+      final grid = _grid(patch: patch);
 
-      test('each line is a chord of the circle', () {
+      test('draws each line as one whole chord at full opacity', () {
         for (final l in _lines(grid)) {
-          final first = l.start;
-          if (first.x == l.end.x) {
-            final half = math.sqrt(radius * radius - first.x * first.x);
-            expect(first.y, greaterThanOrEqualTo(-half - _tolerance));
-            expect(l.end.y, lessThanOrEqualTo(half + _tolerance));
-          }
+          expect(l.opacity, 1);
+          final alongV = l.start.x == l.end.x;
+          final offset = alongV ? l.start.x : l.start.y;
+          final (from, to) = alongV
+              ? (l.start.y, l.end.y)
+              : (l.start.x, l.end.x);
+          final half = math.sqrt(radius * radius - offset * offset);
+          expect(from, closeTo(-half, _tolerance));
+          expect(to, closeTo(half, _tolerance));
         }
       });
 
-      test('opacity falls radially, evaluated mid-segment', () {
+      test('omits the tangent lines, whose chords are empty', () {
+        // A 10 mm minor step puts lines at the radius, where the chord
+        // has no length.
+        expect(grid.minorStep, closeTo(10, _tolerance));
         for (final l in _lines(grid)) {
-          final mid = (l.start + l.end) * 0.5;
-          expect(
-            l.opacity,
-            closeTo(
-              1 - math.sqrt(mid.x * mid.x + mid.y * mid.y) / radius,
-              _tolerance,
-            ),
-          );
+          expect((l.end - l.start).length, greaterThan(0));
         }
       });
+    });
+
+    group('fade', () {
+      for (final convention in [_conventionZ, _conventionY]) {
+        group('$convention', () {
+          final origin = vm.Vector3(3, -4, 5);
+
+          test('centers on the origin, along the plane axes', () {
+            final fade = _grid(convention: convention, origin: origin).fade;
+            final axes = convention.planeAxes;
+            expect(fade.center, origin);
+            expect(fade.u, axes.u.unitVector);
+            expect(fade.v, axes.v.unitVector);
+          });
+
+          test('holds the patch', () {
+            const patch = CircularGroundPatch(radius: 400);
+            final fade = _grid(
+              convention: convention,
+              patch: patch,
+              origin: origin,
+            ).fade;
+            expect(fade.patch, same(patch));
+          });
+
+          test('gives each label the fade at its anchor', () {
+            for (final patch in const <GroundPatch>[
+              RectangularGroundPatch(halfExtentU: 500, halfExtentV: 300),
+              CircularGroundPatch(radius: 400),
+            ]) {
+              final grid = _grid(
+                convention: convention,
+                patch: patch,
+                origin: origin,
+              );
+              final labels = _labels(grid);
+              expect(labels, isNotEmpty);
+              for (final l in labels) {
+                expect(
+                  l.opacity,
+                  closeTo(grid.fade.opacityAt(l.anchor), _tolerance),
+                  reason: '${l.anchor}',
+                );
+              }
+            }
+          });
+
+          group('opacityAt is one minus smoothstep of the reach', () {
+            const rectangle = RectangularGroundPatch(
+              halfExtentU: 500,
+              halfExtentV: 300,
+            );
+            const circle = CircularGroundPatch(radius: 400);
+            for (final c in [
+              (
+                name: 'rectangle, center',
+                patch: rectangle,
+                at: (0.0, 0.0),
+                opacity: 1.0,
+              ),
+              (
+                name: 'rectangle, 0.4 of u',
+                patch: rectangle,
+                at: (200.0, 0.0),
+                opacity: 0.648,
+              ),
+              (
+                name: 'rectangle, 0.8 of u',
+                patch: rectangle,
+                at: (-400.0, 0.0),
+                opacity: 0.104,
+              ),
+              (
+                name: 'rectangle, 2/3 of v',
+                patch: rectangle,
+                at: (0.0, 200.0),
+                opacity: 7 / 27,
+              ),
+              (
+                name: 'rectangle, the larger fraction wins',
+                patch: rectangle,
+                at: (200.0, -200.0),
+                opacity: 7 / 27,
+              ),
+              (
+                name: 'rectangle, past the edge',
+                patch: rectangle,
+                at: (600.0, 0.0),
+                opacity: 0.0,
+              ),
+              (
+                name: 'circle, 0.25 of the radius',
+                patch: circle,
+                at: (100.0, 0.0),
+                opacity: 0.84375,
+              ),
+              (
+                name: 'circle, 0.75 of the radius',
+                patch: circle,
+                at: (0.0, -300.0),
+                opacity: 0.15625,
+              ),
+              (
+                name: 'circle, half the radius off both axes',
+                patch: circle,
+                at: (120.0, 160.0),
+                opacity: 0.5,
+              ),
+              (
+                name: 'circle, past the edge',
+                patch: circle,
+                at: (300.0, 300.0),
+                opacity: 0.0,
+              ),
+            ]) {
+              test(c.name, () {
+                final fade = _grid(
+                  convention: convention,
+                  patch: c.patch,
+                  origin: origin,
+                ).fade;
+                final axes = convention.planeAxes;
+                final (a, b) = c.at;
+                final point =
+                    origin + axes.u.unitVector * a + axes.v.unitVector * b;
+                expect(fade.opacityAt(point), closeTo(c.opacity, _tolerance));
+                // A point off the plane takes the fade of its projection.
+                expect(
+                  fade.opacityAt(point + convention.up.unitVector * 50),
+                  closeTo(c.opacity, _tolerance),
+                );
+              });
+            }
+          });
+        });
+      }
     });
 
     group('labels', () {
@@ -415,7 +534,7 @@ void main() {
         expect(texts, contains('200 mm'));
       });
 
-      test('face the viewer at the label pixel height and fade', () {
+      test('face the viewer at the label pixel height', () {
         for (final l in _labels(grid)) {
           expect(l.orientation, isA<ViewerFacingOrientation>());
           expect(
@@ -424,13 +543,6 @@ void main() {
           );
           expect(l.alignment.x, 0);
           expect(l.alignment.y, 0);
-          expect(
-            l.opacity,
-            closeTo(
-              1 - math.max(l.anchor.x.abs() / 500, l.anchor.y.abs() / 300),
-              _tolerance,
-            ),
-          );
         }
       });
 
@@ -455,7 +567,7 @@ void main() {
       final grid = _grid(
         distance: 2000,
         patch: const RectangularGroundPatch(halfExtentU: 1e4, halfExtentV: 1e4),
-        style: const GroundGridStyle(maxLinesPerAxis: 201, fadeSegments: 1),
+        style: const GroundGridStyle(maxLinesPerAxis: 201),
       );
       expect(grid.majorStep, closeTo(1000, _tolerance));
       final texts = [
@@ -499,5 +611,10 @@ void main() {
 
 const _conventionZ = CoordinateConvention(
   up: SpatialAxis.z,
+  handedness: Handedness.right,
+);
+
+const _conventionY = CoordinateConvention(
+  up: SpatialAxis.y,
   handedness: Handedness.right,
 );

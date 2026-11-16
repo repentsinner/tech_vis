@@ -202,10 +202,6 @@ GROUND_GRID_STEP_MARGIN: float = 0.15
 # coarsens until the lines fit. Unit: count.
 GROUND_GRID_MAX_LINES_PER_AXIS: float = 101.0
 
-# Segments each ground-grid line splits into, each with its own opacity, so the line
-# fades toward the patch edge. Unit: count.
-GROUND_GRID_FADE_SEGMENTS: float = 16.0
-
 # Width of a minor ground-grid line in screen-space logical pixels. Unit: px.
 GROUND_GRID_MINOR_LINE_WIDTH: float = 0.5
 
@@ -273,7 +269,6 @@ ALL: dict[str, float] = {
     "groundGridMinLineSpacingPixels": GROUND_GRID_MIN_LINE_SPACING_PIXELS,
     "groundGridStepMargin": GROUND_GRID_STEP_MARGIN,
     "groundGridMaxLinesPerAxis": GROUND_GRID_MAX_LINES_PER_AXIS,
-    "groundGridFadeSegments": GROUND_GRID_FADE_SEGMENTS,
     "groundGridMinorLineWidth": GROUND_GRID_MINOR_LINE_WIDTH,
     "groundGridMajorLineWidth": GROUND_GRID_MAJOR_LINE_WIDTH,
     "groundGridLabelPixelSize": GROUND_GRID_LABEL_PIXEL_SIZE,

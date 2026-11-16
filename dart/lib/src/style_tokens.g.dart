@@ -211,10 +211,6 @@ abstract final class StyleTokens {
   /// step coarsens until the lines fit. Unit: count.
   static const double groundGridMaxLinesPerAxis = 101.0;
 
-  /// Segments each ground-grid line splits into, each with its own opacity,
-  /// so the line fades toward the patch edge. Unit: count.
-  static const double groundGridFadeSegments = 16.0;
-
   /// Width of a minor ground-grid line in screen-space logical pixels. Unit:
   /// px.
   static const double groundGridMinorLineWidth = 0.5;
@@ -284,7 +280,6 @@ abstract final class StyleTokens {
     'groundGridMinLineSpacingPixels': groundGridMinLineSpacingPixels,
     'groundGridStepMargin': groundGridStepMargin,
     'groundGridMaxLinesPerAxis': groundGridMaxLinesPerAxis,
-    'groundGridFadeSegments': groundGridFadeSegments,
     'groundGridMinorLineWidth': groundGridMinorLineWidth,
     'groundGridMajorLineWidth': groundGridMajorLineWidth,
     'groundGridLabelPixelSize': groundGridLabelPixelSize,

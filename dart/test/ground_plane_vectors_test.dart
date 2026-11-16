@@ -20,11 +20,27 @@ GroundPatch _patch(Json json) => switch (json['shape']) {
   final shape => throw ArgumentError.value(shape, 'shape'),
 };
 
+/// Expects [actual] to match the recorded patch [want], its extents
+/// within [vectorTolerance].
+void _expectPatch(GroundPatch actual, Json want, String reason) {
+  switch (actual) {
+    case RectangularGroundPatch(:final halfExtentU, :final halfExtentV):
+      expect(want['shape'], 'rectangle', reason: reason);
+      expectNumbers(
+        [halfExtentU, halfExtentV],
+        [want['halfExtentU'], want['halfExtentV']],
+        '$reason half extents',
+      );
+    case CircularGroundPatch(:final radius):
+      expect(want['shape'], 'circle', reason: reason);
+      expectNumbers([radius], [want['radius']], '$reason radius');
+  }
+}
+
 GroundGridStyle _style(Json json) => GroundGridStyle(
   minLineSpacingPixels: jsonNumber(json['minLineSpacingPixels']),
   stepMargin: jsonNumber(json['stepMargin']),
   maxLinesPerAxis: json['maxLinesPerAxis'] as int,
-  fadeSegments: json['fadeSegments'] as int,
   minorLineWidth: jsonNumber(json['minorLineWidth']),
   majorLineWidth: jsonNumber(json['majorLineWidth']),
   labelPixelSize: jsonNumber(json['labelPixelSize']),
@@ -116,6 +132,11 @@ void main() {
         for (var i = 0; i < expected.length; i++) {
           expectWorldPrimitive(grid.primitives[i], expected[i], '$name [$i]');
         }
+        final fade = output['fade'] as Json;
+        expectNumbers(grid.fade.center.storage, fade['center'], '$name center');
+        expectNumbers(grid.fade.u.storage, fade['u'], '$name u');
+        expectNumbers(grid.fade.v.storage, fade['v'], '$name v');
+        _expectPatch(grid.fade.patch, fade['patch'] as Json, '$name patch');
       }
     });
   }, skip: skip);
