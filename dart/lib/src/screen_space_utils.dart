@@ -118,6 +118,33 @@ class ScreenSpaceUtils {
     return 2.0 * depth * math.tan(verticalFovRadians / 2.0) / viewportHeight;
   }
 
+  /// Pixel position of [point] in a [viewportSize] viewport, seen by a
+  /// perspective [camera] with vertical field of view [verticalFovRadians].
+  ///
+  /// The origin is the viewport's top-left corner, x runs right and y runs
+  /// down, and (width, height) is the bottom-right corner. Pixels are
+  /// square and the view axis passes through the viewport center, the
+  /// projection [worldUnitsPerPixelAt] assumes. A renderer measures a frame
+  /// in these coordinates to compare it with the reference fixtures.
+  /// Returns null for a point on or behind the camera plane, which has no
+  /// screen position.
+  static vm.Vector2? worldToScreen(
+    vm.Vector3 point,
+    CameraBasis camera,
+    double verticalFovRadians,
+    vm.Vector2 viewportSize,
+  ) {
+    final depth = camera.depthOf(point);
+    if (depth <= _minVisibleDepth) return null;
+    final relative = point - camera.position;
+    final pixelsPerUnitDepth =
+        viewportSize.y / (2.0 * depth * math.tan(verticalFovRadians / 2.0));
+    return vm.Vector2(
+      viewportSize.x / 2.0 + relative.dot(camera.right) * pixelsPerUnitDepth,
+      viewportSize.y / 2.0 - relative.dot(camera.up) * pixelsPerUnitDepth,
+    );
+  }
+
   /// Convert pixel coordinates to Normalized Device Coordinates (NDC).
   ///
   /// NDC range is [-1, 1] for both X and Y axes.

@@ -224,6 +224,11 @@ face the viewer, so every renderer places these elements the same way.
 - `worldUnitsPerPixelAt` sizes by the point's depth along the view axis.
   A screen-space element therefore keeps its pixel size anywhere in the
   view. It returns null for a point on or behind the camera plane.
+- `worldToScreen` projects a world point through the same perspective
+  camera to pixel coordinates, with the origin at the viewport's top-left
+  corner and y running down. It returns null where
+  `worldUnitsPerPixelAt` does. The reference fixtures of
+  §spec:renderer-contract are in these coordinates.
 - Billboard helpers return a viewer-facing rotation and model transform,
   a pixel offset along a screen-projected direction, and the corners of a
   callout's label quad.
