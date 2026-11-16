@@ -605,6 +605,22 @@ dimension's text sits and which way it reads:
 - The convention is independent of the display format and number
   formatting of §spec:unit-system. A metric scene may follow ASME, and a
   decimal-inch scene may follow ISO.
+- Text fits when its extent along the dimension line on screen, plus an
+  arrowhead length and a text gap at each end, is no longer than the
+  on-screen distance between the witness lines. Oriented text's extent is
+  its width. Horizontal text's extent is its box projected onto the
+  line's screen direction. A line seen end-on never fits.
+- Oriented text reads left to right, or bottom to top on a line that is
+  vertical on screen. It lies in the screen plane, lifted off the line
+  by the text gap along its own vertical axis.
+- Inlined text sits centered on the dimension line's midpoint. The break
+  spans the text's extent plus a text gap at each side.
+- A referencing leader leaves the dimension line's midpoint as a callout
+  leader (§spec:callout-layout). Its quadrant is the one whose angled
+  segment points to the outer side, the side the dimension line was
+  offset toward, at the widest angle from the line on screen. When no
+  quadrant points to the outer side, all four compete. Ties go to the
+  earlier of top-right, top-left, bottom-right, bottom-left.
 
 These four conventions follow FreeCAD TechDraw's "Standard and style"
 setting, which drafting users already know.
@@ -627,6 +643,19 @@ without changing the standard the reader expects.
 *Why number formatting is not part of the convention*: the decimal
 marker and leading-zero rule vary by locale and shop more than by
 standard, and drafting tools set them separately.
+
+*Why count the arrowheads and gaps in the fit*: text that only just
+clears the witness lines still collides with the arrowheads. Counting
+them keeps the fallback rule one inequality, with no per-standard
+clearance.
+
+*Why bottom to top on a vertical line*: aligned dimensioning reads a
+vertical dimension from the drawing's right side, which turns the text a
+quarter turn counterclockwise.
+
+*Why the widest angle*: a leader that leaves along the dimension line
+hides it. The widest angle from the line is the simplest rule that
+keeps the two apart, and it needs no knowledge of other annotations.
 
 ### Viewport overlays §spec:viewport-overlays
 
@@ -822,13 +851,15 @@ text that keeps a constant screen size at any zoom (§req:user-stories).
 The app supplies the measured points; the package decides how the
 dimension reads.
 
-- **Linear.** When two points differ along one axis only, within an
-  alignment tolerance, the dimension measures that axis. Its witness
-  lines are perpendicular to that axis. The tolerance defaults to a
-  style token, and the app may override it.
+- **Linear.** When two points differ along one world axis only, within
+  an alignment tolerance, the dimension measures that axis. Its witness
+  lines are perpendicular to that axis. The tolerance is the largest
+  offset along any other axis, as a fraction of the distance between
+  the points. It defaults to a style token, and the app may override it.
 - **Several axes.** When the points differ along more than one axis,
-  the app chooses between per-axis component dimensions and the direct
-  distance with an angled leader.
+  the app chooses between per-axis component dimensions, in X, Y, Z
+  order, and the direct distance. A direct dimension is aligned: its
+  dimension line runs parallel to the segment between the points.
 - **Angular.** The angle between two vectors from a common vertex, drawn
   as an arc.
 - **Radial.** The radius or diameter of a circle or arc, given its
@@ -839,12 +870,53 @@ dimension reads.
 - Text orientation and placement follow §spec:drafting-convention. A
   referencing dimension's leader uses the same geometry and style tokens
   as a leader-line callout.
-- Number formatting follows §spec:unit-system.
+- Number formatting follows §spec:unit-system. The app names the unit
+  system of its world coordinates, and the label is the measured length
+  written by the display format with no step.
+- The dimension line sits a token-set number of pixels from the
+  measured points, along a direction perpendicular to the measured one.
+  The app may give the direction. By default it is the perpendicular
+  that lies in the screen plane, turned toward screen up, or toward
+  screen right when it lies level.
+- Both witness lines are perpendicular to the measured direction. The
+  second point's witness line takes up any offset between the points
+  across the measured direction, so the dimension line stays parallel
+  to it.
+- Arrowheads are open: two lines from the tip, inside the witness lines,
+  with a token-set length and width. They stay inside when text falls
+  back to referencing.
+- Each pixel size converts to world units at the depth where it is
+  drawn: the witness gap at its measured point, the extension and
+  arrowheads at the dimension line's ends, the offset at the midpoint of
+  the measured points, and the break and leader at the dimension line's
+  midpoint.
+- A dimension with any of those points on or behind the camera plane
+  emits nothing, and so do coincident points.
+- `vectors/smart_dimensions.json` pins the emitted primitives in world
+  space (§spec:golden-vectors).
 
 *Why detect axis alignment*: a reader of a technical drawing thinks in
 per-axis distances, such as X travel or Z depth. Showing the single
 varying axis matches that reading. Direct distance with components
 handles the general case.
+
+*Why a relative tolerance*: world units differ between apps, so an
+absolute tolerance would mean a micron in one scene and a meter in
+another. A fraction of the measured distance holds at any scale.
+
+*Why default to the viewer-facing perpendicular*: a dimension in 3D has
+no drawing plane, and a perpendicular along the view axis collapses the
+witness lines to points on screen. The perpendicular in the screen plane
+always shows them at full length.
+
+*Why open arrowheads*: an open arrowhead is two Lines, so it needs no new
+primitive and keeps its pixel size by the Line contract. A filled
+triangle would need a Quad with a repeated corner or a per-frame Mesh,
+and neither is a clean fit for a pixel-sized shape (§spec:scene-model).
+
+*Why the arrowheads stay inside*: the fallback moves the text, which is
+what collides. Flipping the arrowheads outside as well would add a
+second layout case for little gain in readability.
 
 *Why the app supplies the points*: what is worth measuring depends on
 the app's domain. A generic toolkit that guessed would name concepts
