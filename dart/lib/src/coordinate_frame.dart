@@ -27,6 +27,35 @@ enum SpatialAxis {
   String get label => name.toUpperCase();
 }
 
+/// A world axis and the direction along it, such as -Y.
+final class SignedAxis {
+  /// Creates the direction along [axis], toward its negative end when
+  /// [negative] is true.
+  const SignedAxis(this.axis, {this.negative = false});
+
+  /// The axis the direction runs along.
+  final SpatialAxis axis;
+
+  /// Whether the direction points toward the axis's negative end.
+  final bool negative;
+
+  /// Unit vector in this direction.
+  vm.Vector3 get unitVector => negative ? -axis.unitVector : axis.unitVector;
+
+  /// The opposite direction along the same axis.
+  SignedAxis operator -() => SignedAxis(axis, negative: !negative);
+
+  @override
+  bool operator ==(Object other) =>
+      other is SignedAxis && other.axis == axis && other.negative == negative;
+
+  @override
+  int get hashCode => Object.hash(axis, negative);
+
+  @override
+  String toString() => '${negative ? '-' : '+'}${axis.label}';
+}
+
 /// Describes a single axis line within a coordinate frame.
 ///
 /// Renderer-agnostic — carries geometry and identity only.

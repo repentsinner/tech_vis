@@ -16,39 +16,3 @@ Both registries need a first step that automation cannot take.
   `pypi`.
 
 Done when a merged `feat:` PR publishes both packages with no manual step.
-
-## Shared layout §road:shared-layout
-
-Closes §spec:golden-vectors and the layout half of §spec:python-package.
-
-### Python leader-line layout §road:python-leader-line
-
-Port the leader-line functions to Python. Test them against
-`vectors/leader_line.json`.
-
-## Annotation primitives §road:annotation-primitives
-
-Closes §spec:annotation-primitives. Every workstream here emits the
-typed primitives.
-
-### Smart dimensions §road:smart-dimensions
-
-Point-to-point dimensions following ISO 129 / ASME Y14.5
-(§spec:smart-dimensions).
-
-### Ground plane §road:ground-plane
-
-Adaptive grid with a major/minor hierarchy (§spec:ground-plane).
-
-### Scale bar §road:scale-bar
-
-Screen-space ruler with adaptive subdivision (§spec:scale-bar).
-
-### Color ramp legend §road:color-ramp-legend
-
-Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
-
-### Navigation cube §road:nav-cube
-
-Passive orientation indicator whose Top face follows the declared up
-axis (§spec:navigation-cube).

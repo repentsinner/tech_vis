@@ -28,6 +28,45 @@ List<double> jsonNumbers(Object? json) =>
 
 vm.Vector3 jsonVector3(Object? json) => vm.Vector3.array(jsonNumbers(json));
 
+/// Decodes a fixture's viewport-overlay placement record.
+ViewportOverlayPlacement jsonPlacement(Object? json) {
+  final p = json! as Json;
+  return ViewportOverlayPlacement(
+    corner: ViewportCorner.values.byName(p['corner'] as String),
+    offsetXPixels: jsonNumber(p['offsetXPixels']),
+    offsetYPixels: jsonNumber(p['offsetYPixels']),
+    widthPixels: jsonNumber(p['widthPixels']),
+    heightPixels: jsonNumber(p['heightPixels']),
+  );
+}
+
+/// Decodes a fixture's `{decimalMarker, showLeadingZero}` record.
+NumberFormatting jsonNumberFormatting(Object? json) {
+  final n = json! as Json;
+  return NumberFormatting(
+    decimalMarker: DecimalMarker.values.byName(n['decimalMarker'] as String),
+    showLeadingZero: n['showLeadingZero'] as bool,
+  );
+}
+
+/// Decodes a fixture's `{up, handedness}` convention record.
+CoordinateConvention jsonConvention(Object? json) {
+  final c = json! as Json;
+  return CoordinateConvention(
+    up: SpatialAxis.values.byName(c['up'] as String),
+    handedness: Handedness.values.byName(c['handedness'] as String),
+  );
+}
+
+/// Decodes a fixture's `{axis, negative}` signed-axis record.
+SignedAxis jsonSignedAxis(Object? json) {
+  final a = json! as Json;
+  return SignedAxis(
+    SpatialAxis.values.byName(a['axis'] as String),
+    negative: a['negative'] as bool,
+  );
+}
+
 vm.Vector2 jsonVector2(Object? json) => vm.Vector2.array(jsonNumbers(json));
 
 List<Json> jsonList(Object? json) => (json! as List<dynamic>).cast<Json>();
@@ -50,5 +89,74 @@ void expectNumbers(List<double> actual, Object? expected, String reason) {
   expect(actual, hasLength(want.length), reason: reason);
   for (var i = 0; i < want.length; i++) {
     expect(actual[i], closeTo(want[i], vectorTolerance), reason: '$reason[$i]');
+  }
+}
+
+/// Checks a world-space line or billboard against its fixture record.
+void expectWorldPrimitive(Primitive actual, Json want, String reason) {
+  expect(actual.key, want['key'], reason: '$reason key');
+  expect(
+    actual.opacity,
+    closeTo(jsonNumber(want['opacity']), vectorTolerance),
+    reason: '$reason opacity',
+  );
+  switch (actual) {
+    case LinePrimitive():
+      expect(want['type'], 'line', reason: reason);
+      expectNumbers(actual.start.storage, want['start'], '$reason start');
+      expectNumbers(actual.end.storage, want['end'], '$reason end');
+      expect(
+        actual.widthPixels,
+        closeTo(jsonNumber(want['widthPixels']), vectorTolerance),
+        reason: '$reason width',
+      );
+    case BillboardPrimitive():
+      expect(want['type'], 'billboard', reason: reason);
+      expectNumbers(actual.anchor.storage, want['anchor'], '$reason anchor');
+      expectNumbers(
+        actual.alignment.storage,
+        want['alignment'],
+        '$reason alignment',
+      );
+      final orientation = want['orientation'] as Json;
+      switch (actual.orientation) {
+        case ViewerFacingOrientation():
+          expect(orientation['type'], 'viewerFacing', reason: reason);
+        case CoplanarOrientation(:final normal, :final right):
+          expect(orientation['type'], 'coplanar', reason: reason);
+          expectNumbers(normal.storage, orientation['normal'], '$reason n');
+          expectNumbers(right.storage, orientation['right'], '$reason r');
+      }
+      final offset = want['offset'] as Json?;
+      if (offset == null) {
+        expect(actual.offset, isNull, reason: '$reason offset');
+      } else {
+        expectNumbers(
+          actual.offset!.direction.storage,
+          offset['direction'],
+          '$reason offset direction',
+        );
+        expect(
+          actual.offset!.pixels,
+          closeTo(jsonNumber(offset['pixels']), vectorTolerance),
+          reason: '$reason offset pixels',
+        );
+      }
+      final request = want['textRequest'] as Json;
+      expect(
+        actual.content.value,
+        TextRequest(
+          text: request['text'] as String,
+          heightPixels: jsonNumber(request['heightPixels']),
+        ),
+        reason: '$reason text',
+      );
+      expectNumbers(
+        [actual.content.widthPixels, actual.content.heightPixels],
+        want['contentSize'],
+        '$reason content size',
+      );
+    case QuadPrimitive() || MarkerPrimitive() || MeshPrimitive():
+      fail('$reason: expected a line or billboard, got $actual');
   }
 }
