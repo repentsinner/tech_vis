@@ -63,6 +63,7 @@ from tech_vis.primitives import (
     TriangleMesh,
     ViewerFacingOrientation,
 )
+from tech_vis.scale_bar import ScaleBarLayout
 from tech_vis.screen_space import (
     CameraBasis,
     billboard_offset_position,
@@ -112,6 +113,7 @@ __all__ = [
     "Primitive",
     "QuadPrimitive",
     "RectanglePlane",
+    "ScaleBarLayout",
     "ScreenOffset",
     "SignedAxis",
     "SpatialAxis",

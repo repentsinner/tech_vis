@@ -6,7 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from tech_vis import BillboardContent, LeaderLineStyle, TextRequest, Vector3
+from tech_vis import (
+    BillboardContent,
+    DecimalMarker,
+    LeaderLineStyle,
+    NumberFormatting,
+    TextRequest,
+    Vector3,
+    ViewportCorner,
+    ViewportOverlayPlacement,
+)
 
 # Absolute tolerance on a golden-vector number, in the function's own units
 # (§spec:golden-vectors).
@@ -65,4 +74,32 @@ def json_leader_style(s: dict) -> LeaderLineStyle:
         angled_length_pixels=s["angledLengthPixels"],
         horizontal_length_pixels=s["horizontalLengthPixels"],
         angle_degrees=s["angleDegrees"],
+    )
+
+
+# Fixtures name viewport corners as the Dart enum does.
+JSON_CORNERS = {
+    "topLeft": ViewportCorner.TOP_LEFT,
+    "topRight": ViewportCorner.TOP_RIGHT,
+    "bottomLeft": ViewportCorner.BOTTOM_LEFT,
+    "bottomRight": ViewportCorner.BOTTOM_RIGHT,
+}
+
+
+def json_placement(p: dict) -> ViewportOverlayPlacement:
+    """Decodes a fixture's overlay placement record."""
+    return ViewportOverlayPlacement(
+        corner=JSON_CORNERS[p["corner"]],
+        offset_x_pixels=p["offsetXPixels"],
+        offset_y_pixels=p["offsetYPixels"],
+        width_pixels=p["widthPixels"],
+        height_pixels=p["heightPixels"],
+    )
+
+
+def json_number_formatting(n: dict) -> NumberFormatting:
+    """Decodes a fixture's number-formatting record."""
+    return NumberFormatting(
+        decimal_marker=DecimalMarker(n["decimalMarker"]),
+        show_leading_zero=n["showLeadingZero"],
     )
