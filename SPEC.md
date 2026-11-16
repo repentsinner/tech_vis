@@ -718,14 +718,33 @@ uses to judge height above the floor.
 
 A viewport overlay (§spec:viewport-overlays) showing real-world
 distance at the current zoom (§req:user-stories).
+`ScaleBarLayout.atTarget` describes it for one frame.
 
-- The bar's length represents the largest scale bar step of
-  §spec:unit-system that fits within a token-set maximum pixel length,
-  measured at the camera target.
-- The bar subdivides into ticks and carries a label for the value it
-  represents, in the active display format.
-- The bar's value does not flicker at a step boundary, by the same
-  margin rule as §spec:ground-plane.
+- The bar's value is the largest scale bar step of §spec:unit-system
+  whose length at the camera target fits within the width of the scale
+  bar's placement rectangle. The placement's width token is therefore the
+  maximum pixel length. The app states its world unit system, and the
+  world size of a pixel converts to the display format's base unit.
+- The bar starts at the rectangle's edge nearer its corner, so it grows
+  toward the viewport center, and stands on the rectangle's bottom edge.
+- The bar subdivides into the most equal parts that keep adjacent ticks
+  at least a token-set number of pixels apart, where each part is itself
+  a scale bar step. A bar too short for any part keeps only its two end
+  ticks.
+- The bar carries one label, a text request for its value at a
+  token-set pixel height, in the active display format and the app's
+  number formatting. The label's top center sits on the rectangle's top
+  edge, above the bar's midpoint.
+- The bar's value does not flicker at a step boundary. The app passes
+  the previous frame's step. The bar keeps it while it fits, and adopts
+  a longer step only once that step fits within the maximum length less
+  a token-set fraction of it.
+- The layout is null when the camera target is on or behind the camera
+  plane, or when even the format's smallest step is longer than the
+  maximum length.
+- `vectors/scale_bar.json` pins layouts across every display format,
+  both world unit systems, a right corner, the null cases, and each side
+  of the margin (§spec:golden-vectors).
 
 *Why screen-space*: a world-space ruler changes apparent size with
 camera distance, which defeats its purpose. A fixed screen-space element
@@ -734,6 +753,25 @@ with an adaptive label communicates scale at any zoom.
 *Why measure at the camera target*: under perspective, scale varies
 across the view. The camera target is the point the reader is looking
 at, so its scale is the one they want.
+
+*Why the placement width is the maximum*: the bar's rectangle already
+holds the space the app gives the overlay. A second length token could
+disagree with it and push the bar out of its own rectangle.
+
+*Why the margin applies only to a longer step*: a step that no longer
+fits drops at once, so the bar never leaves its rectangle. The margin
+sits on the way up, between a step that fits and the next one, which is
+where a slow zoom would otherwise flip the value back and forth. A
+symmetric band around each boundary was rejected because it lets the
+bar overrun its rectangle by the margin.
+
+*Why the app carries the previous step*: the package holds no state
+between frames, so the hysteresis input is the step the last layout
+returned.
+
+*Why parts are scale bar steps*: a tick at 2.5 mm reads as noise. Parts
+that are themselves clean steps put every tick on a value a reader can
+name.
 
 ### Smart dimensions §spec:smart-dimensions
 
