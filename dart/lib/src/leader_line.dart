@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:vector_math/vector_math.dart' as vm;
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'scene_layout_constants.dart';
 

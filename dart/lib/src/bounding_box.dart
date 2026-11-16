@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
-import 'package:vector_math/vector_math.dart' as vm;
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 /// Pure geometric bounding box abstraction
 ///

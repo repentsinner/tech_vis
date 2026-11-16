@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:vector_math/vector_math.dart' as vm;
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'leader_line.dart';
 import 'scene_theme.dart';
