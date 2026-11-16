@@ -1074,9 +1074,11 @@ the work splits between app and package is an open question
 *Status: in progress*
 
 Pure Python, no runtime dependencies (§req:constraints). It provides
-the style tokens and, in time, every layout function and annotation
-primitive the Dart package provides (§req:user-stories).
+the style tokens, the leader-line layout, and, in time, every layout
+function and annotation primitive the Dart package provides
+(§req:user-stories).
 
+- Points cross the API as plain tuples of floats.
 - A Python function may trail its Dart counterpart by any number of
   releases. Where both exist, they agree on every fixture of
   §spec:golden-vectors.
@@ -1086,6 +1088,11 @@ primitive the Dart package provides (§req:user-stories).
 *Why let Python trail*: the first applications are Dart apps, and the
 primitives they need first should not wait on a second port
 (§req:priorities). The fixtures keep a late port honest.
+
+*Why tuples*: a vector library would be a runtime dependency
+(§req:constraints). A tuple of floats passes unchanged into whatever
+numeric library a caller already uses. A small vector class was rejected
+because callers would convert it at every boundary.
 
 ## Versioning and release §spec:release
 
