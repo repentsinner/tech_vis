@@ -61,6 +61,63 @@ MARKER_DIAMETER_PIXELS: float = 8.0
 # icosahedron's 20 triangles. Unit: count.
 MARKER_SUBDIVISIONS: float = 2.0
 
+# Default viewport corner of the scale bar overlay. Bottom-left, where a reader looks
+# for a drawing's scale. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-
+# right. Unit: corner.
+SCALE_BAR_CORNER: float = 2.0
+
+# Default horizontal offset of the scale bar overlay from its corner, toward the
+# viewport center. Unit: px.
+SCALE_BAR_OFFSET_XPIXELS: float = 16.0
+
+# Default vertical offset of the scale bar overlay from its corner, toward the
+# viewport center. Unit: px.
+SCALE_BAR_OFFSET_YPIXELS: float = 16.0
+
+# Default width of the scale bar overlay. Unit: px.
+SCALE_BAR_WIDTH_PIXELS: float = 160.0
+
+# Default height of the scale bar overlay. Unit: px.
+SCALE_BAR_HEIGHT_PIXELS: float = 32.0
+
+# Default viewport corner of the color ramp legend overlay. Bottom-right, clear of the
+# scale bar and the navigation cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3
+# bottom-right. Unit: corner.
+COLOR_RAMP_LEGEND_CORNER: float = 3.0
+
+# Default horizontal offset of the color ramp legend overlay from its corner, toward
+# the viewport center. Unit: px.
+COLOR_RAMP_LEGEND_OFFSET_XPIXELS: float = 16.0
+
+# Default vertical offset of the color ramp legend overlay from its corner, toward the
+# viewport center. Unit: px.
+COLOR_RAMP_LEGEND_OFFSET_YPIXELS: float = 16.0
+
+# Default width of the color ramp legend overlay. Unit: px.
+COLOR_RAMP_LEGEND_WIDTH_PIXELS: float = 48.0
+
+# Default height of the color ramp legend overlay. Unit: px.
+COLOR_RAMP_LEGEND_HEIGHT_PIXELS: float = 200.0
+
+# Default viewport corner of the navigation cube overlay. Top-right, where CAD tools
+# place their view cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-
+# right. Unit: corner.
+NAVIGATION_CUBE_CORNER: float = 1.0
+
+# Default horizontal offset of the navigation cube overlay from its corner, toward the
+# viewport center. Unit: px.
+NAVIGATION_CUBE_OFFSET_XPIXELS: float = 16.0
+
+# Default vertical offset of the navigation cube overlay from its corner, toward the
+# viewport center. Unit: px.
+NAVIGATION_CUBE_OFFSET_YPIXELS: float = 16.0
+
+# Default width of the navigation cube overlay. Unit: px.
+NAVIGATION_CUBE_WIDTH_PIXELS: float = 96.0
+
+# Default height of the navigation cube overlay. Unit: px.
+NAVIGATION_CUBE_HEIGHT_PIXELS: float = 96.0
+
 # Every token by its name in style/tokens.json.
 ALL: dict[str, float] = {
     "axisLength": AXIS_LENGTH,
@@ -81,4 +138,19 @@ ALL: dict[str, float] = {
     "calloutOpacityMin": CALLOUT_OPACITY_MIN,
     "markerDiameterPixels": MARKER_DIAMETER_PIXELS,
     "markerSubdivisions": MARKER_SUBDIVISIONS,
+    "scaleBarCorner": SCALE_BAR_CORNER,
+    "scaleBarOffsetXPixels": SCALE_BAR_OFFSET_XPIXELS,
+    "scaleBarOffsetYPixels": SCALE_BAR_OFFSET_YPIXELS,
+    "scaleBarWidthPixels": SCALE_BAR_WIDTH_PIXELS,
+    "scaleBarHeightPixels": SCALE_BAR_HEIGHT_PIXELS,
+    "colorRampLegendCorner": COLOR_RAMP_LEGEND_CORNER,
+    "colorRampLegendOffsetXPixels": COLOR_RAMP_LEGEND_OFFSET_XPIXELS,
+    "colorRampLegendOffsetYPixels": COLOR_RAMP_LEGEND_OFFSET_YPIXELS,
+    "colorRampLegendWidthPixels": COLOR_RAMP_LEGEND_WIDTH_PIXELS,
+    "colorRampLegendHeightPixels": COLOR_RAMP_LEGEND_HEIGHT_PIXELS,
+    "navigationCubeCorner": NAVIGATION_CUBE_CORNER,
+    "navigationCubeOffsetXPixels": NAVIGATION_CUBE_OFFSET_XPIXELS,
+    "navigationCubeOffsetYPixels": NAVIGATION_CUBE_OFFSET_YPIXELS,
+    "navigationCubeWidthPixels": NAVIGATION_CUBE_WIDTH_PIXELS,
+    "navigationCubeHeightPixels": NAVIGATION_CUBE_HEIGHT_PIXELS,
 }

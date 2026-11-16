@@ -65,6 +65,63 @@ abstract final class StyleTokens {
   /// the icosahedron's 20 triangles. Unit: count.
   static const double markerSubdivisions = 2.0;
 
+  /// Default viewport corner of the scale bar overlay. Bottom-left, where a
+  /// reader looks for a drawing's scale. Codes: 0 top-left, 1 top-right, 2
+  /// bottom-left, 3 bottom-right. Unit: corner.
+  static const double scaleBarCorner = 2.0;
+
+  /// Default horizontal offset of the scale bar overlay from its corner,
+  /// toward the viewport center. Unit: px.
+  static const double scaleBarOffsetXPixels = 16.0;
+
+  /// Default vertical offset of the scale bar overlay from its corner, toward
+  /// the viewport center. Unit: px.
+  static const double scaleBarOffsetYPixels = 16.0;
+
+  /// Default width of the scale bar overlay. Unit: px.
+  static const double scaleBarWidthPixels = 160.0;
+
+  /// Default height of the scale bar overlay. Unit: px.
+  static const double scaleBarHeightPixels = 32.0;
+
+  /// Default viewport corner of the color ramp legend overlay. Bottom-right,
+  /// clear of the scale bar and the navigation cube. Codes: 0 top-left, 1
+  /// top-right, 2 bottom-left, 3 bottom-right. Unit: corner.
+  static const double colorRampLegendCorner = 3.0;
+
+  /// Default horizontal offset of the color ramp legend overlay from its
+  /// corner, toward the viewport center. Unit: px.
+  static const double colorRampLegendOffsetXPixels = 16.0;
+
+  /// Default vertical offset of the color ramp legend overlay from its
+  /// corner, toward the viewport center. Unit: px.
+  static const double colorRampLegendOffsetYPixels = 16.0;
+
+  /// Default width of the color ramp legend overlay. Unit: px.
+  static const double colorRampLegendWidthPixels = 48.0;
+
+  /// Default height of the color ramp legend overlay. Unit: px.
+  static const double colorRampLegendHeightPixels = 200.0;
+
+  /// Default viewport corner of the navigation cube overlay. Top-right, where
+  /// CAD tools place their view cube. Codes: 0 top-left, 1 top-right, 2
+  /// bottom-left, 3 bottom-right. Unit: corner.
+  static const double navigationCubeCorner = 1.0;
+
+  /// Default horizontal offset of the navigation cube overlay from its
+  /// corner, toward the viewport center. Unit: px.
+  static const double navigationCubeOffsetXPixels = 16.0;
+
+  /// Default vertical offset of the navigation cube overlay from its corner,
+  /// toward the viewport center. Unit: px.
+  static const double navigationCubeOffsetYPixels = 16.0;
+
+  /// Default width of the navigation cube overlay. Unit: px.
+  static const double navigationCubeWidthPixels = 96.0;
+
+  /// Default height of the navigation cube overlay. Unit: px.
+  static const double navigationCubeHeightPixels = 96.0;
+
   /// Every token by its name in style/tokens.json.
   static const Map<String, double> all = {
     'axisLength': axisLength,
@@ -85,5 +142,20 @@ abstract final class StyleTokens {
     'calloutOpacityMin': calloutOpacityMin,
     'markerDiameterPixels': markerDiameterPixels,
     'markerSubdivisions': markerSubdivisions,
+    'scaleBarCorner': scaleBarCorner,
+    'scaleBarOffsetXPixels': scaleBarOffsetXPixels,
+    'scaleBarOffsetYPixels': scaleBarOffsetYPixels,
+    'scaleBarWidthPixels': scaleBarWidthPixels,
+    'scaleBarHeightPixels': scaleBarHeightPixels,
+    'colorRampLegendCorner': colorRampLegendCorner,
+    'colorRampLegendOffsetXPixels': colorRampLegendOffsetXPixels,
+    'colorRampLegendOffsetYPixels': colorRampLegendOffsetYPixels,
+    'colorRampLegendWidthPixels': colorRampLegendWidthPixels,
+    'colorRampLegendHeightPixels': colorRampLegendHeightPixels,
+    'navigationCubeCorner': navigationCubeCorner,
+    'navigationCubeOffsetXPixels': navigationCubeOffsetXPixels,
+    'navigationCubeOffsetYPixels': navigationCubeOffsetYPixels,
+    'navigationCubeWidthPixels': navigationCubeWidthPixels,
+    'navigationCubeHeightPixels': navigationCubeHeightPixels,
   };
 }
