@@ -334,7 +334,7 @@ contract on pixels would bind every engine to one rasterizer
 
 Fixtures of §spec:golden-vectors cover a set of sample scenes. For each
 camera and viewport, a fixture records every primitive's expected screen
-position and pixel size: billboard boxes, leader endpoints, line widths, and
+position and pixel size: billboard boxes, line endpoints and widths, and
 marker diameters. A renderer author renders the sample scene, measures
 the frame, and compares the measurements with the fixture within a
 tolerance that the renderer records. A renderer's recorded tolerance

@@ -79,10 +79,15 @@ class CalloutLeaderGeometry {
   /// [calloutAnchorAlignment].
   final vm.Vector3 labelEdge;
 
+  /// Width of the leader's lines in screen pixels, from the style it was
+  /// computed with.
+  final double widthPixels;
+
   const CalloutLeaderGeometry({
     required this.gapEnd,
     required this.elbow,
     required this.labelEdge,
+    required this.widthPixels,
   });
 }
 
@@ -138,6 +143,7 @@ CalloutLeaderGeometry computeCalloutLeaderGeometry({
     gapEnd: gapEnd,
     elbow: elbow,
     labelEdge: labelEdge,
+    widthPixels: style.lineWidth,
   );
 }
 
@@ -183,27 +189,28 @@ BillboardPrimitive createCalloutLabel({
 /// angled segment from the gap end to the elbow, then the horizontal
 /// segment from the elbow to the label edge.
 ///
-/// Both lines are [LeaderLineStyle.lineWidth] of [style] pixels wide, the
-/// style the leader was computed with, and carry [key] and [opacity]. The
-/// leader moves with the camera, so the lines are rebuilt each frame with
-/// it.
+/// Both lines take the leader's own pixel width and carry [key] and
+/// [opacity]. The leader moves with the camera, so the lines are rebuilt
+/// each frame with it.
 List<LinePrimitive> createCalloutLeaderLines({
   required CalloutLeaderGeometry leader,
   required Object? key,
   required double opacity,
-  LeaderLineStyle style = const LeaderLineStyle(),
 }) => [
-  for (final (start, end) in [
-    (leader.gapEnd, leader.elbow),
-    (leader.elbow, leader.labelEdge),
-  ])
-    LinePrimitive(
-      start: start,
-      end: end,
-      widthPixels: style.lineWidth,
-      key: key,
-      opacity: opacity,
-    ),
+  LinePrimitive(
+    start: leader.gapEnd,
+    end: leader.elbow,
+    widthPixels: leader.widthPixels,
+    key: key,
+    opacity: opacity,
+  ),
+  LinePrimitive(
+    start: leader.elbow,
+    end: leader.labelEdge,
+    widthPixels: leader.widthPixels,
+    key: key,
+    opacity: opacity,
+  ),
 ];
 
 /// Compute callout opacity based on anchor-to-camera distance.

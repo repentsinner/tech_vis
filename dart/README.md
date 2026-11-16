@@ -312,10 +312,10 @@ Screen points are in the coordinates of `ScreenSpaceUtils.worldToScreen`.
 The origin is the viewport's top-left corner, x runs right, y runs down,
 and the bottom-right corner is (width, height). The fixture records:
 
-- a line's two endpoints and its width in pixels;
+- a line's two endpoints and its width in pixels, including the two
+  lines of each callout leader;
 - a quad's four corners;
 - a marker's center and its diameter in pixels;
-- a callout leader's anchor, gap end, elbow, label edge, and width;
 - a billboard's placed anchor, alignment, text request, content size,
   and box as `[left, top, right, bottom]`.
 

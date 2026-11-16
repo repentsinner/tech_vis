@@ -192,16 +192,11 @@ typedef _View = ({
 /// One camera and viewport over a scene.
 typedef _Frame = ({CameraBasis camera, double fovRadians, vm.Vector2 viewport});
 
-typedef _Emitted = ({
-  List<Primitive> primitives,
-  List<Map<String, Object?>> leaders,
-});
-
 /// A scene's factory inputs, as the fixture records them, and the call
 /// that emits its primitives for one frame.
 typedef _Build = ({
   Map<String, Object?> input,
-  _Emitted Function(_Frame frame) emit,
+  List<Primitive> Function(_Frame frame) emit,
 });
 
 typedef _Scene = ({
@@ -238,14 +233,11 @@ _Build _box({
     'fillOpacity': fillOpacity,
     'edgeWidth': edgeWidth,
   },
-  emit: (_) => (
-    primitives: BoundingBoxFactory.createCube(
-      bounds: BoundingBox(minBounds: minBounds, maxBounds: maxBounds),
-      key: null,
-      fillOpacity: fillOpacity,
-      edgeWidth: edgeWidth,
-    ),
-    leaders: const [],
+  emit: (_) => BoundingBoxFactory.createCube(
+    bounds: BoundingBox(minBounds: minBounds, maxBounds: maxBounds),
+    key: null,
+    fillOpacity: fillOpacity,
+    edgeWidth: edgeWidth,
   ),
 );
 
@@ -258,13 +250,10 @@ _Build _axes(CoordinateFrameDescriptor frame) => (
     'labelPixelSize': frame.labelPixelSize,
     'labelOffsetPixels': frame.labelOffsetPixels,
   },
-  emit: (_) => (
-    primitives: CoordinateFrameFactory.create(
-      frame,
-      keyFor: (_) => null,
-      resolveText: fakeTextResolver,
-    ),
-    leaders: const [],
+  emit: (_) => CoordinateFrameFactory.create(
+    frame,
+    keyFor: (_) => null,
+    resolveText: fakeTextResolver,
   ),
 );
 
@@ -290,7 +279,6 @@ _Build _callouts(List<_Callout> callouts, LeaderLineStyle style) => (
   },
   emit: (frame) {
     final primitives = <Primitive>[];
-    final leaders = <Map<String, Object?>>[];
     for (final c in callouts) {
       final leader = computeCalloutLeaderGeometry(
         anchor: c.anchor,
@@ -305,24 +293,21 @@ _Build _callouts(List<_Callout> callouts, LeaderLineStyle style) => (
         quadrant: c.quadrant,
         style: style,
       );
-      primitives.add(
-        createCalloutLabel(
-          leader: leader,
-          quadrant: c.quadrant,
-          content: fakeTextResolver(c.text),
-          key: null,
-          opacity: 1,
-        ),
-      );
-      leaders.add({
-        'anchor': _screen(c.anchor, frame),
-        'gapEnd': _screen(leader.gapEnd, frame),
-        'elbow': _screen(leader.elbow, frame),
-        'labelEdge': _screen(leader.labelEdge, frame),
-        'widthPixels': style.lineWidth,
-      });
+      primitives
+        ..addAll(
+          createCalloutLeaderLines(leader: leader, key: null, opacity: 1),
+        )
+        ..add(
+          createCalloutLabel(
+            leader: leader,
+            quadrant: c.quadrant,
+            content: fakeTextResolver(c.text),
+            key: null,
+            opacity: 1,
+          ),
+        );
     }
-    return (primitives: primitives, leaders: leaders);
+    return primitives;
   },
 );
 
@@ -337,18 +322,15 @@ _Build _markers(
         {'position': _vector(m.position), 'diameterPixels': m.diameterPixels},
     ],
   },
-  emit: (_) => (
-    primitives: [
-      for (final m in markers)
-        MarkerFactory.create(
-          position: m.position,
-          convention: convention,
-          key: null,
-          diameterPixels: m.diameterPixels,
-        ),
-    ],
-    leaders: const [],
-  ),
+  emit: (_) => [
+    for (final m in markers)
+      MarkerFactory.create(
+        position: m.position,
+        convention: convention,
+        key: null,
+        diameterPixels: m.diameterPixels,
+      ),
+  ],
 );
 
 /// The sample scenes: each factory family, under Z-up and Y-up
@@ -536,7 +518,7 @@ Map<String, Object?> _sceneView(_Scene scene, _View view) {
     fovRadians: view.verticalFovDegrees * math.pi / 180,
     viewport: view.viewport,
   );
-  final (:primitives, :leaders) = scene.build.emit(frame);
+  final primitives = scene.build.emit(frame);
   return {
     'name': view.name,
     'camera': {
@@ -546,7 +528,6 @@ Map<String, Object?> _sceneView(_Scene scene, _View view) {
       'viewport': _vector(view.viewport),
     },
     'primitives': [for (final p in primitives) _primitive(p, frame)],
-    if (leaders.isNotEmpty) 'leaders': leaders,
   };
 }
 
