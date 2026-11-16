@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'primitives.dart';
 import 'scene_layout_constants.dart';
 
 /// Quadrant placement for leader line callouts.
@@ -74,7 +75,8 @@ class CalloutLeaderGeometry {
   /// Bend point where angled segment meets horizontal segment.
   final vm.Vector3 elbow;
 
-  /// End of leader line where the label billboard is centered.
+  /// End of leader line, where the callout label is anchored by
+  /// [calloutAnchorAlignment].
   final vm.Vector3 labelEdge;
 
   const CalloutLeaderGeometry({
@@ -152,6 +154,29 @@ vm.Vector2 calloutAnchorAlignment(CalloutQuadrant quadrant) {
     case CalloutQuadrant.bottomLeft:
       return vm.Vector2(1.0, 0.5);
   }
+}
+
+/// Returns the callout's label: [content] as a viewer-facing billboard at
+/// the end of [leader], aligned by [calloutAnchorAlignment] for [quadrant]
+/// so it extends away from the leader.
+///
+/// [content] is the app's, sized in pixels: app content such as a note's
+/// text layout, or the answer to a [TextRequest] the app resolved. The
+/// [opacity] is typically [computeCalloutOpacity] of the anchor's distance.
+BillboardPrimitive createCalloutLabel({
+  required CalloutLeaderGeometry leader,
+  required CalloutQuadrant quadrant,
+  required BillboardContent content,
+  required Object? key,
+  required double opacity,
+}) {
+  return BillboardPrimitive(
+    content: content,
+    anchor: leader.labelEdge,
+    alignment: calloutAnchorAlignment(quadrant),
+    key: key,
+    opacity: opacity,
+  );
 }
 
 /// Compute callout opacity based on anchor-to-camera distance.
