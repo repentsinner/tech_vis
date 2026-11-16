@@ -627,6 +627,126 @@ Map<String, Object?> viewportOverlaysFixture() => {
   ],
 };
 
+/// Lengths, in each format's base unit, that land on, between, and either
+/// side of the leading run of fractional-inch steps.
+const _stepLengths = <double>[
+  0.01,
+  1 / 64,
+  0.1,
+  0.5,
+  3,
+  7,
+  11.9,
+  12,
+  13,
+  59,
+  130,
+  6e4,
+];
+
+typedef _LabelSet = ({
+  String name,
+  DisplayFormat format,
+  List<double> values,
+  double? step,
+  NumberFormatting numbers,
+});
+
+const _defaultNumbers = NumberFormatting();
+
+List<_LabelSet> _labelSets() {
+  final inchesIn1500mm = UnitSystem.metric.convertTo(1500, UnitSystem.imperial);
+  return [
+    for (final format in DisplayFormat.values) ...[
+      (
+        name: '1500 mm, ${format.name}',
+        format: format,
+        values: [if (format == DisplayFormat.metric) 1500 else inchesIn1500mm],
+        step: null,
+        numbers: _defaultNumbers,
+      ),
+      for (final inches in [0.125, 40.5])
+        (
+          name: '$inches in, ${format.name}',
+          format: format,
+          values: [UnitSystem.imperial.convertTo(inches, format.unitSystem)],
+          step: null,
+          numbers: _defaultNumbers,
+        ),
+      for (final spacing in [9.0, 5000.0])
+        (
+          name: 'grid labels at least $spacing apart, ${format.name}',
+          format: format,
+          values: [
+            for (var i = -2; i <= 2; i++) i * format.gridStepAtLeast(spacing),
+          ],
+          step: format.gridStepAtLeast(spacing),
+          numbers: _defaultNumbers,
+        ),
+      (
+        name: 'scale-bar ticks, ${format.name}',
+        format: format,
+        values: [
+          for (var i = 0; i <= 4; i++) i * format.scaleBarStepAtMost(6)! / 4,
+        ],
+        step: format.scaleBarStepAtMost(6)! / 4,
+        numbers: _defaultNumbers,
+      ),
+      (
+        name: 'comma, no leading zero, ${format.name}',
+        format: format,
+        values: [-0.5, 0.25, 2.5, 12500],
+        step: null,
+        numbers: const NumberFormatting(
+          decimalMarker: DecimalMarker.comma,
+          showLeadingZero: false,
+        ),
+      ),
+    ],
+  ];
+}
+
+Map<String, Object?> _stepQueries(
+  double? Function(DisplayFormat format, double length) query,
+) => {
+  for (final format in DisplayFormat.values)
+    format.name: [
+      for (final length in _stepLengths)
+        {'length': length, 'step': query(format, length)},
+    ],
+};
+
+/// The unit-format fixture: each display format's step queries and the
+/// labels it writes for sample sets.
+Map<String, Object?> unitFormatsFixture() => {
+  'units': "every length is in its format's base unit: mm, or in for inch",
+  'scaleBarStepAtMost': _stepQueries((f, l) => f.scaleBarStepAtMost(l)),
+  'gridStepAtLeast': _stepQueries((f, l) => f.gridStepAtLeast(l)),
+  'gridStepAbove': _stepQueries((f, l) => f.gridStepAbove(l)),
+  'formatLabels': [
+    for (final c in _labelSets())
+      {
+        'name': c.name,
+        'input': {
+          'format': c.format.name,
+          'values': c.values,
+          'step': c.step,
+          'numbers': {
+            'decimalMarker': c.numbers.decimalMarker.name,
+            'showLeadingZero': c.numbers.showLeadingZero,
+          },
+        },
+        'output': {
+          'labels': c.format.formatLabels(
+            c.values,
+            step: c.step,
+            numbers: c.numbers,
+          ),
+        },
+      },
+  ],
+};
+
 /// Renders a fixture family under the header and style version every
 /// fixture file carries.
 String _render(Map<String, Object?> family) {
@@ -646,6 +766,7 @@ void main(List<String> args) {
       referenceScreenGeometryFixture(),
     ),
     'vectors/viewport_overlays.json': _render(viewportOverlaysFixture()),
+    'vectors/unit_formats.json': _render(unitFormatsFixture()),
   };
 
   final stale = [
