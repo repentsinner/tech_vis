@@ -735,25 +735,30 @@ no perceptible scale or orientation (§req:user-stories).
 - At most a token-set number of lines crosses the patch in each
   direction. Where the pixel rule gives more, the minor step coarsens to
   the smallest grid step that fits.
-- Line opacity falls linearly with distance from the patch center,
-  reaching zero at the patch edge. The fade is radial for a circular
-  patch and rectangular, by the larger fraction of either half extent,
-  for a rectangular one. Each line splits into a token-set number of
-  equal segments, each with the opacity at its midpoint, and a segment at
-  zero opacity is left out.
+- Each grid line is one Line across its whole chord of the patch, at
+  full opacity. A line whose chord is empty, such as one tangent to a
+  circular patch, is left out.
+- The grid fades from the patch center to its edge. A point's reach `r`
+  is its distance from the center over the radius for a circular patch,
+  and the larger fraction of either half extent for a rectangular one.
+  Its fade is `1 - smoothstep(0, 1, r)`, one at the center and zero from
+  the edge out. The grid reports its origin and patch, so a renderer
+  fading lines per pixel evaluates the same curve and its lines agree
+  with the labels.
 - Each major line carries one coordinate label where it crosses the
   perpendicular line through the origin, and the origin carries one
   label for zero. The labels form one label set of §spec:unit-system in
   the active display format. They face the viewer, with their content's
-  bottom-left corner on the crossing (§req:quality-attributes), and fade
-  like the lines at their anchors. A label at zero opacity is left out
-  of the set, so an invisible edge label cannot promote the others.
+  bottom-left corner on the crossing (§req:quality-attributes). Each
+  label carries one opacity, the fade at its anchor. A label at zero
+  opacity is left out of the set, so an invisible edge label cannot
+  promote the others.
 - When the camera rests near a step boundary, the grid does not flicker.
   The step changes only once the spacing passes the boundary by a
   token-set margin, and changes back only once it passes back by the
   same margin. The app passes the previous frame's minor step back in,
   so the grid stays a pure function of its inputs.
-- Minor line segments come first, then major ones, then labels. Minor and
+- Minor lines come first, then major ones, then labels. Minor and
   major lines take token-set widths, and the app keys each kind.
 - `vectors/ground_plane.json` pins the minor-step choice and whole grids
   under Y-up and Z-up conventions in both handednesses
@@ -768,10 +773,20 @@ grid steps keeps grid density perceptually constant across zoom levels
 boundary that implies a physical constraint. Fade-to-transparent
 communicates a reference surface without implying a wall.
 
-*Why segments*: a primitive carries one opacity, so a single Line cannot
-fade along its length. A per-vertex opacity was rejected because it adds
-a field to the closed set of §spec:scene-model for one annotation. A
-fixed segment count bounds the output per line at any zoom.
+*Why the renderer fades the lines*: a primitive carries one opacity, so
+the package can only step a fade along a line by splitting it into
+segments. Stepped opacity cannot fade a screen-space anti-aliased line
+smoothly, and it fights a renderer that alpha-tests. A per-pixel fade,
+such as a radial alpha mask or depth fog, is pixel fidelity, which
+§spec:renderer-contract leaves to the renderer. A per-vertex opacity was
+rejected because it adds a field to the closed set of §spec:scene-model
+for one annotation.
+
+*Why labels keep an opacity*: a label is a Billboard, which a line
+shader does not touch, so the package evaluates the fade at the anchor.
+Smoothstep has zero slope at both ends, so the fade holds near full
+opacity at the center and eases to zero at the edge with no visible
+kink.
 
 *Why cap the line count*: the patch is a world size and the minor step
 follows the camera, so closing in on a large patch would otherwise emit
