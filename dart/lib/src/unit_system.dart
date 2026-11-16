@@ -324,8 +324,8 @@ final class _StepSequence {
 /// [mantissa] times 10^[exponent], dividing for negative exponents so
 /// that 10^-3 is the double nearest 0.001.
 double _decade(double mantissa, int exponent) => exponent >= 0
-    ? mantissa * math.pow(10, exponent)
-    : mantissa / math.pow(10, -exponent);
+    ? mantissa * math.pow(10.0, exponent)
+    : mantissa / math.pow(10.0, -exponent);
 
 /// Whether [x] is a whole number, within the relative slack.
 bool _isWhole(double x) =>
@@ -334,7 +334,7 @@ bool _isWhole(double x) =>
 /// The fewest decimal places that write [step] exactly.
 int _decimalsFor(double step) {
   for (var places = 0; places < _maxDecimals; places++) {
-    if (_isWhole(step * math.pow(10, places))) return places;
+    if (_isWhole(step * math.pow(10.0, places))) return places;
   }
   return _maxDecimals;
 }

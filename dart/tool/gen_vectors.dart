@@ -771,6 +771,8 @@ const _stepLengths = <double>[
   59,
   130,
   6e4,
+  // Past 64-bit integers, where a power of ten has to be a double.
+  3e19,
 ];
 
 typedef _LabelSet = ({

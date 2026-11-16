@@ -271,6 +271,16 @@ void main() {
       }
     });
 
+    test('step queries stay exact past 64-bit integers', () {
+      _expectSteps([
+        (format: _metric, length: 3e19, step: 2e19),
+        (format: _decimalInch, length: 7e20, step: 5e20),
+      ], (format, length) => format.scaleBarStepAtMost(length));
+      _expectSteps([
+        (format: _metric, length: 3e19, step: 1e20),
+      ], (format, length) => format.gridStepAtLeast(length));
+    });
+
     test('each grid step is a whole multiple of the one before', () {
       for (final format in DisplayFormat.values) {
         var step = format.gridStepAtLeast(1e-3);
