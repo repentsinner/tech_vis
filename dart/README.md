@@ -134,7 +134,8 @@ A renderer handles each primitive as follows:
   fraction of the content's width and height, counted from its
   bottom-left corner. A viewer-facing billboard stays upright and faces
   the viewer. A coplanar one lies in its plane and foreshortens at
-  oblique angles. Multiply the content's own alpha by the primitive's
+  oblique angles. Its content runs along `right`, and its vertical axis
+  is `normal` cross `right` by the declared hand rule. Multiply the content's own alpha by the primitive's
   opacity.
 - **Marker**: draw the shared unit-sphere mesh at the transform that
   `MarkerFactory.transform` returns for the frame. The transform keeps
@@ -407,6 +408,57 @@ The grid never draws more than `StyleTokens.groundGridMaxLinesPerAxis`
 lines across the patch in either direction. When the camera closes in on
 a large patch, the minor step coarsens to stay within that count.
 `GroundGridStyle` overrides any of the grid's tokens.
+
+## Dimensions
+
+A dimension measures between two points the app picks.
+`SmartDimensionFactory.create` returns its witness lines, dimension line,
+open arrowheads, and value text as lines and a billboard, all sized in
+screen pixels. The size depends on the camera, so rebuild the dimension
+in every frame in which the camera moves.
+
+When the points differ along one world axis, within a small tolerance,
+the dimension measures that axis. Otherwise `multiAxis` picks one
+dimension per varying axis, or one of the direct distance. The value
+text is the measured length written by the display format, so convert
+nothing first: pass the unit system of the world coordinates.
+
+```dart
+final dimension = SmartDimensionFactory.create(
+  from: holeCenter,
+  to: edgePoint,
+  convention: DraftingConvention.isoOriented,
+  format: DisplayFormat.metric,
+  worldUnits: UnitSystem.metric,
+  camera: camera,
+  verticalFovRadians: verticalFovRadians,
+  viewportSize: viewportSize,
+  resolveText: resolveText,
+  key: MyStyle.dimension,
+);
+```
+
+The drafting convention decides where the text sits. Pick the one the
+app's readers work to:
+
+| Convention | Text |
+|---|---|
+| `isoOriented` | Parallel to the dimension line, above it, upright |
+| `isoReferencing` | Horizontal, on a leader off the dimension line |
+| `asmeInlined` | Horizontal, in a break in the dimension line |
+| `asmeReferencing` | Horizontal, on a leader off the dimension line |
+
+A dimension shrinks on screen as the camera pulls back. When oriented
+or inlined text no longer fits between the witness lines, it moves onto
+a leader in its standard's referencing style, so the value stays
+readable at any zoom. The leader is a callout leader with the same
+style. Oriented text is a coplanar billboard facing the viewer; the
+others are viewer-facing.
+
+By default the dimension line sits toward screen up, on the
+perpendicular that faces the viewer. Pass `offsetDirection` to put it on
+a side of the app's choosing. `DimensionStyle` overrides any pixel size
+or the alignment tolerance.
 
 ## Measure a frame against the reference geometry
 
