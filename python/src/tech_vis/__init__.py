@@ -47,6 +47,11 @@ from tech_vis.marker import (
     marker_sphere_mesh,
     marker_transform,
 )
+from tech_vis.navigation_cube import (
+    NavigationCube,
+    NavigationCubeFace,
+    NavigationCubeFaceView,
+)
 from tech_vis.primitives import (
     BillboardContent,
     BillboardOrientation,
@@ -109,6 +114,9 @@ __all__ = [
     "MarkerPrimitive",
     "Matrix4",
     "MeshPrimitive",
+    "NavigationCube",
+    "NavigationCubeFace",
+    "NavigationCubeFaceView",
     "NumberFormatting",
     "Primitive",
     "QuadPrimitive",
