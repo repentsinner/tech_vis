@@ -5,11 +5,17 @@ from typing import Any
 
 import pytest
 
-from conftest import load_vectors
-from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, tokens
+from conftest import TOLERANCE, json_number_formatting, load_vectors
+from tech_vis import (
+    DecimalMarker,
+    DisplayFormat,
+    NumberFormatting,
+    format_degrees_label,
+    format_number_label,
+    tokens,
+)
 
 # Absolute tolerance on every numeric output, in the format's base unit.
-TOLERANCE = 1e-9
 
 type Json = dict[str, Any]
 
@@ -70,3 +76,31 @@ def test_format_labels(fixture: Json) -> None:
             numbers=numbers,
         )
         assert labels == c["output"]["labels"], c["name"]
+
+
+def test_format_degrees_label(fixture: Json) -> None:
+    cases = fixture["formatDegreesLabel"]
+    assert cases, "no formatDegreesLabel cases"
+    for c in cases:
+        given = c["input"]
+        numbers = NumberFormatting(
+            decimal_marker=DecimalMarker(given["numbers"]["decimalMarker"]),
+            show_leading_zero=given["numbers"]["showLeadingZero"],
+        )
+        label = format_degrees_label(
+            float(given["degrees"]), step=float(given["step"]), numbers=numbers
+        )
+        assert label == c["output"]["label"], given
+
+
+def test_format_number_label(fixture: Json) -> None:
+    cases = fixture["formatNumberLabel"]
+    assert cases, "no formatNumberLabel cases"
+    for c in cases:
+        given = c["input"]
+        label = format_number_label(
+            float(given["value"]),
+            step=float(given["step"]),
+            numbers=json_number_formatting(given["numbers"]),
+        )
+        assert label == c["output"]["label"], given
