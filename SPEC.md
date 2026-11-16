@@ -148,7 +148,7 @@ graph and draws them with its own engine (§req:constraints).
   pixel size, and layout places the Billboard by that size.
 - Factories return primitives: `BoundingBoxFactory`,
   `CoordinateFrameFactory`, `EnvelopeLabelFactory`,
-  `FilledRectangleFactory`, §spec:callout-layout, and
+  `FilledRectangleFactory`, `MarkerFactory`, §spec:callout-layout, and
   §spec:annotation-primitives. A factory emits every line it draws, so a
   renderer draws lines and never derives one. `BoundingBoxFactory`
   emits a box's twelve edges once each, plus six faces only when the box
@@ -282,7 +282,7 @@ as Z-up draws its ground plane as a wall.
 
 ## Renderer contract §spec:renderer-contract
 
-*Status: not started*
+*Status: in progress*
 
 A renderer reproduces the style when it honors what each primitive
 means. The package guarantees placement: where a primitive lands on
@@ -351,6 +351,13 @@ sized in world units vanishes when the camera pulls back.
 
 *Why generated geometry*: a model file makes every renderer load an
 asset format to draw a dot (§req:constraints).
+
+The mesh is an icosphere whose subdivision level is a style token. Every
+marker in one handedness shares one mesh.
+
+*Why an icosphere*: its triangles are close to equal in size and shape,
+so a low subdivision level reads as round at marker sizes. A UV sphere
+crowds thin triangles at its poles and spends its vertices there.
 
 ## Unit system §spec:unit-system
 
