@@ -354,6 +354,10 @@ DisplayFormat.decimalInch.formatLabels(
 ); // [',125 in']
 ```
 
+An angle has no display format. `formatDegreesLabel` writes one in
+decimal degrees under the same rounding and number formatting:
+`formatDegreesLabel(37.46, step: 0.1)` returns `37.5°`.
+
 ## Ground plane
 
 A ground plane gives floating geometry a sense of scale and orientation.
@@ -459,6 +463,55 @@ By default the dimension line sits toward screen up, on the
 perpendicular that faces the viewer. Pass `offsetDirection` to put it on
 a side of the app's choosing. `DimensionStyle` overrides any pixel size
 or the alignment tolerance.
+
+`SmartDimensionFactory.createAngular` measures the angle at a vertex
+between two legs, each a vector from the vertex to the leg's far end.
+The arc runs a fixed pixel radius from the vertex, the short way round,
+and draws as straight lines a few pixels long. A leg that ends short of
+the arc gets a witness line out to it. The value reads in decimal
+degrees, such as `37.5°`, with the app's number formatting.
+
+```dart
+final angle = SmartDimensionFactory.createAngular(
+  vertex: corner,
+  first: edgeEnd - corner,
+  second: otherEdgeEnd - corner,
+  convention: DraftingConvention.isoOriented,
+  camera: camera,
+  verticalFovRadians: verticalFovRadians,
+  viewportSize: viewportSize,
+  resolveText: resolveText,
+  key: MyStyle.dimension,
+);
+```
+
+`SmartDimensionFactory.createRadial` dimensions a circle or arc from its
+center, radius, and plane normal. `RadialMeasure.radius` draws from the
+center to the rim and reads `R12 mm`; `RadialMeasure.diameter` draws
+across the circle and reads `⌀24 mm`. The line runs toward the screen's
+top-right corner unless `direction` says otherwise, so for an arc, pass a
+direction that points into it.
+
+```dart
+final hole = SmartDimensionFactory.createRadial(
+  center: holeCenter,
+  radius: holeRadius,
+  normal: faceNormal,
+  measure: RadialMeasure.diameter,
+  convention: DraftingConvention.asmeInlined,
+  format: DisplayFormat.metric,
+  worldUnits: UnitSystem.metric,
+  camera: camera,
+  verticalFovRadians: verticalFovRadians,
+  viewportSize: viewportSize,
+  resolveText: resolveText,
+  key: MyStyle.dimension,
+);
+```
+
+Both follow the drafting convention and the referencing fallback of a
+point-to-point dimension. An angle's text fits when it clears the
+arrowheads along the arc on screen.
 
 ## Measure a frame against the reference geometry
 
