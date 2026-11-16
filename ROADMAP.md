@@ -17,15 +17,6 @@ Both registries need a first step that automation cannot take.
 
 Done when a merged `feat:` PR publishes both packages with no manual step.
 
-## Shared layout §road:shared-layout
-
-Closes §spec:golden-vectors and the layout half of §spec:python-package.
-
-### Python leader-line layout §road:python-leader-line
-
-Port the leader-line functions to Python. Test them against
-`vectors/leader_line.json`.
-
 ## Renderer contract §road:renderer-contract
 
 Closes §spec:scene-model, §spec:scene-color, §spec:coordinate-convention,
