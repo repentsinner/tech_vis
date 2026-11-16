@@ -62,4 +62,20 @@ void main() {
       expect('$convention', 'Z-up left-handed');
     });
   });
+
+  group('CoordinateConvention.planeAxes', () {
+    for (final (up, u, v) in [
+      (SpatialAxis.z, SpatialAxis.x, SpatialAxis.y),
+      (SpatialAxis.y, SpatialAxis.z, SpatialAxis.x),
+      (SpatialAxis.x, SpatialAxis.y, SpatialAxis.z),
+    ]) {
+      for (final hand in Handedness.values) {
+        test('${up.label}-up ${hand.name}-handed lies in $u, $v', () {
+          final axes = CoordinateConvention(up: up, handedness: hand).planeAxes;
+          expect(axes.u, u);
+          expect(axes.v, v);
+        });
+      }
+    }
+  });
 }

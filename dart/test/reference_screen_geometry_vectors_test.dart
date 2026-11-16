@@ -11,11 +11,6 @@ import 'support/vectors.dart';
 
 final _fixture = vectorFixture('reference_screen_geometry.json');
 
-CoordinateConvention _convention(Json json) => CoordinateConvention(
-  up: SpatialAxis.values.byName(json['up'] as String),
-  handedness: Handedness.values.byName(json['handedness'] as String),
-);
-
 /// One camera and viewport, read from a fixture view.
 class _Frame {
   _Frame(Json json, CoordinateConvention convention)
@@ -45,44 +40,37 @@ class _Frame {
 
 /// Rebuilds a scene's primitives through the public factories, from the
 /// inputs the fixture records.
-({List<Primitive> primitives, List<CalloutLeaderGeometry> leaders}) _build(
+List<Primitive> _build(
   Json build,
   CoordinateConvention convention,
   _Frame frame,
 ) {
   switch (build['factory']) {
     case 'BoundingBoxFactory.createCube':
-      return (
-        primitives: BoundingBoxFactory.createCube(
-          bounds: BoundingBox(
-            minBounds: jsonVector3(build['minBounds']),
-            maxBounds: jsonVector3(build['maxBounds']),
-          ),
-          key: null,
-          fillOpacity: jsonNumber(build['fillOpacity']),
-          edgeWidth: jsonNumber(build['edgeWidth']),
+      return BoundingBoxFactory.createCube(
+        bounds: BoundingBox(
+          minBounds: jsonVector3(build['minBounds']),
+          maxBounds: jsonVector3(build['maxBounds']),
         ),
-        leaders: const [],
+        key: null,
+        fillOpacity: jsonNumber(build['fillOpacity']),
+        edgeWidth: jsonNumber(build['edgeWidth']),
       );
     case 'CoordinateFrameFactory.create':
-      return (
-        primitives: CoordinateFrameFactory.create(
-          CoordinateFrameDescriptor(
-            origin: jsonVector3(build['origin']),
-            length: jsonNumber(build['length']),
-            lineThickness: jsonNumber(build['lineThickness']),
-            labelPixelSize: jsonNumber(build['labelPixelSize']),
-            labelOffsetPixels: jsonNumber(build['labelOffsetPixels']),
-          ),
-          keyFor: (_) => null,
-          resolveText: fakeTextResolver,
+      return CoordinateFrameFactory.create(
+        CoordinateFrameDescriptor(
+          origin: jsonVector3(build['origin']),
+          length: jsonNumber(build['length']),
+          lineThickness: jsonNumber(build['lineThickness']),
+          labelPixelSize: jsonNumber(build['labelPixelSize']),
+          labelOffsetPixels: jsonNumber(build['labelOffsetPixels']),
         ),
-        leaders: const [],
+        keyFor: (_) => null,
+        resolveText: fakeTextResolver,
       );
     case 'createCalloutLabel':
       final style = jsonLeaderLineStyle(build['style'] as Json);
       final primitives = <Primitive>[];
-      final leaders = <CalloutLeaderGeometry>[];
       for (final c in jsonList(build['callouts'])) {
         final anchor = jsonVector3(c['anchor']);
         final quadrant = CalloutQuadrant.values.byName(c['quadrant'] as String);
@@ -94,47 +82,46 @@ class _Frame {
           quadrant: quadrant,
           style: style,
         );
-        leaders.add(leader);
-        primitives.add(
-          createCalloutLabel(
-            leader: leader,
-            quadrant: quadrant,
-            content: fakeTextResolver(
-              TextRequest(
-                text: c['text'] as String,
-                heightPixels: jsonNumber(c['textHeightPixels']),
+        primitives
+          ..addAll(
+            createCalloutLeaderLines(leader: leader, key: null, opacity: 1),
+          )
+          ..add(
+            createCalloutLabel(
+              leader: leader,
+              quadrant: quadrant,
+              content: fakeTextResolver(
+                TextRequest(
+                  text: c['text'] as String,
+                  heightPixels: jsonNumber(c['textHeightPixels']),
+                ),
               ),
-            ),
-            key: null,
-            opacity: 1,
-          ),
-        );
-      }
-      return (primitives: primitives, leaders: leaders);
-    case 'MarkerFactory.create':
-      return (
-        primitives: [
-          for (final m in jsonList(build['markers']))
-            MarkerFactory.create(
-              position: jsonVector3(m['position']),
-              convention: convention,
               key: null,
-              diameterPixels: jsonNumber(m['diameterPixels']),
+              opacity: 1,
             ),
-        ],
-        leaders: const [],
-      );
+          );
+      }
+      return primitives;
+    case 'MarkerFactory.create':
+      return [
+        for (final m in jsonList(build['markers']))
+          MarkerFactory.create(
+            position: jsonVector3(m['position']),
+            convention: convention,
+            key: null,
+            diameterPixels: jsonNumber(m['diameterPixels']),
+          ),
+      ];
     default:
       throw ArgumentError.value(build['factory'], 'factory');
   }
 }
 
-/// Every screen point a recorded primitive or leader names.
+/// Every screen point a recorded primitive names.
 Iterable<List<double>> _points(Json record) sync* {
   for (final MapEntry(:key, :value) in record.entries) {
     switch (key) {
       case 'start' || 'end' || 'center' || 'anchor':
-      case 'gapEnd' || 'elbow' || 'labelEdge':
         yield jsonNumbers(value);
       case 'corners':
         yield* (value as List<dynamic>).map(jsonNumbers);
@@ -274,43 +261,28 @@ void _expectMarker(
   );
 }
 
-void _expectLeader(
-  CalloutLeaderGeometry leader,
-  vm.Vector3 anchor,
+/// Expects each callout's leader lines, emitted before its label, to keep
+/// their style lengths in pixels on screen: the angled segment, then the
+/// horizontal one.
+void _expectLeaderLengths(
+  List<Primitive> primitives,
   LeaderLineStyle style,
-  Json record,
   _Frame frame,
   String reason,
 ) {
-  final points = {
-    'anchor': frame.screen(anchor),
-    'gapEnd': frame.screen(leader.gapEnd),
-    'elbow': frame.screen(leader.elbow),
-    'labelEdge': frame.screen(leader.labelEdge),
-  };
-  for (final MapEntry(:key, :value) in points.entries) {
-    expectNumbers(value.storage, record[key], '$reason $key');
-  }
-  expect(
-    jsonNumber(record['widthPixels']),
-    closeTo(style.lineWidth, vectorTolerance),
-    reason: reason,
-  );
-  // Each leader segment keeps its style length in pixels on screen.
-  final lengths = {
-    'gap': (points['gapEnd']! - points['anchor']!, style.gapPixels),
-    'angled': (points['elbow']! - points['gapEnd']!, style.angledLengthPixels),
-    'horizontal': (
-      points['labelEdge']! - points['elbow']!,
-      style.horizontalLengthPixels,
-    ),
-  };
-  for (final MapEntry(:key, value: (segment, pixels)) in lengths.entries) {
-    expect(
-      segment.length,
-      closeTo(pixels, vectorTolerance),
-      reason: '$reason $key',
-    );
+  final lines = primitives.whereType<LinePrimitive>().toList();
+  expect(lines.length.isEven, isTrue, reason: reason);
+  for (var i = 0; i < lines.length; i += 2) {
+    for (final (line, pixels) in [
+      (lines[i], style.angledLengthPixels),
+      (lines[i + 1], style.horizontalLengthPixels),
+    ]) {
+      expect(
+        (frame.screen(line.end) - frame.screen(line.start)).length,
+        closeTo(pixels, vectorTolerance),
+        reason: '$reason leader $i',
+      );
+    }
   }
 }
 
@@ -340,7 +312,7 @@ void main() {
 
     test('cover every factory, two up axes, and both handednesses', () {
       final conventions = {
-        for (final s in scenes) _convention(s['convention'] as Json),
+        for (final s in scenes) jsonConvention(s['convention']),
       };
       expect(conventions.map((c) => c.up).toSet(), hasLength(2));
       expect(conventions.map((c) => c.handedness).toSet(), Handedness.values);
@@ -367,10 +339,7 @@ void main() {
           final [width, height] = jsonNumbers(
             (view['camera'] as Json)['viewport'],
           );
-          final records = [
-            ...jsonList(view['primitives']),
-            ...jsonList(view['leaders'] ?? const <dynamic>[]),
-          ];
+          final records = jsonList(view['primitives']);
           for (final record in records) {
             for (final [x, y] in _points(record)) {
               expect(x, inInclusiveRange(0, width), reason: '${scene['name']}');
@@ -388,12 +357,12 @@ void main() {
     test('match each scene rebuilt and projected through the package', () {
       expect(scenes, isNotEmpty);
       for (final scene in scenes) {
-        final convention = _convention(scene['convention'] as Json);
+        final convention = jsonConvention(scene['convention']);
         final build = scene['build'] as Json;
         for (final view in jsonList(scene['views'])) {
           final reason = '${scene['name']} / ${view['name']}';
           final frame = _Frame(view['camera'] as Json, convention);
-          final (:primitives, :leaders) = _build(build, convention, frame);
+          final primitives = _build(build, convention, frame);
 
           final records = jsonList(view['primitives']);
           expect(records, hasLength(primitives.length), reason: reason);
@@ -401,17 +370,12 @@ void main() {
             _expectPrimitive(primitive, records[i], frame, '$reason #$i');
           }
 
-          final leaderRecords = jsonList(view['leaders'] ?? const <dynamic>[]);
-          expect(leaderRecords, hasLength(leaders.length), reason: reason);
-          for (final (i, leader) in leaders.indexed) {
-            final callout = jsonList(build['callouts'])[i];
-            _expectLeader(
-              leader,
-              jsonVector3(callout['anchor']),
+          if (build['factory'] == 'createCalloutLabel') {
+            _expectLeaderLengths(
+              primitives,
               jsonLeaderLineStyle(build['style'] as Json),
-              leaderRecords[i],
               frame,
-              '$reason leader $i',
+              reason,
             );
           }
         }
@@ -420,14 +384,10 @@ void main() {
 
     test('agree with an independent pinhole projection', () {
       for (final scene in scenes) {
-        final convention = _convention(scene['convention'] as Json);
+        final convention = jsonConvention(scene['convention']);
         for (final view in jsonList(scene['views'])) {
           final frame = _Frame(view['camera'] as Json, convention);
-          final (:primitives, leaders: _) = _build(
-            scene['build'] as Json,
-            convention,
-            frame,
-          );
+          final primitives = _build(scene['build'] as Json, convention, frame);
           final records = jsonList(view['primitives']);
           for (final (i, primitive) in primitives.indexed) {
             if (primitive is! LinePrimitive) continue;
