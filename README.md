@@ -89,9 +89,11 @@ leader = compute_callout_leader_geometry(
 ```
 
 The Python package takes and returns points as plain `(x, y, z)` tuples of
-floats, so it needs no vector library. It trails the Dart package: it has
-the style tokens, the display formats, overlay placement, and the
-leader-line layout, and the rest follows. See [ROADMAP.md](ROADMAP.md).
+floats, so it needs no vector library. It carries the style tokens, the
+display formats, overlay placement, the camera projection, and the typed
+primitives with their box, coordinate-frame, envelope-label, marker, and
+callout factories. It trails the Dart package, and the rest follows; see
+[ROADMAP.md](ROADMAP.md).
 
 ## Renderer guide
 

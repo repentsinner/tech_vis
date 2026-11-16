@@ -42,6 +42,75 @@ opacity = compute_callout_opacity(distance_to_camera)
 Points are plain tuples of floats, so the package needs no vector library.
 Pass a `LeaderLineStyle` to override the segment lengths and angle.
 
+### Primitives
+
+The factories return typed primitives for a renderer to draw:
+`LinePrimitive`, `QuadPrimitive`, `BillboardPrimitive`, `MarkerPrimitive`,
+and `MeshPrimitive`. Each carries an opacity and an app key that the package
+passes through untouched, so the app resolves color from the key. A
+`CoordinateConvention` declares which axis points up and the handedness of
+the app's space. The camera, markers, and envelope labels read it:
+
+```python
+import math
+
+from tech_vis import (
+    BillboardContent,
+    BoundingBox,
+    CalloutQuadrant,
+    CameraBasis,
+    CoordinateConvention,
+    Handedness,
+    SpatialAxis,
+    compute_callout_leader_geometry,
+    create_bounding_box,
+    create_callout_label,
+    create_callout_leader_lines,
+    create_marker,
+    world_to_screen,
+    world_units_per_pixel_at,
+)
+
+z_up = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
+camera = CameraBasis.look_at(position=(7, -9, 5), target=(0, 0, 0.75), convention=z_up)
+fov, viewport = math.radians(45), (1280.0, 720.0)
+
+box = create_bounding_box(
+    BoundingBox(min_bounds=(-2, -1, 0), max_bounds=(2, 1, 1.5)),
+    key="part",
+    fill_opacity=0.25,
+)
+marker = create_marker((0, 0, 1.5), z_up, key="probe")
+
+anchor = (2.0, 1.0, 1.5)
+leader = compute_callout_leader_geometry(
+    anchor=anchor,
+    camera_right=camera.right,
+    camera_up=camera.up,
+    world_units_per_pixel=world_units_per_pixel_at(anchor, camera, fov, viewport[1]),
+    quadrant=CalloutQuadrant.TOP_RIGHT,
+)
+lines = create_callout_leader_lines(leader, key="note", opacity=1.0)
+label = create_callout_label(
+    leader,
+    CalloutQuadrant.TOP_RIGHT,
+    content=BillboardContent(value=my_text_layout, width_pixels=56, height_pixels=14),
+    key="note",
+    opacity=1.0,
+)
+
+x, y = world_to_screen(anchor, camera, fov, viewport)  # pixels, y down
+```
+
+Text the package composes, such as an axis letter, reaches the app as a
+`TextRequest`. A factory that sets text takes a `resolve_text` function,
+which sets the request in the app's typeface and returns a
+`BillboardContent` with the pixel size the renderer draws it at.
+`marker_transform` returns the per-frame matrix that keeps a marker at its
+pixel diameter, and `world_to_screen` places any world point in viewport
+pixels, which is how a renderer measures a frame against the reference
+screen geometry.
+
 The style defaults come from `tech_vis.tokens`:
 
 ```python
