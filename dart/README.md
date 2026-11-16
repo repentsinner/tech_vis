@@ -79,6 +79,54 @@ for (final primitive in box) {
 }
 ```
 
+A billboard places 2D content that the app prepares, such as text, an
+icon, or a video frame, by the content's size in screen pixels. The
+package never measures or draws the content. When a factory composes text
+of its own, such as an axis letter or an envelope label, it sends a
+`TextRequest` (the string and a pixel height) to a resolver that the app
+supplies. The resolver sets the text in the app's typeface and returns the
+content with its measured size, so every billboard arrives sized.
+
+```dart
+BillboardContent resolveText(TextRequest request) {
+  final layout = myTextLayout(request.text, request.heightPixels);
+  return BillboardContent(
+    value: layout,
+    widthPixels: layout.width,
+    heightPixels: layout.height,
+  );
+}
+
+final frame = CoordinateFrameFactory.create(
+  CoordinateFrameDescriptor(origin: origin),
+  keyFor: (axis) => MyStyle.axis(axis),
+  resolveText: resolveText,
+);
+
+final envelope = EnvelopeLabelFactory.createEnvelopeLabel(
+  text: '120 × 80 × 40',
+  bounds: bounds,
+  corner: LabelCorner.topFrontLeft,
+  convention: convention,
+  resolveText: resolveText,
+  key: MyStyle.envelope,
+);
+
+// A callout's label sits at the end of its leader, extending away from it.
+final label = createCalloutLabel(
+  leader: leader,
+  quadrant: CalloutQuadrant.topRight,
+  content: resolveText(
+    const TextRequest(
+      text: 'Datum A',
+      heightPixels: SceneLayoutConstants.calloutLabelPixelSize,
+    ),
+  ),
+  key: MyStyle.callout,
+  opacity: opacity,
+);
+```
+
 `StyleTokens` holds every style constant, generated from the repository's
 `style/tokens.json`. `StyleTokens.styleVersion` identifies the token set.
 

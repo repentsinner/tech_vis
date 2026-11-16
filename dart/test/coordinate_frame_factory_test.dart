@@ -2,6 +2,8 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+import 'support/fake_text_resolver.dart';
+
 void main() {
   group('CoordinateFrameFactory.create', () {
     final frame = CoordinateFrameDescriptor(
@@ -17,6 +19,7 @@ void main() {
       frame,
       keyFor: axisKey,
       labelKeyFor: labelKey,
+      resolveText: fakeTextResolver,
     );
     final lines = primitives.whereType<LinePrimitive>().toList();
     final labels = primitives.whereType<BillboardPrimitive>().toList();
@@ -37,21 +40,29 @@ void main() {
     });
 
     test('labels each axis end, offset in pixels along the axis', () {
-      expect(labels.map((l) => l.content), ['X', 'Y', 'Z']);
+      expect(labels.map((l) => l.content.value), const [
+        TextRequest(text: 'X', heightPixels: 18),
+        TextRequest(text: 'Y', heightPixels: 18),
+        TextRequest(text: 'Z', heightPixels: 18),
+      ]);
       for (final (i, axis) in SpatialAxis.values.indexed) {
         final label = labels[i];
         expect(label.anchor, lines[i].end);
         expect(label.orientation, isA<ViewerFacingOrientation>());
         expect(label.offset!.direction, axis.unitVector);
         expect(label.offset!.pixels, 6);
-        expect(label.heightPixels, 18);
-        expect(label.widthPixels, isNull);
+        expect(label.content.heightPixels, 18);
+        expect(label.content.widthPixels, 18 * fakeCharacterAspect);
         expect(label.key, labelKey(axis));
       }
     });
 
     test('keys labels by their axis key when given no label key', () {
-      final keyed = CoordinateFrameFactory.create(frame, keyFor: axisKey);
+      final keyed = CoordinateFrameFactory.create(
+        frame,
+        keyFor: axisKey,
+        resolveText: fakeTextResolver,
+      );
       final keys = keyed.whereType<BillboardPrimitive>().map((l) => l.key);
       expect(keys, ['axis_x', 'axis_y', 'axis_z']);
     });
@@ -60,6 +71,7 @@ void main() {
       final bare = CoordinateFrameFactory.create(
         CoordinateFrameDescriptor(showLabels: false),
         keyFor: axisKey,
+        resolveText: fakeTextResolver,
       );
       expect(bare, hasLength(3));
       expect(bare, everyElement(isA<LinePrimitive>()));
@@ -69,6 +81,7 @@ void main() {
       final at = CoordinateFrameFactory.create(
         CoordinateFrameDescriptor(origin: Vector3(-1, -2, -3), length: 1),
         keyFor: axisKey,
+        resolveText: fakeTextResolver,
       );
       final first = at.first as LinePrimitive;
       expect(first.start, Vector3(-1, -2, -3));

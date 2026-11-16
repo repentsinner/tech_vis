@@ -49,9 +49,11 @@ void main() {
     (
       'billboard',
       BillboardPrimitive(
-        content: key,
-        widthPixels: 32,
-        heightPixels: 16,
+        content: BillboardContent(
+          value: key,
+          widthPixels: 32,
+          heightPixels: 16,
+        ),
         anchor: vm.Vector3.zero(),
         key: key,
         opacity: 0.5,
@@ -107,14 +109,55 @@ void main() {
   group('BillboardPrimitive', () {
     test('faces the viewer, centered on its anchor, by default', () {
       final billboard = BillboardPrimitive(
-        content: 'A',
-        heightPixels: 16,
+        content: const BillboardContent(
+          value: 'icon',
+          widthPixels: 24,
+          heightPixels: 16,
+        ),
         anchor: vm.Vector3.zero(),
         key: null,
       );
       expect(billboard.orientation, isA<ViewerFacingOrientation>());
       expect(billboard.alignment, vm.Vector2(0.5, 0.5));
       expect(billboard.offset, isNull);
+    });
+
+    test('carries the app content and its pixel size untouched', () {
+      final handle = Object();
+      final billboard = BillboardPrimitive(
+        content: BillboardContent(
+          value: handle,
+          widthPixels: 24,
+          heightPixels: 16,
+        ),
+        anchor: vm.Vector3.zero(),
+        key: null,
+      );
+      expect(billboard.content.value, same(handle));
+      expect(billboard.content.widthPixels, 24);
+      expect(billboard.content.heightPixels, 16);
+    });
+  });
+
+  group('BillboardContent', () {
+    test('rejects a negative pixel size', () {
+      expect(
+        () => BillboardContent(value: null, widthPixels: -1, heightPixels: 1),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+  });
+
+  group('TextRequest', () {
+    test('compares by text and pixel height', () {
+      expect(
+        const TextRequest(text: 'X', heightPixels: 12),
+        const TextRequest(text: 'X', heightPixels: 12),
+      );
+      expect(
+        const TextRequest(text: 'X', heightPixels: 12),
+        isNot(const TextRequest(text: 'X', heightPixels: 14)),
+      );
     });
   });
 

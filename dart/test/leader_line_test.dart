@@ -2,6 +2,8 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'support/fake_text_resolver.dart';
+
 void main() {
   group('LeaderLineStyle', () {
     test('default values from SceneLayoutConstants', () {
@@ -193,7 +195,46 @@ void main() {
     });
   });
 
-  /// @spec §spec:billboard-labels — Callout opacity fades with anchor distance
+  group('createCalloutLabel', () {
+    final cases = <(CalloutQuadrant, vm.Vector2)>[
+      (CalloutQuadrant.topRight, vm.Vector2(0, 0.5)),
+      (CalloutQuadrant.bottomRight, vm.Vector2(0, 0.5)),
+      (CalloutQuadrant.topLeft, vm.Vector2(1, 0.5)),
+      (CalloutQuadrant.bottomLeft, vm.Vector2(1, 0.5)),
+    ];
+    for (final (quadrant, alignment) in cases) {
+      test('sets the label at the leader end, ${quadrant.name}', () {
+        final leader = computeCalloutLeaderGeometry(
+          anchor: vm.Vector3(1, 2, 3),
+          cameraRight: vm.Vector3(1, 0, 0),
+          cameraUp: vm.Vector3(0, 1, 0),
+          worldUnitsPerPixel: 0.5,
+          quadrant: quadrant,
+        );
+        final content = fakeTextResolver(
+          const TextRequest(
+            text: 'note',
+            heightPixels: SceneLayoutConstants.calloutLabelPixelSize,
+          ),
+        );
+        final label = createCalloutLabel(
+          leader: leader,
+          quadrant: quadrant,
+          content: content,
+          key: 'callout',
+          opacity: 0.25,
+        );
+        expect(label.anchor, leader.labelEdge);
+        expect(label.alignment, alignment);
+        expect(label.orientation, isA<ViewerFacingOrientation>());
+        expect(label.offset, isNull);
+        expect(label.content, same(content));
+        expect(label.key, 'callout');
+        expect(label.opacity, 0.25);
+      });
+    }
+  });
+
   group('computeCalloutOpacity', () {
     test('returns max opacity at near distance', () {
       expect(

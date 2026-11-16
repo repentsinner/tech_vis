@@ -13,14 +13,15 @@ class CoordinateFrameFactory {
   /// Emits one line per axis, from the origin to the axis end, in X, Y, Z
   /// order. When the frame shows labels, also emits one viewer-facing
   /// billboard per axis end, offset along the axis on screen by the frame's
-  /// label offset. A label's content is the axis letter as a [String], at
-  /// the frame's label pixel height, for the app to set in its typeface.
+  /// label offset. Each label requests the axis letter at the frame's label
+  /// pixel height, and [resolveText] answers with the app's content for it.
   ///
   /// [keyFor] gives each axis line its app key. [labelKeyFor] gives each
   /// label its key, and defaults to [keyFor].
   static List<Primitive> create(
     CoordinateFrameDescriptor frame, {
     required Object? Function(SpatialAxis axis) keyFor,
+    required TextResolver resolveText,
     Object? Function(SpatialAxis axis)? labelKeyFor,
   }) {
     final axes = frame.axes;
@@ -36,8 +37,12 @@ class CoordinateFrameFactory {
       if (frame.showLabels)
         for (final axisLine in axes)
           BillboardPrimitive(
-            content: axisLine.label,
-            heightPixels: frame.labelPixelSize,
+            content: resolveText(
+              TextRequest(
+                text: axisLine.label,
+                heightPixels: frame.labelPixelSize,
+              ),
+            ),
             anchor: axisLine.end,
             offset: ScreenOffset(
               direction: axisLine.direction,
