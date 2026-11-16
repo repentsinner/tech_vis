@@ -127,6 +127,30 @@ final label = createCalloutLabel(
 );
 ```
 
+A marker is a sphere that keeps its diameter in screen pixels at any
+distance. The package generates the sphere's mesh, so there is no model
+file to load. Every marker in one convention shares that mesh, and its
+triangles face outward in either handedness. Each frame, ask for the
+marker's transform and draw the mesh with it.
+
+```dart
+final marker = MarkerFactory.create(
+  position: point,
+  convention: convention,
+  key: MyStyle.probe,
+  diameterPixels: 10,
+);
+
+// Null when the marker is on or behind the camera plane.
+final transform = MarkerFactory.transform(
+  marker,
+  camera,
+  verticalFovRadians,
+  viewportHeight,
+);
+if (transform != null) drawMesh(marker.mesh, transform, colorFor(marker.key));
+```
+
 `StyleTokens` holds every style constant, generated from the repository's
 `style/tokens.json`. `StyleTokens.styleVersion` identifies the token set.
 
