@@ -2,7 +2,10 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'scene_layout_constants.dart';
 
-/// Spatial axis in a right-handed coordinate system.
+/// World coordinate axis.
+///
+/// Which axis points up, and the handedness of the axes, come from the
+/// app's declared coordinate convention.
 enum SpatialAxis {
   /// X axis (typically right).
   x,

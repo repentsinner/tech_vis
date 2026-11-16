@@ -1,0 +1,77 @@
+import 'package:vector_math/vector_math_64.dart' as vm;
+
+import 'coordinate_frame.dart';
+
+/// Rule that relates the three world axes to one another.
+enum Handedness {
+  /// X cross Y gives +Z by the right-hand rule.
+  right,
+
+  /// X cross Y gives +Z by the left-hand rule.
+  left,
+}
+
+/// Convention of the space an app hands the package: which world axis
+/// points up, and the handedness of the axes.
+///
+/// Every input and output of the package is in this space. The convention
+/// has no default, because a wrong default fails silently: a Y-up scene
+/// read as Z-up stands its floor on end. The package converts no data
+/// between conventions; each orientation decision reads the app's own
+/// space instead.
+class CoordinateConvention {
+  /// Creates the convention of a space whose [up] axis points up and whose
+  /// axes follow [handedness].
+  const CoordinateConvention({required this.up, required this.handedness});
+
+  /// World axis that points up.
+  final SpatialAxis up;
+
+  /// Handedness of the world axes.
+  final Handedness handedness;
+
+  /// Unit vector along [up].
+  vm.Vector3 get upVector => up.unitVector;
+
+  /// Axis that takes the place of [up] when a view looks straight along it.
+  ///
+  /// Returns the axis before [up] in the cycle X, Y, Z. A Z-up top view
+  /// then keeps +Y up on screen, as a plan view does, and a Y-up top view
+  /// keeps +X up.
+  SpatialAxis get fallbackAxis => switch (up) {
+    SpatialAxis.x => SpatialAxis.z,
+    SpatialAxis.y => SpatialAxis.x,
+    SpatialAxis.z => SpatialAxis.y,
+  };
+
+  /// Returns the cross product of [u] and [v] by the declared hand rule.
+  ///
+  /// The components of a right-handed space satisfy the textbook formula.
+  /// A left-handed space mirrors one axis, which reverses the sign, so
+  /// screen axes and face normals built from this agree with the app's
+  /// space in either handedness.
+  vm.Vector3 cross(vm.Vector3 u, vm.Vector3 v) => switch (handedness) {
+    Handedness.right => u.cross(v),
+    Handedness.left => v.cross(u),
+  };
+
+  /// Orders the triangle [a], [b], [c] of [positions] so its face points
+  /// along [outward].
+  ///
+  /// Returns the indices so that, read from the [outward] side, they turn
+  /// counter-clockwise in the declared handedness. The handed [cross] of
+  /// the first two edges then points along [outward]. A generated mesh
+  /// winds every face through this, so faces point outward under either
+  /// handedness.
+  (int, int, int) windOutward(
+    List<vm.Vector3> positions,
+    int a,
+    int b,
+    int c,
+    vm.Vector3 outward,
+  ) {
+    final origin = positions[a];
+    final normal = cross(positions[b] - origin, positions[c] - origin);
+    return normal.dot(outward) >= 0 ? (a, b, c) : (a, c, b);
+  }
+}

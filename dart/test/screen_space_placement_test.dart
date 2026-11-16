@@ -27,10 +27,24 @@ Matcher _closeToVector(vm.Vector3 expected) => predicate<vm.Vector3>(
   'within $_tolerance of $expected',
 );
 
+const _yUpRightHanded = CoordinateConvention(
+  up: SpatialAxis.y,
+  handedness: Handedness.right,
+);
+
+void _expectOrthonormal(CameraBasis basis) {
+  expect(basis.right.length, closeTo(1.0, _tolerance));
+  expect(basis.up.length, closeTo(1.0, _tolerance));
+  expect(basis.right.dot(basis.forward), closeTo(0.0, _tolerance));
+  expect(basis.up.dot(basis.forward), closeTo(0.0, _tolerance));
+  expect(basis.right.dot(basis.up), closeTo(0.0, _tolerance));
+}
+
 void main() {
   final camera = CameraBasis.lookAt(
     position: vm.Vector3.zero(),
     target: vm.Vector3(0, 0, -100),
+    convention: _yUpRightHanded,
   );
 
   group('CameraBasis.lookAt', () {
@@ -41,15 +55,97 @@ void main() {
       expect(camera.toViewer, _closeToVector(vm.Vector3(0, 0, 1)));
     });
 
-    test('falls back to the fallback up axis when looking along world up', () {
+    test('falls back to the fallback axis when looking along world up', () {
       final down = CameraBasis.lookAt(
         position: vm.Vector3(0, 100, 0),
         target: vm.Vector3.zero(),
+        convention: _yUpRightHanded,
       );
-      expect(down.right.length, closeTo(1.0, _tolerance));
-      expect(down.up.length, closeTo(1.0, _tolerance));
-      expect(down.right.dot(down.forward), closeTo(0.0, _tolerance));
-      expect(down.up.dot(down.forward), closeTo(0.0, _tolerance));
+      _expectOrthonormal(down);
+      expect(
+        down.up.cross(_yUpRightHanded.fallbackAxis.unitVector).length,
+        closeTo(0.0, _tolerance),
+      );
+    });
+
+    test('orients a Z-up camera with +Z up on screen', () {
+      const zUp = CoordinateConvention(
+        up: SpatialAxis.z,
+        handedness: Handedness.right,
+      );
+      final front = CameraBasis.lookAt(
+        position: vm.Vector3(0, -100, 0),
+        target: vm.Vector3.zero(),
+        convention: zUp,
+      );
+      expect(front.forward, _closeToVector(vm.Vector3(0, 1, 0)));
+      expect(front.right, _closeToVector(vm.Vector3(1, 0, 0)));
+      expect(front.up, _closeToVector(vm.Vector3(0, 0, 1)));
+    });
+
+    test('a Z-up top view keeps +Y up on screen', () {
+      const zUp = CoordinateConvention(
+        up: SpatialAxis.z,
+        handedness: Handedness.right,
+      );
+      final top = CameraBasis.lookAt(
+        position: vm.Vector3(0, 0, 100),
+        target: vm.Vector3.zero(),
+        convention: zUp,
+      );
+      _expectOrthonormal(top);
+      expect(top.up, _closeToVector(vm.Vector3(0, 1, 0)));
+      expect(top.right, _closeToVector(vm.Vector3(1, 0, 0)));
+    });
+
+    test('a left-handed camera puts screen right by the left-hand rule', () {
+      // Y up, looking down +Z: screen right is +X in a left-handed space.
+      const leftHanded = CoordinateConvention(
+        up: SpatialAxis.y,
+        handedness: Handedness.left,
+      );
+      final basis = CameraBasis.lookAt(
+        position: vm.Vector3.zero(),
+        target: vm.Vector3(0, 0, 100),
+        convention: leftHanded,
+      );
+      expect(basis.forward, _closeToVector(vm.Vector3(0, 0, 1)));
+      expect(basis.right, _closeToVector(vm.Vector3(1, 0, 0)));
+      expect(basis.up, _closeToVector(vm.Vector3(0, 1, 0)));
+      // right, up, forward follow the declared hand rule.
+      expect(
+        leftHanded.cross(basis.right, basis.up),
+        _closeToVector(basis.toViewer),
+      );
+    });
+
+    test('right, up, toward-viewer follow the declared hand rule', () {
+      final target = vm.Vector3(3, -2, 5);
+      final eye = vm.Vector3(40, 25, -30);
+      for (final up in SpatialAxis.values) {
+        for (final handedness in Handedness.values) {
+          final convention = CoordinateConvention(
+            up: up,
+            handedness: handedness,
+          );
+          final basis = CameraBasis.lookAt(
+            position: eye,
+            target: target,
+            convention: convention,
+          );
+          _expectOrthonormal(basis);
+          expect(
+            convention.cross(basis.right, basis.up),
+            _closeToVector(basis.toViewer),
+            reason: '${up.label}-up ${handedness.name}-handed',
+          );
+          expect(
+            basis.up.dot(convention.upVector),
+            greaterThan(0),
+            reason: '${up.label}-up ${handedness.name}-handed',
+          );
+        }
+      }
     });
 
     test('depthOf measures along the view axis, not straight-line', () {

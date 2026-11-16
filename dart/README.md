@@ -19,7 +19,18 @@ dart pub add tech_vis
 ```dart
 import 'package:tech_vis/tech_vis.dart';
 
-final camera = CameraBasis.lookAt(position: eye, target: target);
+// The app's own space: which axis points up, and its handedness. There is
+// no default, and every input and output is in this space.
+const convention = CoordinateConvention(
+  up: SpatialAxis.y,
+  handedness: Handedness.right,
+);
+
+final camera = CameraBasis.lookAt(
+  position: eye,
+  target: target,
+  convention: convention,
+);
 
 // The world size of one pixel at the anchor, by its depth along the view
 // axis. Null when the anchor is behind the camera.
