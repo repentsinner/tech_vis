@@ -13,6 +13,37 @@ uv add tech_vis
 
 ## Usage
 
+A callout is a label tied to a point in the scene by a leader line. The
+line leaves the anchor at an angle, bends, and runs horizontally to the
+label. `compute_callout_leader_geometry` lays that line out in the camera's
+screen plane and returns its three points in world space:
+
+```python
+from tech_vis import (
+    CalloutQuadrant,
+    callout_anchor_alignment,
+    compute_callout_leader_geometry,
+    compute_callout_opacity,
+)
+
+leader = compute_callout_leader_geometry(
+    anchor=(1.5, -2.25, 3.0),
+    camera_right=(1.0, 0.0, 0.0),
+    camera_up=(0.0, 1.0, 0.0),
+    world_units_per_pixel=0.125,
+    quadrant=CalloutQuadrant.TOP_RIGHT,
+)
+leader.gap_end, leader.elbow, leader.label_edge  # (x, y, z) tuples
+
+alignment = callout_anchor_alignment(CalloutQuadrant.TOP_RIGHT)  # label UV
+opacity = compute_callout_opacity(distance_to_camera)
+```
+
+Points are plain tuples of floats, so the package needs no vector library.
+Pass a `LeaderLineStyle` to override the segment lengths and angle.
+
+The style defaults come from `tech_vis.tokens`:
+
 ```python
 from tech_vis import tokens
 
