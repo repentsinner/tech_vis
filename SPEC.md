@@ -1029,8 +1029,9 @@ respond to input (§req:priorities).
 - It returns only the faces turned toward the viewer, least direct
   first, each as four pixel corners in label order (bottom-left,
   bottom-right, top-right, top-left) and the cosine it faces the viewer
-  by. Facings within 1e-9 tie, and ties keep face order. The app draws
-  each label onto its face with an affine map.
+  by. Faces whose facings lie within 1e-9 of the least direct face of
+  their group tie, and ties keep face order. The app draws each label
+  onto its face with an affine map.
 - `vectors/navigation_cube.json` pins face frames and visible faces in
   Y-up and Z-up, both handednesses, and an app-named front
   (§spec:golden-vectors).

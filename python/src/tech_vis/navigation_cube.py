@@ -2,7 +2,6 @@
 reference."""
 
 import math
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import NamedTuple
@@ -191,33 +190,30 @@ class NavigationCube:
                     facing=facing,
                 )
             )
-        _insertion_sort(views, _compare_views)
-        return views
+        return _least_direct_first(views)
 
 
-def _compare_views(a: NavigationCubeFaceView, b: NavigationCubeFaceView) -> int:
-    """Orders ``a`` and ``b`` least direct first, with ties in face order.
+def _least_direct_first(
+    views: list[NavigationCubeFaceView],
+) -> list[NavigationCubeFaceView]:
+    """Returns ``views`` least direct first, with ties in face order.
 
     Facings within the fixture tolerance tie, because another language's
-    trigonometry can differ from this one in the last bits.
+    trigonometry can differ from this one in the last bits. Pairwise
+    tolerance is not transitive, so the faces are grouped instead: each group
+    holds the faces within the tolerance of its least direct one, in face
+    order, as the Dart reference groups them.
     """
-    if abs(a.facing - b.facing) <= _FACING_TIE_TOLERANCE:
-        return _FACE_ORDER[a.face] - _FACE_ORDER[b.face]
-    return -1 if a.facing < b.facing else 1
-
-
-def _insertion_sort[T](items: list[T], compare: Callable[[T, T], int]) -> None:
-    """Sorts ``items`` in place by the straight insertion sort Dart's
-    ``List.sort`` runs on short lists.
-
-    A tolerance tie is not transitive, so the order depends on which pairs a
-    sort compares. Comparing the same pairs as the Dart reference keeps both
-    packages listing faces alike.
-    """
-    for i in range(1, len(items)):
-        item = items[i]
-        j = i
-        while j > 0 and compare(items[j - 1], item) > 0:
-            items[j] = items[j - 1]
-            j -= 1
-        items[j] = item
+    by_facing = sorted(views, key=lambda v: v.facing)
+    ordered: list[NavigationCubeFaceView] = []
+    start = 0
+    while start < len(by_facing):
+        end = start + 1
+        while (
+            end < len(by_facing)
+            and by_facing[end].facing - by_facing[start].facing <= _FACING_TIE_TOLERANCE
+        ):
+            end += 1
+        ordered.extend(sorted(by_facing[start:end], key=lambda v: _FACE_ORDER[v.face]))
+        start = end
+    return ordered
