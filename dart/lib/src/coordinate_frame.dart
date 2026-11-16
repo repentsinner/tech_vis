@@ -61,8 +61,8 @@ class AxisLineDescriptor {
 /// Renderer-agnostic description of a coordinate frame (origin marker
 /// with colored axis lines and labels).
 ///
-/// Produces [AxisLineDescriptor]s that the scene composition layer
-/// converts to renderer-specific primitives (e.g. [SceneObject]).
+/// Produces [AxisLineDescriptor]s, which `CoordinateFrameFactory` turns
+/// into primitives.
 class CoordinateFrameDescriptor {
   CoordinateFrameDescriptor({
     vm.Vector3? origin,
