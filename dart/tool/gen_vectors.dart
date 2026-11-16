@@ -15,6 +15,10 @@ import 'dart:math' as math;
 import 'package:tech_vis/tech_vis.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+// The generator and the fixture test share one stand-in typeface, so the
+// recorded content sizes cannot drift from what the test rebuilds.
+import '../test/support/fake_text_resolver.dart';
+
 /// The repository root, relative to `dart/`.
 const _root = '..';
 
@@ -164,18 +168,6 @@ Map<String, Object?> leaderLineFixture() => {
   ],
 };
 
-/// Width of one character of the generator's stand-in typeface, as a
-/// fraction of the requested height. The fixture records it beside each
-/// content size it gives, so a renderer can substitute its own measure.
-const _characterWidthPerHeight = 0.5;
-
-BillboardContent _resolveText(TextRequest request) => BillboardContent(
-  value: request,
-  widthPixels:
-      request.text.length * _characterWidthPerHeight * request.heightPixels,
-  heightPixels: request.heightPixels,
-);
-
 const _zUpRight = CoordinateConvention(
   up: SpatialAxis.z,
   handedness: Handedness.right,
@@ -270,7 +262,7 @@ _Build _axes(CoordinateFrameDescriptor frame) => (
     primitives: CoordinateFrameFactory.create(
       frame,
       keyFor: (_) => null,
-      resolveText: _resolveText,
+      resolveText: fakeTextResolver,
     ),
     leaders: const [],
   ),
@@ -317,7 +309,7 @@ _Build _callouts(List<_Callout> callouts, LeaderLineStyle style) => (
         createCalloutLabel(
           leader: leader,
           quadrant: c.quadrant,
-          content: _resolveText(c.text),
+          content: fakeTextResolver(c.text),
           key: null,
           opacity: 1,
         ),
@@ -563,11 +555,13 @@ Map<String, Object?> _sceneView(_Scene scene, _View view) {
 Map<String, Object?> referenceScreenGeometryFixture() => {
   'screenCoordinates':
       'pixels from the top-left corner of the viewport, x right, y down',
-  'textResolver': {'characterWidthPerHeight': _characterWidthPerHeight},
+  'textResolver': {'characterWidthPerHeight': fakeCharacterAspect},
   'scenes': [
     for (final scene in _scenes())
       {
-        'name': '${scene.name}, ${scene.convention}',
+        'name':
+            '${scene.name}, ${scene.convention.up.label}-up '
+            '${scene.convention.handedness.name}-handed',
         'convention': {
           'up': scene.convention.up.name,
           'handedness': scene.convention.handedness.name,

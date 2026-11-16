@@ -134,14 +134,20 @@ class ScreenSpaceUtils {
     double verticalFovRadians,
     vm.Vector2 viewportSize,
   ) {
-    final depth = camera.depthOf(point);
-    if (depth <= _minVisibleDepth) return null;
+    // One pixel spans worldUnitsPerPixelAt at the point's depth, so the
+    // projection and the pixel scale agree, and null the same, by
+    // construction.
+    final worldUnitsPerPixel = worldUnitsPerPixelAt(
+      point,
+      camera,
+      verticalFovRadians,
+      viewportSize.y,
+    );
+    if (worldUnitsPerPixel == null) return null;
     final relative = point - camera.position;
-    final pixelsPerUnitDepth =
-        viewportSize.y / (2.0 * depth * math.tan(verticalFovRadians / 2.0));
     return vm.Vector2(
-      viewportSize.x / 2.0 + relative.dot(camera.right) * pixelsPerUnitDepth,
-      viewportSize.y / 2.0 - relative.dot(camera.up) * pixelsPerUnitDepth,
+      viewportSize.x / 2.0 + relative.dot(camera.right) / worldUnitsPerPixel,
+      viewportSize.y / 2.0 - relative.dot(camera.up) / worldUnitsPerPixel,
     );
   }
 
