@@ -69,6 +69,15 @@ enum DraftingConvention {
   final DimensionTextPlacement placement;
 }
 
+/// What a radial dimension measures.
+enum RadialMeasure {
+  /// The radius, from the center to the rim, written after `R`.
+  radius,
+
+  /// The diameter, from rim to rim through the center, written after `⌀`.
+  diameter,
+}
+
 /// What a dimension between points that differ along more than one axis
 /// measures.
 enum MultiAxisDimension {
@@ -324,6 +333,90 @@ class SmartDimensionFactory {
         ) ??
         const [];
   }
+
+  /// Returns the primitives of a radial dimension of the circle or arc
+  /// centered on [center] with [radius], in the plane through [center]
+  /// perpendicular to [normal], seen by [camera] with vertical field of
+  /// view [verticalFovRadians] in a [viewportSize] viewport.
+  ///
+  /// The dimension line lies in the plane along [direction], less its
+  /// component along [normal]. Without one, it runs toward the screen's
+  /// top-right corner, or toward screen right when that corner lies along
+  /// [normal]. For an arc, give a [direction] that points into the arc.
+  /// [measure] decides whether the line runs from [center] to the rim, or
+  /// across the circle through [center] from rim to rim.
+  ///
+  /// The dimension emits, in order: the dimension line, as two segments
+  /// when inlined text breaks it; two lines per arrowhead, at the rim
+  /// along [direction] and then, for a diameter, at the opposite rim; the
+  /// two leader lines of a referencing dimension; and the text billboard.
+  ///
+  /// The text is `R` before a radius and `⌀` before a diameter, then the
+  /// length converted from [worldUnits] and written by [format] with
+  /// [numbers]. [resolveText] answers its request, and [convention]
+  /// places it at the dimension line's midpoint, falling back to
+  /// referencing as a linear dimension does.
+  ///
+  /// Returns an empty list for a radius that is not positive, a zero
+  /// [normal], or when a point the dimension needs lies on or behind the
+  /// camera plane.
+  static List<Primitive> createRadial({
+    required vm.Vector3 center,
+    required double radius,
+    required vm.Vector3 normal,
+    required RadialMeasure measure,
+    required DraftingConvention convention,
+    required DisplayFormat format,
+    required UnitSystem worldUnits,
+    required CameraBasis camera,
+    required double verticalFovRadians,
+    required vm.Vector2 viewportSize,
+    required TextResolver resolveText,
+    required Object? key,
+    vm.Vector3? direction,
+    NumberFormatting numbers = const NumberFormatting(),
+    DimensionStyle style = const DimensionStyle(),
+    double opacity = 1.0,
+  }) {
+    if (!(radius > _epsilon) || normal.length <= _epsilon) return const [];
+    final axis = normal.normalized();
+    vm.Vector3? inPlane(vm.Vector3? v) {
+      if (v == null) return null;
+      final projected = v - axis * v.dot(axis);
+      return projected.length > _epsilon ? projected.normalized() : null;
+    }
+
+    // Screen right projects to zero only along the normal, and then the
+    // top-right corner does not.
+    final along =
+        inPlane(direction) ??
+        inPlane(camera.right + camera.up) ??
+        inPlane(camera.right)!;
+    final diameter = measure == RadialMeasure.diameter;
+    final length = diameter ? 2 * radius : radius;
+    final value = format.formatLabels([
+      worldUnits.convertTo(length, format.unitSystem),
+    ], numbers: numbers).single;
+
+    final builder = _DimensionBuilder(
+      camera: camera,
+      verticalFovRadians: verticalFovRadians,
+      viewportSize: viewportSize,
+      convention: convention,
+      style: style,
+      resolveText: resolveText,
+      key: key,
+      opacity: opacity,
+    );
+    return builder.radial(
+          diameter ? center - along * radius : center,
+          center + along * radius,
+          along,
+          diameter: diameter,
+          label: '${diameter ? '⌀' : 'R'}$value',
+        ) ??
+        const [];
+  }
 }
 
 class _DimensionBuilder {
@@ -465,16 +558,18 @@ class _DimensionBuilder {
       witness(to, footTo, toPixel, footToPixel),
     ];
 
-    if (placement == DimensionTextPlacement.inlined) {
-      final halfBreak = _halfBreak(extent, middlePixel, lineOnScreen);
-      primitives
-        ..add(_line(footFrom, middle - direction * halfBreak))
-        ..add(_line(middle + direction * halfBreak, footTo));
-    } else {
-      primitives.add(_line(footFrom, footTo));
-    }
-
     return primitives
+      ..addAll(
+        _straightLine(
+          footFrom,
+          footTo,
+          direction,
+          placement,
+          extent,
+          middlePixel,
+          lineOnScreen,
+        ),
+      )
       ..addAll(_arrowhead(footFrom, direction, footFromPixel))
       ..addAll(_arrowhead(footTo, -direction, footToPixel))
       ..addAll(
@@ -603,6 +698,93 @@ class _DimensionBuilder {
           middlePixel,
         ),
       );
+  }
+
+  /// A radial dimension line from [start] to [rim] along the unit
+  /// [direction], with an arrowhead on [rim], and on [start] too for a
+  /// [diameter].
+  List<Primitive>? radial(
+    vm.Vector3 start,
+    vm.Vector3 rim,
+    vm.Vector3 direction, {
+    required bool diameter,
+    required String label,
+  }) {
+    final middle = (start + rim) / 2;
+    final startPixel = _pixel(start);
+    final rimPixel = _pixel(rim);
+    final middlePixel = _pixel(middle);
+    final screenStart = ScreenSpaceUtils.worldToScreen(
+      start,
+      camera,
+      verticalFovRadians,
+      viewportSize,
+    );
+    final screenRim = ScreenSpaceUtils.worldToScreen(
+      rim,
+      camera,
+      verticalFovRadians,
+      viewportSize,
+    );
+    if (startPixel == null ||
+        rimPixel == null ||
+        middlePixel == null ||
+        screenStart == null ||
+        screenRim == null) {
+      return null;
+    }
+
+    final content = resolveText(
+      TextRequest(text: label, heightPixels: style.textPixelSize),
+    );
+    final lineOnScreen = _onScreen(direction);
+    final (placement, extent) = _fit(
+      content,
+      lineOnScreen,
+      screenRim.distanceTo(screenStart),
+    );
+    return [
+      ..._straightLine(
+        start,
+        rim,
+        direction,
+        placement,
+        extent,
+        middlePixel,
+        lineOnScreen,
+      ),
+      ..._arrowhead(rim, -direction, rimPixel),
+      if (diameter) ..._arrowhead(start, direction, startPixel),
+      ..._text(
+        placement,
+        content,
+        middle,
+        lineOnScreen,
+        _viewerPerpendicular(direction),
+        middlePixel,
+      ),
+    ];
+  }
+
+  /// A straight dimension line from [start] to [end] along the unit
+  /// [direction]: one line, or two either side of the break that inlined
+  /// text of [extent] pixels makes at its midpoint.
+  List<LinePrimitive> _straightLine(
+    vm.Vector3 start,
+    vm.Vector3 end,
+    vm.Vector3 direction,
+    DimensionTextPlacement placement,
+    double extent,
+    double middlePixel,
+    vm.Vector2 lineOnScreen,
+  ) {
+    if (placement != DimensionTextPlacement.inlined) return [_line(start, end)];
+    final middle = (start + end) / 2;
+    final halfBreak = _halfBreak(extent, middlePixel, lineOnScreen);
+    return [
+      _line(start, middle - direction * halfBreak),
+      _line(middle + direction * halfBreak, end),
+    ];
   }
 
   /// The placement of [content] on a dimension line whose unit direction

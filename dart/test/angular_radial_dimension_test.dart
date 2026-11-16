@@ -382,4 +382,185 @@ void main() {
       expect(p.opacity, 0.4);
     }
   });
+  group('radial dimension', () {
+    final rim = _at(45) * 50;
+    final cases = [
+      (
+        name: 'radius',
+        measure: RadialMeasure.radius,
+        format: DisplayFormat.metric,
+        worldUnits: UnitSystem.metric,
+        text: 'R50 mm',
+        start: vm.Vector3.zero(),
+      ),
+      (
+        name: 'diameter',
+        measure: RadialMeasure.diameter,
+        format: DisplayFormat.metric,
+        worldUnits: UnitSystem.metric,
+        text: '⌀100 mm',
+        start: -rim,
+      ),
+      (
+        name: 'diameter in fractional inch',
+        measure: RadialMeasure.diameter,
+        format: DisplayFormat.fractionalInch,
+        worldUnits: UnitSystem.imperial,
+        text: '⌀8\' 4"',
+        start: -rim,
+      ),
+    ];
+    for (final c in cases) {
+      test('${c.name} runs toward screen top-right and reads ${c.text}', () {
+        final primitives = _radial(
+          50,
+          measure: c.measure,
+          format: c.format,
+          worldUnits: c.worldUnits,
+          convention: DraftingConvention.isoReferencing,
+        );
+        expect(_texts(primitives), [c.text]);
+        final lines = _lines(primitives);
+        _expectVector(lines.first.start, c.start, 'start');
+        _expectVector(lines.first.end, rim, 'ends on the rim');
+        final barbs = lines.sublist(1, lines.length - 2);
+        final arrows = c.measure == RadialMeasure.radius ? 1 : 2;
+        expect(barbs, hasLength(2 * arrows));
+        final length = StyleTokens.dimensionArrowLengthPixels * _pixel;
+        for (final b in barbs.take(2)) {
+          _expectVector(b.start, rim, 'tip on the rim');
+          // The base sits an arrowhead length back toward the center.
+          expect((b.end - rim).dot(-_at(45)), closeTo(length, _tolerance));
+        }
+        for (final b in barbs.skip(2)) {
+          _expectVector(b.start, -rim, 'tip on the far rim');
+        }
+      });
+    }
+
+    test('lies along the in-plane part of the app direction', () {
+      final line = _lines(
+        _radial(
+          50,
+          direction: vm.Vector3(0, -1, 5),
+          convention: DraftingConvention.isoReferencing,
+        ),
+      ).first;
+      _expectVector(line.end, _y * -50, 'rim');
+    });
+
+    test('falls back to screen right when up-right is the normal', () {
+      final normal = vm.Vector3(1, 1, 0).normalized();
+      final line = _lines(
+        _radial(
+          50,
+          normal: normal,
+          convention: DraftingConvention.isoReferencing,
+        ),
+      ).first;
+      _expectVector(line.end, vm.Vector3(1, -1, 0).normalized() * 50, 'rim');
+    });
+
+    test('an inlined line breaks around its midpoint for the text', () {
+      final primitives = _radial(
+        50,
+        convention: DraftingConvention.asmeInlined,
+      );
+      final lines = _lines(primitives);
+      final label = _labels(primitives).single;
+      final middle = rim / 2;
+      _expectVector(label.anchor, middle, 'text at the midpoint');
+      final content = label.content;
+      final extent =
+          (content.widthPixels + content.heightPixels) * math.sqrt1_2;
+      final halfBreak =
+          (extent / 2 + StyleTokens.dimensionTextGapPixels) * _pixel;
+      _expectVector(lines[0].start, vm.Vector3.zero(), 'from the center');
+      _expectVector(lines[0].end, middle - _at(45) * halfBreak, 'to the break');
+      _expectVector(lines[1].start, middle + _at(45) * halfBreak, 'past it');
+      _expectVector(lines[1].end, rim, 'to the rim');
+    });
+
+    test('oriented text lies along the line', () {
+      final label = _labels(_radial(50)).single;
+      final orientation = label.orientation as CoplanarOrientation;
+      _expectVector(orientation.right, _at(45), 'reads along the line');
+    });
+
+    for (final convention in [
+      DraftingConvention.isoOriented,
+      DraftingConvention.asmeInlined,
+    ]) {
+      test(
+        '${convention.name} falls back to referencing on a small circle',
+        () {
+          final primitives = _radial(5, convention: convention);
+          // Line, two barbs, two leader lines.
+          expect(_lines(primitives), hasLength(5));
+          expect(
+            _labels(primitives).single.orientation,
+            isA<ViewerFacingOrientation>(),
+          );
+        },
+      );
+    }
+
+    final empty = [
+      (name: 'a zero radius', radius: 0.0, normal: _z, center: null),
+      (
+        name: 'a zero normal',
+        radius: 50.0,
+        normal: vm.Vector3.zero(),
+        center: null,
+      ),
+      (
+        name: 'a center behind the camera',
+        radius: 50.0,
+        normal: _z,
+        center: vm.Vector3(0, 0, 2 * _depth),
+      ),
+    ];
+    for (final c in empty) {
+      test('emits nothing for ${c.name}', () {
+        expect(_radial(c.radius, normal: c.normal, center: c.center), isEmpty);
+      });
+    }
+
+    test('carries the key and opacity', () {
+      for (final p in _radial(50, key: #radius, opacity: 0.3)) {
+        expect(p.key, #radius);
+        expect(p.opacity, 0.3);
+      }
+    });
+  });
 }
+
+final _z = vm.Vector3(0, 0, 1);
+
+List<Primitive> _radial(
+  double radius, {
+  vm.Vector3? center,
+  vm.Vector3? normal,
+  RadialMeasure measure = RadialMeasure.radius,
+  DraftingConvention convention = DraftingConvention.isoOriented,
+  DisplayFormat format = DisplayFormat.metric,
+  UnitSystem worldUnits = UnitSystem.metric,
+  vm.Vector3? direction,
+  Object? key,
+  double opacity = 1,
+}) => SmartDimensionFactory.createRadial(
+  center: center ?? vm.Vector3.zero(),
+  radius: radius,
+  normal: normal ?? _z,
+  measure: measure,
+  convention: convention,
+  format: format,
+  worldUnits: worldUnits,
+  camera: _topView,
+  verticalFovRadians: _fovRadians,
+  viewportSize: _viewport,
+  resolveText: fakeTextResolver,
+  key: key,
+  direction: direction,
+  opacity: opacity,
+);
