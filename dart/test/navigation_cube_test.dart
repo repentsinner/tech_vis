@@ -4,6 +4,7 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'support/primitives.dart';
 import 'support/vectors.dart';
 
 const _yUpRight = CoordinateConvention(
@@ -59,9 +60,6 @@ final _normals = <_Normals>[
   ),
 ];
 
-void _expectVector(vm.Vector3 actual, vm.Vector3 expected, String reason) =>
-    expectNumbers(List.of(actual.storage), List.of(expected.storage), reason);
-
 CameraBasis _camera(CoordinateConvention c, vm.Vector3 offset) =>
     CameraBasis.lookAt(
       position: offset,
@@ -96,20 +94,20 @@ void main() {
           NavigationCubeFace.left: -right,
         };
         for (final MapEntry(key: face, value: normal) in expected.entries) {
-          _expectVector(cube.normal(face), normal, face.name);
+          expectVector3(cube.normal(face), normal, face.name);
         }
       });
 
       test('$convention: each face text frame follows the hand rule', () {
         for (final face in NavigationCubeFace.values) {
-          _expectVector(
+          expectVector3(
             convention.cross(cube.textRight(face), cube.textUp(face)),
             cube.normal(face),
             face.name,
           );
         }
-        _expectVector(cube.textUp(NavigationCubeFace.front), up, 'front');
-        _expectVector(cube.textUp(NavigationCubeFace.top), -frontNormal, 'top');
+        expectVector3(cube.textUp(NavigationCubeFace.front), up, 'front');
+        expectVector3(cube.textUp(NavigationCubeFace.top), -frontNormal, 'top');
       });
     }
   });
@@ -232,17 +230,17 @@ void main() {
         convention: _yUpRight,
         front: const SignedAxis(SpatialAxis.z),
       );
-      _expectVector(
+      expectVector3(
         cube.normal(NavigationCubeFace.front),
         vm.Vector3(0, 0, 1),
         'front',
       );
-      _expectVector(
+      expectVector3(
         cube.normal(NavigationCubeFace.right),
         vm.Vector3(1, 0, 0),
         'right',
       );
-      _expectVector(
+      expectVector3(
         cube.textUp(NavigationCubeFace.top),
         vm.Vector3(0, 0, -1),
         'top text up',

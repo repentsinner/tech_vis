@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'support/fake_text_resolver.dart';
+import 'support/primitives.dart';
 
 const _tolerance = 1e-9;
 
@@ -63,25 +64,9 @@ List<Primitive> _angular(
   opacity: opacity,
 );
 
-List<BillboardPrimitive> _labels(List<Primitive> primitives) =>
-    primitives.whereType<BillboardPrimitive>().toList();
-
-List<String> _texts(List<Primitive> primitives) => [
-  for (final b in _labels(primitives)) (b.content.value! as TextRequest).text,
-];
-
-List<LinePrimitive> _lines(List<Primitive> primitives) =>
-    primitives.whereType<LinePrimitive>().toList();
-
-void _expectVector(vm.Vector3 actual, vm.Vector3 expected, String reason) {
-  for (var i = 0; i < 3; i++) {
-    expect(actual[i], closeTo(expected[i], _tolerance), reason: '$reason[$i]');
-  }
-}
-
 /// The arc's lines: those with both ends at [radius] from the origin.
 List<LinePrimitive> _arc(List<Primitive> primitives, double radius) => [
-  for (final l in _lines(primitives))
+  for (final l in linesOf(primitives))
     if ((l.start.length - radius).abs() < 1e-6 &&
         (l.end.length - radius).abs() < 1e-6)
       l,
@@ -117,12 +102,12 @@ void main() {
     ];
     for (final c in cases) {
       test(c.name, () {
-        expect(_texts(_angular(c.first, c.second)), [c.want]);
+        expect(textsOf(_angular(c.first, c.second)), [c.want]);
       });
     }
 
     test('rounds to the style resolution with the app numbers', () {
-      final texts = _texts(
+      final texts = textsOf(
         _angular(
           _x,
           _at(22.5),
@@ -186,14 +171,14 @@ void main() {
                     StyleTokens.dimensionArcSegmentPixels)
                 .ceil();
         expect(arc, hasLength(segments));
-        _expectVector(arc.first.start, _x * radius, 'starts on the first leg');
-        _expectVector(
+        expectVector3(arc.first.start, _x * radius, 'starts on the first leg');
+        expectVector3(
           arc.last.end,
           c.second * radius,
           'ends on the second leg',
         );
         for (var i = 1; i < arc.length; i++) {
-          _expectVector(arc[i].start, arc[i - 1].end, 'segment $i joins');
+          expectVector3(arc[i].start, arc[i - 1].end, 'segment $i joins');
         }
         for (final l in arc) {
           expect(l.widthPixels, StyleTokens.dimensionLineWidth);
@@ -208,8 +193,8 @@ void main() {
         convention: DraftingConvention.asmeInlined,
       );
       final arc = _arc(primitives, radius);
-      final label = _labels(primitives).single;
-      _expectVector(label.anchor, _at(45) * radius, 'text at the midpoint');
+      final label = billboardsOf(primitives).single;
+      expectVector3(label.anchor, _at(45) * radius, 'text at the midpoint');
       expect(label.orientation, isA<ViewerFacingOrientation>());
       // The break sits where consecutive arc lines no longer join.
       final breaks = [
@@ -227,12 +212,12 @@ void main() {
       final halfAngle =
           (extent / 2 + StyleTokens.dimensionTextGapPixels) /
           StyleTokens.dimensionArcRadiusPixels;
-      _expectVector(
+      expectVector3(
         before,
         _at(45 - halfAngle * 180 / math.pi) * radius,
         'before',
       );
-      _expectVector(
+      expectVector3(
         after,
         _at(45 + halfAngle * 180 / math.pi) * radius,
         'after',
@@ -243,7 +228,7 @@ void main() {
   group('angular dimension witness lines', () {
     test('extend a leg that ends short of the arc', () {
       final leg = radius / 2;
-      final lines = _lines(
+      final lines = linesOf(
         _angular(
           _x * leg,
           _y * 100,
@@ -253,8 +238,8 @@ void main() {
       final witness = lines.first;
       final gap = StyleTokens.dimensionWitnessGapIsoPixels * _pixel;
       final extension = StyleTokens.dimensionWitnessExtensionPixels * _pixel;
-      _expectVector(witness.start, _x * (leg + gap), 'starts past the gap');
-      _expectVector(
+      expectVector3(witness.start, _x * (leg + gap), 'starts past the gap');
+      expectVector3(
         witness.end,
         _x * (radius + extension),
         'runs past the arc',
@@ -268,12 +253,12 @@ void main() {
         convention: DraftingConvention.isoReferencing,
       );
       final arc = _arc(primitives, radius);
-      expect(identical(_lines(primitives).first, arc.first), isTrue);
+      expect(identical(linesOf(primitives).first, arc.first), isTrue);
     });
 
     test('use the ASME gap under ASME', () {
       final leg = radius / 4;
-      final witness = _lines(
+      final witness = linesOf(
         _angular(
           _x * leg,
           _y * 100,
@@ -281,7 +266,7 @@ void main() {
         ),
       ).first;
       final gap = StyleTokens.dimensionWitnessGapAsmePixels * _pixel;
-      _expectVector(witness.start, _x * (leg + gap), 'starts past the gap');
+      expectVector3(witness.start, _x * (leg + gap), 'starts past the gap');
     });
   });
 
@@ -292,7 +277,7 @@ void main() {
         _y * 100,
         convention: DraftingConvention.isoReferencing,
       );
-      final lines = _lines(primitives);
+      final lines = linesOf(primitives);
       final arcCount = _arc(primitives, radius).length;
       final barbs = lines.sublist(arcCount, arcCount + 4);
       final length = StyleTokens.dimensionArrowLengthPixels * _pixel;
@@ -300,10 +285,10 @@ void main() {
       final firstTip = _x * radius;
       final secondTip = _y * radius;
       for (final b in barbs.take(2)) {
-        _expectVector(b.start, firstTip, 'first tip');
+        expectVector3(b.start, firstTip, 'first tip');
       }
       for (final b in barbs.skip(2)) {
-        _expectVector(b.start, secondTip, 'second tip');
+        expectVector3(b.start, secondTip, 'second tip');
       }
       // The arc runs +Y from its first end and +X back from its second.
       final firstEnds = {
@@ -325,12 +310,12 @@ void main() {
   group('angular dimension text', () {
     test('oriented text lies along the tangent at the arc midpoint', () {
       final primitives = _angular(_x * 100, _y * 100);
-      final label = _labels(primitives).single;
-      _expectVector(label.anchor, _at(45) * radius, 'at the midpoint');
+      final label = billboardsOf(primitives).single;
+      expectVector3(label.anchor, _at(45) * radius, 'at the midpoint');
       final orientation = label.orientation as CoplanarOrientation;
       // The tangent at 45 degrees runs toward -X, +Y; read left to right.
-      _expectVector(orientation.right, _at(-45), 'reads along the tangent');
-      _expectVector(label.offset!.direction, _at(45), 'lifted outward');
+      expectVector3(orientation.right, _at(-45), 'reads along the tangent');
+      expectVector3(label.offset!.direction, _at(45), 'lifted outward');
     });
 
     final referencing = [
@@ -340,11 +325,11 @@ void main() {
     for (final convention in referencing) {
       test('${convention.name} leads the text off the arc midpoint', () {
         final primitives = _angular(_x * 100, _y * 100, convention: convention);
-        final label = _labels(primitives).single;
-        final lines = _lines(primitives);
+        final label = billboardsOf(primitives).single;
+        final lines = linesOf(primitives);
         final leader = lines.sublist(lines.length - 2);
         expect(label.orientation, isA<ViewerFacingOrientation>());
-        _expectVector(leader.last.end, label.anchor, 'label at leader end');
+        expectVector3(leader.last.end, label.anchor, 'label at leader end');
         // The bisector points to top-right on screen: the leader leaves
         // there.
         expect(leader.first.start.x, greaterThan(_at(45).x * radius));
@@ -363,12 +348,12 @@ void main() {
           _at(5) * 100,
           convention: convention,
         );
-        final lines = _lines(primitives);
+        final lines = linesOf(primitives);
         final arc = _arc(primitives, radius);
         // Arc, four barbs, two leader lines.
         expect(lines, hasLength(arc.length + 6));
         expect(
-          _labels(primitives).single.orientation,
+          billboardsOf(primitives).single.orientation,
           isA<ViewerFacingOrientation>(),
         );
       });
@@ -419,46 +404,46 @@ void main() {
           worldUnits: c.worldUnits,
           convention: DraftingConvention.isoReferencing,
         );
-        expect(_texts(primitives), [c.text]);
-        final lines = _lines(primitives);
-        _expectVector(lines.first.start, c.start, 'start');
-        _expectVector(lines.first.end, rim, 'ends on the rim');
+        expect(textsOf(primitives), [c.text]);
+        final lines = linesOf(primitives);
+        expectVector3(lines.first.start, c.start, 'start');
+        expectVector3(lines.first.end, rim, 'ends on the rim');
         final barbs = lines.sublist(1, lines.length - 2);
         final arrows = c.measure == RadialMeasure.radius ? 1 : 2;
         expect(barbs, hasLength(2 * arrows));
         final length = StyleTokens.dimensionArrowLengthPixels * _pixel;
         for (final b in barbs.take(2)) {
-          _expectVector(b.start, rim, 'tip on the rim');
+          expectVector3(b.start, rim, 'tip on the rim');
           // The base sits an arrowhead length back toward the center.
           expect((b.end - rim).dot(-_at(45)), closeTo(length, _tolerance));
         }
         for (final b in barbs.skip(2)) {
-          _expectVector(b.start, -rim, 'tip on the far rim');
+          expectVector3(b.start, -rim, 'tip on the far rim');
         }
       });
     }
 
     test('lies along the in-plane part of the app direction', () {
-      final line = _lines(
+      final line = linesOf(
         _radial(
           50,
           direction: vm.Vector3(0, -1, 5),
           convention: DraftingConvention.isoReferencing,
         ),
       ).first;
-      _expectVector(line.end, _y * -50, 'rim');
+      expectVector3(line.end, _y * -50, 'rim');
     });
 
     test('falls back to screen right when up-right is the normal', () {
       final normal = vm.Vector3(1, 1, 0).normalized();
-      final line = _lines(
+      final line = linesOf(
         _radial(
           50,
           normal: normal,
           convention: DraftingConvention.isoReferencing,
         ),
       ).first;
-      _expectVector(line.end, vm.Vector3(1, -1, 0).normalized() * 50, 'rim');
+      expectVector3(line.end, vm.Vector3(1, -1, 0).normalized() * 50, 'rim');
     });
 
     test('an inlined line breaks around its midpoint for the text', () {
@@ -466,25 +451,25 @@ void main() {
         50,
         convention: DraftingConvention.asmeInlined,
       );
-      final lines = _lines(primitives);
-      final label = _labels(primitives).single;
+      final lines = linesOf(primitives);
+      final label = billboardsOf(primitives).single;
       final middle = rim / 2;
-      _expectVector(label.anchor, middle, 'text at the midpoint');
+      expectVector3(label.anchor, middle, 'text at the midpoint');
       final content = label.content;
       final extent =
           (content.widthPixels + content.heightPixels) * math.sqrt1_2;
       final halfBreak =
           (extent / 2 + StyleTokens.dimensionTextGapPixels) * _pixel;
-      _expectVector(lines[0].start, vm.Vector3.zero(), 'from the center');
-      _expectVector(lines[0].end, middle - _at(45) * halfBreak, 'to the break');
-      _expectVector(lines[1].start, middle + _at(45) * halfBreak, 'past it');
-      _expectVector(lines[1].end, rim, 'to the rim');
+      expectVector3(lines[0].start, vm.Vector3.zero(), 'from the center');
+      expectVector3(lines[0].end, middle - _at(45) * halfBreak, 'to the break');
+      expectVector3(lines[1].start, middle + _at(45) * halfBreak, 'past it');
+      expectVector3(lines[1].end, rim, 'to the rim');
     });
 
     test('oriented text lies along the line', () {
-      final label = _labels(_radial(50)).single;
+      final label = billboardsOf(_radial(50)).single;
       final orientation = label.orientation as CoplanarOrientation;
-      _expectVector(orientation.right, _at(45), 'reads along the line');
+      expectVector3(orientation.right, _at(45), 'reads along the line');
     });
 
     for (final convention in [
@@ -496,9 +481,9 @@ void main() {
         () {
           final primitives = _radial(5, convention: convention);
           // Line, two barbs, two leader lines.
-          expect(_lines(primitives), hasLength(5));
+          expect(linesOf(primitives), hasLength(5));
           expect(
-            _labels(primitives).single.orientation,
+            billboardsOf(primitives).single.orientation,
             isA<ViewerFacingOrientation>(),
           );
         },

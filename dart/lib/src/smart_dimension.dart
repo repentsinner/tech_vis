@@ -12,6 +12,10 @@ import 'unit_system.dart';
 /// Below this length, a vector is treated as zero.
 const double _epsilon = 1e-9;
 
+/// [v] scaled to unit length, or zero when it has no length.
+vm.Vector2 _unit(vm.Vector2 v) =>
+    v.length > _epsilon ? v.normalized() : vm.Vector2.zero();
+
 /// Alignment of oriented text: the middle of its bottom edge on the anchor.
 final vm.Vector2 _bottomCenter = vm.Vector2(0.5, 0);
 
@@ -440,6 +444,13 @@ class _DimensionBuilder {
   final Object? key;
   final double opacity;
 
+  vm.Vector2? _screen(vm.Vector3 point) => ScreenSpaceUtils.worldToScreen(
+    point,
+    camera,
+    verticalFovRadians,
+    viewportSize,
+  );
+
   double? _pixel(vm.Vector3 point) => ScreenSpaceUtils.worldUnitsPerPixelAt(
     point,
     camera,
@@ -507,18 +518,8 @@ class _DimensionBuilder {
     final footFromPixel = _pixel(footFrom);
     final footToPixel = _pixel(footTo);
     final middlePixel = _pixel(middle);
-    final screenFrom = ScreenSpaceUtils.worldToScreen(
-      footFrom,
-      camera,
-      verticalFovRadians,
-      viewportSize,
-    );
-    final screenTo = ScreenSpaceUtils.worldToScreen(
-      footTo,
-      camera,
-      verticalFovRadians,
-      viewportSize,
-    );
+    final screenFrom = _screen(footFrom);
+    final screenTo = _screen(footTo);
     if (footFromPixel == null ||
         footToPixel == null ||
         middlePixel == null ||
@@ -604,19 +605,14 @@ class _DimensionBuilder {
     );
 
     final count = segments(angle);
-    final screen = [
-      for (var i = 0; i <= count; i++)
-        ScreenSpaceUtils.worldToScreen(
-          point(angle * i / count),
-          camera,
-          verticalFovRadians,
-          viewportSize,
-        ),
-    ];
+    // Each point of the whole arc once: projected for the fit test, and
+    // joined directly when no inlined break splits the arc.
+    final points = [for (var i = 0; i <= count; i++) point(angle * i / count)];
+    final screen = [for (final p in points) _screen(p)];
     final half = angle / 2;
     final middle = point(half);
-    final firstEnd = point(0);
-    final secondEnd = point(angle);
+    final firstEnd = points.first;
+    final secondEnd = points.last;
     final middlePixel = _pixel(middle);
     final firstEndPixel = _pixel(firstEnd);
     final secondEndPixel = _pixel(secondEnd);
@@ -682,7 +678,9 @@ class _DimensionBuilder {
       run(0, half - halfBreak);
       run(half + halfBreak, angle);
     } else {
-      run(0, angle);
+      for (var i = 0; i < count; i++) {
+        primitives.add(_line(points[i], points[i + 1]));
+      }
     }
 
     return primitives
@@ -714,18 +712,8 @@ class _DimensionBuilder {
     final startPixel = _pixel(start);
     final rimPixel = _pixel(rim);
     final middlePixel = _pixel(middle);
-    final screenStart = ScreenSpaceUtils.worldToScreen(
-      start,
-      camera,
-      verticalFovRadians,
-      viewportSize,
-    );
-    final screenRim = ScreenSpaceUtils.worldToScreen(
-      rim,
-      camera,
-      verticalFovRadians,
-      viewportSize,
-    );
+    final screenStart = _screen(start);
+    final screenRim = _screen(rim);
     if (startPixel == null ||
         rimPixel == null ||
         middlePixel == null ||
@@ -798,9 +786,7 @@ class _DimensionBuilder {
     vm.Vector2 lineOnScreen,
     double screenLength,
   ) {
-    final screenDirection = lineOnScreen.length > _epsilon
-        ? lineOnScreen.normalized()
-        : vm.Vector2.zero();
+    final screenDirection = _unit(lineOnScreen);
     final extent = convention.placement == DimensionTextPlacement.oriented
         ? content.widthPixels
         : content.widthPixels * screenDirection.x.abs() +
@@ -849,9 +835,7 @@ class _DimensionBuilder {
           ),
         ];
       case DimensionTextPlacement.referencing:
-        final along = lineOnScreen.length > _epsilon
-            ? lineOnScreen.normalized()
-            : vm.Vector2.zero();
+        final along = _unit(lineOnScreen);
         final quadrant = _referenceQuadrant(along, _onScreen(outward));
         final leader = computeCalloutLeaderGeometry(
           anchor: middle,
