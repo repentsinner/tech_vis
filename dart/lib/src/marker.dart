@@ -8,9 +8,6 @@ import 'primitives.dart';
 import 'screen_space_utils.dart';
 import 'style_tokens.g.dart';
 
-/// Default opacity of a marker: fully opaque.
-const double _opaque = 1.0;
-
 /// Largest vertex count that a 16-bit index buffer can address.
 const int _maxUint16Vertices = 1 << 16;
 
@@ -69,7 +66,7 @@ abstract final class MarkerFactory {
     required CoordinateConvention convention,
     required Object? key,
     double diameterPixels = StyleTokens.markerDiameterPixels,
-    double opacity = _opaque,
+    double opacity = 1.0,
   }) => MarkerPrimitive(
     position: position.clone(),
     diameterPixels: diameterPixels,

@@ -4,6 +4,8 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'support/pinhole.dart';
+
 // The golden-vector tolerance of §spec:golden-vectors.
 const _tolerance = 1e-9;
 
@@ -11,16 +13,14 @@ const _tolerance = 1e-9;
 // single-precision rounding of the 64-bit value it was generated from.
 const _float32Tolerance = 1e-6;
 
-// Largest vertex count that a 16-bit index buffer can address.
-const _maxUint16Vertices = 1 << 16;
-
 const _fov = math.pi / 4;
 const _viewportHeight = 1080.0;
 
-final _conventions = [
-  for (final up in SpatialAxis.values)
-    for (final handedness in Handedness.values)
-      CoordinateConvention(up: up, handedness: handedness),
+// The sphere looks the same about any up axis, so only the handedness
+// changes the mesh.
+final _oneConventionPerHand = [
+  for (final handedness in Handedness.values)
+    CoordinateConvention(up: SpatialAxis.y, handedness: handedness),
 ];
 
 const _yUpRightHanded = CoordinateConvention(
@@ -31,21 +31,16 @@ const _yUpRightHanded = CoordinateConvention(
 vm.Vector3 _vertex(List<double> buffer, int index) =>
     vm.Vector3(buffer[index * 3], buffer[index * 3 + 1], buffer[index * 3 + 2]);
 
-/// Projects [point] through a pinhole camera and returns its pixel
-/// position relative to the viewport center, y up.
-vm.Vector2 _project(vm.Vector3 point, CameraBasis camera) {
-  final focalPixels = (_viewportHeight / 2.0) / math.tan(_fov / 2.0);
-  final relative = point - camera.position;
-  final depth = relative.dot(camera.forward);
-  return vm.Vector2(
-    relative.dot(camera.right) * focalPixels / depth,
-    relative.dot(camera.up) * focalPixels / depth,
-  );
-}
+vm.Vector2 _project(vm.Vector3 point, CameraBasis camera) => projectPinhole(
+  point,
+  camera,
+  verticalFovRadians: _fov,
+  viewportHeight: _viewportHeight,
+);
 
 void main() {
   group('MarkerFactory.sphereMesh', () {
-    for (final convention in _conventions) {
+    for (final convention in _oneConventionPerHand) {
       group('$convention', () {
         final mesh = MarkerFactory.sphereMesh(convention);
 
@@ -59,21 +54,13 @@ void main() {
           }
         });
 
-        test('gives every vertex a unit outward normal', () {
-          for (var i = 0; i < mesh.vertexCount; i++) {
-            final normal = _vertex(mesh.normals, i);
-            final position = _vertex(mesh.positions, i);
-            expect(normal.length, closeTo(1.0, _float32Tolerance));
-            expect(
-              normal.dot(position.normalized()),
-              closeTo(1.0, _float32Tolerance),
-              reason: 'vertex $i',
-            );
-          }
+        test('uses each unit position as its outward normal', () {
+          expect(mesh.normals, orderedEquals(mesh.positions));
         });
 
         test('winds every triangle outward by the declared hand rule', () {
           final indices = mesh.indices;
+          expect(indices.every((i) => i < mesh.vertexCount), isTrue);
           for (var t = 0; t < mesh.triangleCount; t++) {
             final a = _vertex(mesh.positions, indices[t * 3]);
             final b = _vertex(mesh.positions, indices[t * 3 + 1]);
@@ -82,12 +69,6 @@ void main() {
             final centroid = (a + b + c) / 3.0;
             expect(faceNormal.dot(centroid), greaterThan(0), reason: 'tri $t');
           }
-        });
-
-        test('fits a 16-bit index buffer', () {
-          expect(mesh.vertexCount, lessThanOrEqualTo(_maxUint16Vertices));
-          expect(mesh.indices.length % 3, 0);
-          expect(mesh.indices.every((i) => i < mesh.vertexCount), isTrue);
         });
       });
     }

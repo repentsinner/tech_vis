@@ -4,23 +4,20 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'support/pinhole.dart';
+
 // The golden-vector tolerance of §spec:golden-vectors.
 const _tolerance = 1e-9;
 const _pixelTolerance = 1e-9;
 const _fov = math.pi / 4;
 const _viewportHeight = 1080.0;
 
-/// Projects [point] through a pinhole camera and returns its pixel
-/// position relative to the viewport center, y up.
-vm.Vector2 _project(vm.Vector3 point, CameraBasis camera) {
-  final focalPixels = (_viewportHeight / 2.0) / math.tan(_fov / 2.0);
-  final relative = point - camera.position;
-  final depth = relative.dot(camera.forward);
-  return vm.Vector2(
-    relative.dot(camera.right) * focalPixels / depth,
-    relative.dot(camera.up) * focalPixels / depth,
-  );
-}
+vm.Vector2 _project(vm.Vector3 point, CameraBasis camera) => projectPinhole(
+  point,
+  camera,
+  verticalFovRadians: _fov,
+  viewportHeight: _viewportHeight,
+);
 
 Matcher _closeToVector(vm.Vector3 expected) => predicate<vm.Vector3>(
   (actual) => (actual - expected).length < _tolerance,
