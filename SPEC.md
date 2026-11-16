@@ -101,6 +101,16 @@ A generic toolkit shall name nothing from a consumer's domain.
 source file under `dart/lib/` matches the vocabulary of the application
 the package was extracted from.
 
+Vectors and matrices in the public API are 64-bit, from
+`package:vector_math/vector_math_64.dart`. Mesh vertex buffers stay
+32-bit, because that is the precision a GPU consumes.
+
+*Why 64-bit*: Python floats are 64-bit. A 32-bit Dart result near 100
+world units differs from the same Python computation by about 1e-5, so
+the two packages could not agree within the tolerance of
+§spec:golden-vectors. Flutter's own transforms use the 64-bit types
+too, which spares a Flutter-based renderer a conversion per transform.
+
 ## Scene model §spec:scene-model
 
 *Status: complete*

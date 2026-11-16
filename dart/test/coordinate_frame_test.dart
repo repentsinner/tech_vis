@@ -1,6 +1,6 @@
 import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:vector_math/vector_math_64.dart';
 
 void main() {
   group('SpatialAxis', () {

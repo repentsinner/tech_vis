@@ -2,12 +2,11 @@ import 'dart:math' as math;
 
 import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
-import 'package:vector_math/vector_math.dart' as vm;
+import 'package:vector_math/vector_math_64.dart' as vm;
 
-// vector_math stores 32-bit floats, so world-space results near 100 units
-// carry errors near 1e-5.
-const _tolerance = 1e-4;
-const _pixelTolerance = 1e-3;
+// The golden-vector tolerance of §spec:golden-vectors.
+const _tolerance = 1e-9;
+const _pixelTolerance = 1e-9;
 const _fov = math.pi / 4;
 const _viewportHeight = 1080.0;
 

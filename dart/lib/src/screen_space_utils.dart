@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:vector_math/vector_math.dart' as vm;
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 /// Above this |forward · worldUp|, the view is treated as looking along
 /// the world up axis and [CameraBasis.lookAt] switches to its fallback.
