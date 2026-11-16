@@ -353,6 +353,61 @@ DisplayFormat.decimalInch.formatLabels(
 ); // [',125 in']
 ```
 
+## Ground plane
+
+A ground plane gives floating geometry a sense of scale and orientation.
+`GroundPlaneFactory.create` draws a grid of minor and major lines on a
+patch centered on an origin, in the plane across the declared up axis.
+The plane lies along the two axes after the up axis in the cycle X, Y,
+Z, which `GroundPlaneFactory.planeAxes` names: X and Y for Z-up, Z and
+X for Y-up. A `RectangularGroundPatch` takes a half extent along each of
+those axes, and a `CircularGroundPatch` takes a radius.
+
+The grid adapts to the camera. Its minor step is the finest grid step of
+the display format whose lines sit at least
+`StyleTokens.groundGridMinLineSpacingPixels` apart at the camera target,
+and its major step is the next grid step. Pass the returned minor step
+back on the next frame, so a camera resting near a step boundary does not
+flicker between two steps:
+
+```dart
+GroundGrid? grid;
+
+void onFrame(CameraBasis camera, Vector3 target) {
+  grid = GroundPlaneFactory.create(
+    convention: convention,
+    patch: const RectangularGroundPatch(halfExtentU: 600, halfExtentV: 400),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric, // one world unit is 1 mm
+    camera: camera,
+    target: target,
+    verticalFovRadians: fov,
+    viewportHeight: viewport.y,
+    resolveText: myTextResolver,
+    minorKey: MyStyle.gridMinor,
+    majorKey: MyStyle.gridMajor,
+    labelKey: MyStyle.gridLabel,
+    previousMinorStep: grid?.minorStep,
+  );
+  scene.replaceGrid(grid!.primitives);
+}
+```
+
+Each line arrives as a run of `LinePrimitive` segments whose opacity
+falls from one at the patch center to zero at its edge, so the grid fades
+out without a hard border. The fade is rectangular on a rectangular patch
+and radial on a circular one. Each major line carries a viewer-facing
+coordinate label where it crosses the perpendicular line through the
+origin, and the origin carries one label for zero. The labels form one
+set in the display format, so they share a unit. Minor segments come
+first, then major segments, then labels, so drawing them in order puts
+major lines over minor ones.
+
+The grid never draws more than `StyleTokens.groundGridMaxLinesPerAxis`
+lines across the patch in either direction. When the camera closes in on
+a large patch, the minor step coarsens to stay within that count.
+`GroundGridStyle` overrides any of the grid's tokens.
+
 ## Measure a frame against the reference geometry
 
 The repository's
