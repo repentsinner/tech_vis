@@ -398,15 +398,21 @@ void onFrame(CameraBasis camera, Vector3 target) {
 }
 ```
 
-Each line arrives as a run of `LinePrimitive` segments whose opacity
-falls from one at the patch center to zero at its edge, so the grid fades
-out without a hard border. The fade is rectangular on a rectangular patch
-and radial on a circular one. Each major line carries a viewer-facing
-coordinate label where it crosses the perpendicular line through the
-origin, and the origin carries one label for zero. The labels form one
-set in the display format, so they share a unit. Minor segments come
-first, then major segments, then labels, so drawing them in order puts
-major lines over minor ones.
+Each line arrives as one `LinePrimitive` across the whole patch, at full
+opacity. Your renderer fades the lines per pixel toward the patch edge,
+so the grid ends without a hard border. Read the fade's center from
+`grid.origin` and its reach from `grid.patch`. A point's reach `r` is its
+distance from the center over the radius on a circular patch, and the
+larger fraction of either half extent on a rectangular one. Multiply the
+line's alpha by `1 - smoothstep(0, 1, r)`, so the lines agree with the
+labels.
+
+Each major line carries a viewer-facing coordinate label where it
+crosses the perpendicular line through the origin, and the origin
+carries one label for zero. Each label's opacity is the fade at its
+anchor. The labels form one set in the display format, so they share a
+unit. Minor lines come first, then major lines, then labels, so drawing
+them in order puts major lines over minor ones.
 
 The grid never draws more than `StyleTokens.groundGridMaxLinesPerAxis`
 lines across the patch in either direction. When the camera closes in on

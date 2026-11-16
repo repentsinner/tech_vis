@@ -208,10 +208,14 @@ report the same style version produce the same layout.
 
 A ground grid lies in the plane across the declared up axis. Its minor
 lines keep a minimum pixel spacing at the camera target, so the step
-changes with zoom, and its lines fade toward the patch edge. A dimension
-measures between points the app supplies: a length, an angle, or a radius
-or diameter. Both are sized in screen pixels, so the app rebuilds them each
-frame the camera moves:
+changes with zoom. Each line spans the whole patch at full opacity, and
+the renderer fades it per pixel by `1 - smoothstep(0, 1, r)`, where `r`
+is the point's reach from `grid.origin` as a fraction of `grid.patch`.
+Each label's opacity follows the same curve at its anchor.
+
+A dimension measures between points the app supplies: a length, an
+angle, or a radius or diameter. Both are sized in screen pixels, so the
+app rebuilds them each frame the camera moves:
 
 ```python
 from tech_vis import (
