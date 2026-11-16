@@ -26,12 +26,6 @@ Closes §spec:golden-vectors and the layout half of §spec:python-package.
 Port the leader-line functions to Python. Test them against
 `vectors/leader_line.json`.
 
-### Python viewport overlays §road:python-viewport-overlays
-
-Port overlay placement to `python/src/tech_vis/viewport_overlay.py`
-(§spec:viewport-overlays), tested against
-`vectors/viewport_overlays.json`.
-
 ### Python renderer contract §road:python-renderer-contract
 
 Port the typed primitives, the coordinate convention, the camera basis,
@@ -46,7 +40,7 @@ factories, with the callout leader's line width (§spec:scene-model,
 Port the scale bar and the navigation cube (§spec:scale-bar,
 §spec:navigation-cube), tested against `vectors/scale_bar.json` and
 `vectors/navigation_cube.json`. Depends on
-§road:python-viewport-overlays and §road:python-renderer-contract.
+§road:python-renderer-contract.
 
 ### Python world annotations §road:python-world-annotations
 
