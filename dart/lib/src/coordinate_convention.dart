@@ -41,6 +41,18 @@ class CoordinateConvention {
     SpatialAxis.z => SpatialAxis.y,
   };
 
+  /// Returns the two axes after [up] in the cycle X, Y, Z, which span the
+  /// plane across it.
+  ///
+  /// A Z-up plane lies along X and Y, a Y-up plane along Z and X. Both
+  /// axes point the positive way, so a coordinate read along either is
+  /// the world coordinate in either handedness.
+  ({SpatialAxis u, SpatialAxis v}) get planeAxes => switch (up) {
+    SpatialAxis.x => (u: SpatialAxis.y, v: SpatialAxis.z),
+    SpatialAxis.y => (u: SpatialAxis.z, v: SpatialAxis.x),
+    SpatialAxis.z => (u: SpatialAxis.x, v: SpatialAxis.y),
+  };
+
   /// Returns the cross product of [u] and [v] by the declared hand rule.
   ///
   /// The components of a right-handed space satisfy the textbook formula.
