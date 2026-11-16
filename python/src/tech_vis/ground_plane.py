@@ -310,35 +310,34 @@ def create_ground_grid(
     # the others.
     major_world = target_system.convert_to(major, world_units)
 
-    def label_opacity(k: int, on_u: bool) -> float:
+    def mark(k: int, on_u: bool) -> tuple[int, Vector3, float]:
         offset = k * major_world
-        return fade.opacity_at(at(offset, 0) if on_u else at(0, offset))
+        anchor = at(offset, 0) if on_u else at(0, offset)
+        return k, anchor, fade.opacity_at(anchor)
 
-    marks: list[tuple[int, bool]] = [(0, True)]
+    marks = [mark(0, True)]
     for on_u in (True, False):
         count = math.floor((shape.extent_u if on_u else shape.extent_v) / major_world)
         marks.extend(
-            (k, on_u)
-            for k in range(-count, count + 1)
-            if k != 0 and label_opacity(k, on_u) > 0
+            m
+            for m in (mark(k, on_u) for k in range(-count, count + 1) if k != 0)
+            if m[2] > 0
         )
     texts = display_format.format_labels(
-        [k * major for k, _ in marks], step=major, numbers=numbers
+        [k * major for k, _, _ in marks], step=major, numbers=numbers
     )
-    labels: list[Primitive] = []
-    for (k, on_u), text in zip(marks, texts, strict=True):
-        offset = k * major_world
-        labels.append(
-            BillboardPrimitive(
-                content=resolve_text(
-                    TextRequest(text=text, height_pixels=style.label_pixel_size)
-                ),
-                anchor=at(offset, 0) if on_u else at(0, offset),
-                alignment=_LABEL_ALIGNMENT,
-                key=label_key,
-                opacity=label_opacity(k, on_u),
-            )
+    labels: list[Primitive] = [
+        BillboardPrimitive(
+            content=resolve_text(
+                TextRequest(text=text, height_pixels=style.label_pixel_size)
+            ),
+            anchor=anchor,
+            alignment=_LABEL_ALIGNMENT,
+            key=label_key,
+            opacity=opacity,
         )
+        for (_, anchor, opacity), text in zip(marks, texts, strict=True)
+    ]
 
     return GroundGrid(
         minor_step=minor,
