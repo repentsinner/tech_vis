@@ -54,6 +54,43 @@ CALLOUT_OPACITY_MAX: float = 0.95
 # Callout opacity at the far distance. Unit: ratio.
 CALLOUT_OPACITY_MIN: float = 0.25
 
+# Width of a dimension's witness, dimension, and arrowhead lines. Tied to the callout
+# leader width, so a referencing dimension's leader matches its dimension line. Unit:
+# px.
+DIMENSION_LINE_WIDTH: float = CALLOUT_LEADER_LINE_WIDTH
+
+# Gap between a measured point and the start of its witness line under ISO 129. Unit:
+# px.
+DIMENSION_WITNESS_GAP_ISO_PIXELS: float = 2.0
+
+# Gap between a measured point and the start of its witness line under ASME Y14.5.
+# Unit: px.
+DIMENSION_WITNESS_GAP_ASME_PIXELS: float = 4.0
+
+# Length a witness line runs past the dimension line. Unit: px.
+DIMENSION_WITNESS_EXTENSION_PIXELS: float = 6.0
+
+# Distance from the measured points to the dimension line, along the witness lines.
+# Unit: px.
+DIMENSION_OFFSET_PIXELS: float = 24.0
+
+# Length of a dimension arrowhead, from its tip along the dimension line. Unit: px.
+DIMENSION_ARROW_LENGTH_PIXELS: float = 10.0
+
+# Width of a dimension arrowhead across its two barbs. Unit: px.
+DIMENSION_ARROW_WIDTH_PIXELS: float = 4.0
+
+# Pixel height of a dimension's value text. Unit: px.
+DIMENSION_TEXT_PIXEL_SIZE: float = 14.0
+
+# Gap between a dimension's text and its dimension line: below oriented text, and
+# either side of inlined text in the line's break. Unit: px.
+DIMENSION_TEXT_GAP_PIXELS: float = 4.0
+
+# Largest offset along any other axis, as a fraction of the distance between the
+# points, at which a dimension still measures one axis. Unit: ratio.
+DIMENSION_ALIGNMENT_TOLERANCE: float = 0.001
+
 # Default marker diameter in screen-space logical pixels. Unit: px.
 MARKER_DIAMETER_PIXELS: float = 8.0
 
@@ -172,6 +209,16 @@ ALL: dict[str, float] = {
     "calloutOpacityFarDistance": CALLOUT_OPACITY_FAR_DISTANCE,
     "calloutOpacityMax": CALLOUT_OPACITY_MAX,
     "calloutOpacityMin": CALLOUT_OPACITY_MIN,
+    "dimensionLineWidth": DIMENSION_LINE_WIDTH,
+    "dimensionWitnessGapIsoPixels": DIMENSION_WITNESS_GAP_ISO_PIXELS,
+    "dimensionWitnessGapAsmePixels": DIMENSION_WITNESS_GAP_ASME_PIXELS,
+    "dimensionWitnessExtensionPixels": DIMENSION_WITNESS_EXTENSION_PIXELS,
+    "dimensionOffsetPixels": DIMENSION_OFFSET_PIXELS,
+    "dimensionArrowLengthPixels": DIMENSION_ARROW_LENGTH_PIXELS,
+    "dimensionArrowWidthPixels": DIMENSION_ARROW_WIDTH_PIXELS,
+    "dimensionTextPixelSize": DIMENSION_TEXT_PIXEL_SIZE,
+    "dimensionTextGapPixels": DIMENSION_TEXT_GAP_PIXELS,
+    "dimensionAlignmentTolerance": DIMENSION_ALIGNMENT_TOLERANCE,
     "markerDiameterPixels": MARKER_DIAMETER_PIXELS,
     "markerSubdivisions": MARKER_SUBDIVISIONS,
     "scaleBarCorner": SCALE_BAR_CORNER,

@@ -17,6 +17,7 @@ export 'src/primitives.dart';
 export 'src/scale_bar.dart';
 export 'src/scene_layout_constants.dart';
 export 'src/screen_space_utils.dart';
+export 'src/smart_dimension.dart';
 export 'src/style_tokens.g.dart';
 export 'src/unit_system.dart';
 export 'src/viewport_overlay.dart';

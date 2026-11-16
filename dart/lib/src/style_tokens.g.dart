@@ -58,6 +58,45 @@ abstract final class StyleTokens {
   /// Callout opacity at the far distance. Unit: ratio.
   static const double calloutOpacityMin = 0.25;
 
+  /// Width of a dimension's witness, dimension, and arrowhead lines. Tied to
+  /// the callout leader width, so a referencing dimension's leader matches
+  /// its dimension line. Unit: px.
+  static const double dimensionLineWidth = calloutLeaderLineWidth;
+
+  /// Gap between a measured point and the start of its witness line under ISO
+  /// 129. Unit: px.
+  static const double dimensionWitnessGapIsoPixels = 2.0;
+
+  /// Gap between a measured point and the start of its witness line under
+  /// ASME Y14.5. Unit: px.
+  static const double dimensionWitnessGapAsmePixels = 4.0;
+
+  /// Length a witness line runs past the dimension line. Unit: px.
+  static const double dimensionWitnessExtensionPixels = 6.0;
+
+  /// Distance from the measured points to the dimension line, along the
+  /// witness lines. Unit: px.
+  static const double dimensionOffsetPixels = 24.0;
+
+  /// Length of a dimension arrowhead, from its tip along the dimension line.
+  /// Unit: px.
+  static const double dimensionArrowLengthPixels = 10.0;
+
+  /// Width of a dimension arrowhead across its two barbs. Unit: px.
+  static const double dimensionArrowWidthPixels = 4.0;
+
+  /// Pixel height of a dimension's value text. Unit: px.
+  static const double dimensionTextPixelSize = 14.0;
+
+  /// Gap between a dimension's text and its dimension line: below oriented
+  /// text, and either side of inlined text in the line's break. Unit: px.
+  static const double dimensionTextGapPixels = 4.0;
+
+  /// Largest offset along any other axis, as a fraction of the distance
+  /// between the points, at which a dimension still measures one axis. Unit:
+  /// ratio.
+  static const double dimensionAlignmentTolerance = 0.001;
+
   /// Default marker diameter in screen-space logical pixels. Unit: px.
   static const double markerDiameterPixels = 8.0;
 
@@ -180,6 +219,16 @@ abstract final class StyleTokens {
     'calloutOpacityFarDistance': calloutOpacityFarDistance,
     'calloutOpacityMax': calloutOpacityMax,
     'calloutOpacityMin': calloutOpacityMin,
+    'dimensionLineWidth': dimensionLineWidth,
+    'dimensionWitnessGapIsoPixels': dimensionWitnessGapIsoPixels,
+    'dimensionWitnessGapAsmePixels': dimensionWitnessGapAsmePixels,
+    'dimensionWitnessExtensionPixels': dimensionWitnessExtensionPixels,
+    'dimensionOffsetPixels': dimensionOffsetPixels,
+    'dimensionArrowLengthPixels': dimensionArrowLengthPixels,
+    'dimensionArrowWidthPixels': dimensionArrowWidthPixels,
+    'dimensionTextPixelSize': dimensionTextPixelSize,
+    'dimensionTextGapPixels': dimensionTextGapPixels,
+    'dimensionAlignmentTolerance': dimensionAlignmentTolerance,
     'markerDiameterPixels': markerDiameterPixels,
     'markerSubdivisions': markerSubdivisions,
     'scaleBarCorner': scaleBarCorner,
