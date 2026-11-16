@@ -2,7 +2,7 @@
 name = "tech_vis"
 # Written by Flywheel on release, in lockstep with dart/pubspec.yaml.
 # Do not edit by hand.
-version = "0.3.0"
+version = "0.4.0"
 description = "Technical visualization primitives: style tokens and screen-space callout layout."
 readme = "README.md"
 license = "BSD-3-Clause"
