@@ -26,28 +26,6 @@ Closes §spec:golden-vectors and the layout half of §spec:python-package.
 Port the leader-line functions to Python. Test them against
 `vectors/leader_line.json`.
 
-## Renderer contract §road:renderer-contract
-
-Closes §spec:scene-model, §spec:scene-color, §spec:coordinate-convention,
-and §spec:renderer-contract.
-
-### Renderer guide §road:renderer-guide
-
-Document what each primitive means to a renderer, the declared
-convention, and how to measure a frame against the reference fixtures,
-in `dart/README.md` and the root `README.md`
-(§spec:renderer-contract).
-
-**Verify:** In `dart/`, run `dart test`, and confirm `grep -rn SceneObject
-lib/` finds nothing. Build the same box and coordinate frame under a
-Y-up and a Z-up convention, and confirm every output is one of the five
-primitives, each carrying its opacity and the app key passed in, and
-that mesh faces point outward in both. Place a marker at depths 10 and
-1000 and confirm its projected diameter matches its pixel diameter at
-both. Run the reference-geometry tool and confirm it reproduces the
-committed fixtures unchanged. Read the renderer guide and confirm it
-names every primitive with what a renderer shall do with it.
-
 ## Annotation primitives §road:annotation-primitives
 
 Closes §spec:annotation-primitives. Every workstream here emits the
