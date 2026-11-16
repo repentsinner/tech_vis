@@ -67,6 +67,15 @@ gap_px = tokens.CALLOUT_GAP_PIXELS
 The Python package carries the tokens today. Layout functions follow; see
 [ROADMAP.md](ROADMAP.md).
 
+## Renderer guide
+
+Both packages emit annotations as data and draw nothing. The
+[renderer guide](dart/README.md#placement-and-pixel-fidelity) in the Dart
+package's README states what each primitive means to the engine that
+draws it and which camera the placement assumes. It also shows how to
+measure a rendered frame against the reference screen geometry in
+`vectors/`, whichever language the renderer is written in.
+
 ## Changing the style
 
 Edit `style/tokens.json`, then regenerate and commit the token modules.
