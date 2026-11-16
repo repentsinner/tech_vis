@@ -93,8 +93,9 @@ Comparing rendered output across engines is deferred.
 *Status: complete*
 
 Pure Dart. No Flutter dependency, so it runs in any Dart program.
-It provides scene object types, coordinate frames, bounding boxes,
-leader-line callout geometry, and screen-space conversions.
+It provides typed annotation primitives (§spec:scene-model), coordinate
+frames, bounding boxes, leader-line callout geometry, and screen-space
+conversions.
 
 A generic toolkit shall name nothing from a consumer's domain.
 `dart/test/generic_vocabulary_test.dart` enforces this: it fails when a
@@ -111,52 +112,81 @@ the two packages could not agree within the tolerance of
 §spec:golden-vectors. Flutter's own transforms use the 64-bit types
 too, which spares a Flutter-based renderer a conversion per transform.
 
-## Scene model §spec:scene-model
+## Primitive output §spec:scene-model
 
-*Status: complete*
+*Status: in progress*
 
-The package produces scenes as data and never renders them. A renderer
-implements `SceneRendererBackend` and maps each `SceneObject` in a
-`SceneDescription` to its engine's draw calls. Factories such as
-`BoundingBoxFactory`, `CoordinateFrameFactory`, `EnvelopeLabelFactory`,
-and `FilledRectangleFactory` compose scene objects from geometry.
-`CoordinateFrameFactory` draws an axis indicator at any origin, and the
-consumer maps each axis to its own line category.
+The package emits annotations as a closed set of typed primitives and
+never renders them. Each app maps the primitives into its own scene
+graph and draws them with its own engine (§req:constraints).
 
-- `SceneObject` is a generic base. A consumer that needs its own object
-  types subclasses it. No type in the package shall reference a
-  subclass.
-- A type belongs in the package when a visualizer in an unrelated domain
-  would need it. A type that makes sense in only one domain belongs in
-  that domain's consumer.
-- Factories emit every line they draw, so a renderer draws lines and
-  never derives one. `BoundingBoxFactory` emits a box's twelve edges once
-  each, plus six faces only when the box has a fill; the faces carry no
-  edge. `FilledRectangleFactory.createOutline` emits a lone rectangle's
-  perimeter.
+| Primitive | Carries |
+|---|---|
+| Line | Two world endpoints and a width in screen pixels |
+| Quad | Four world corners of a filled face |
+| Label | Text, a world anchor, a height in screen pixels, an orientation mode, an anchor alignment, and an optional screen offset |
+| Marker | A world position, a diameter in screen pixels, and its generated mesh |
+| Mesh | Triangle positions, normals, and indices, in the declared convention of §spec:coordinate-convention |
 
-*Why data, not rendering*: one scene description drives any engine, and
-a scene can be tested without a GPU.
+- Every primitive carries an opacity, which the package computes, and an
+  app key. The key is an opaque value that the package passes through
+  and never inspects. The app resolves color and any other meaning from
+  it.
+- Factories return primitives: `BoundingBoxFactory`,
+  `CoordinateFrameFactory`, `EnvelopeLabelFactory`,
+  `FilledRectangleFactory`, §spec:callout-layout, and
+  §spec:annotation-primitives. A factory emits every line it draws, so a
+  renderer draws lines and never derives one. `BoundingBoxFactory`
+  emits a box's twelve edges once each, plus six faces only when the box
+  has a fill. `FilledRectangleFactory.createOutline` emits a lone
+  rectangle's perimeter.
+- The package defines no scene container, no renderer interface, and no
+  type for scene content such as a loaded model.
+- A primitive or factory belongs in the package when a visualizer in an
+  unrelated domain would need it. One that makes sense in only one
+  domain belongs in that domain's app.
+
+*Why typed primitives*: a single object type with every field optional
+admits any combination of fields, and leaves each renderer to guess
+which ones apply. A closed set states each primitive's meaning once,
+and a renderer handles exactly five cases. A slimmed single type was
+rejected because it still mixes kinds in one type. A shared type that
+apps subclass was rejected because it puts the package's scene graph
+inside every app.
+
+*Why no renderer interface*: a renderer interface carries engine and app
+concerns, such as building a widget, a frame callback, or an app's
+camera targeting. The package's boundary is the data it emits.
+
+*Why no scene content*: a model of the object being annotated is the
+app's content, and drawing it needs an asset loader that annotations do
+not (§req:constraints).
+
+*Why an opaque key*: what a line means, and therefore its color, belongs
+to the app's domain. The key lets the app carry that meaning through the
+package without the package naming it.
 
 *Why boxes emit their own edges*: a box outlined from its six face
 perimeters draws every edge twice, once for each face that shares it.
 The doubled line darkens a translucent edge and z-fights with itself.
 
-## Scene color resolution §spec:scene-color
+## Color §spec:scene-color
 
-*Status: complete*
+*Status: in progress*
 
-`SceneTheme.resolveLineColor(Object)` returns a `SceneColor`, an RGBA
-value with no Flutter dependency. A consumer's theme narrows the
-parameter to its own line category type.
+The package performs no color conversion and holds no palette. The app
+resolves each primitive's color from its key, in whatever color space
+its renderer needs. The package's only color output is opacity, a value
+from 0 to 1 that fades and the callout opacity ramp produce.
 
-The composition layer resolves each object's color and stores it on
-`SceneObject.resolvedColor`. A backend reads `resolvedColor` and makes
-no color decision of its own.
+Where a feature would blend two colors, such as a gradient in
+§spec:color-ramp-legend, the app supplies the blend.
 
-*Why resolve upstream*: the color a line takes depends on what the line
-means. The composition layer holds that meaning; the backend holds only
-geometry.
+*Why no conversion*: every color comes from the app's theme, and the
+space a renderer wants, sRGB for a texture or linear for a shader
+input, is the engine's choice. A conversion in the package would encode
+one engine's needs. A package color type with a linear conversion was
+rejected for that reason.
 
 ## Screen-space placement §spec:screen-space-placement
 
@@ -168,8 +198,9 @@ The package computes it, along with the transforms that turn a quad to
 face the viewer, so every renderer places these elements the same way.
 
 - `CameraBasis` holds a camera's position and its forward, right, and up
-  axes. When the view direction nearly parallels world up, it builds the
-  axes from a fallback up axis instead.
+  axes. When the view direction nearly parallels the up axis of
+  §spec:coordinate-convention, it builds the axes from a fallback axis
+  that the convention gives.
 - `worldUnitsPerPixelAt` sizes by the point's depth along the view axis.
   A screen-space element therefore keeps its pixel size anywhere in the
   view. It returns null for a point on or behind the camera plane.
@@ -192,6 +223,104 @@ callout opacity ramp and draw order.
 *Why the package owns this*: the size of a pixel at a point is the same
 math in every engine. Left to each renderer, it is the kind of constant
 and formula that drifts between copies (§req:problem-statement).
+
+## Coordinate convention §spec:coordinate-convention
+
+*Status: not started*
+
+The app declares the convention of the space it hands the package:
+which world axis points up, and whether the axes are right- or
+left-handed. Every input and output of the package is in that space.
+The convention has no default, and the package exports no converter
+between conventions.
+
+The declared convention decides:
+
+- the fallback up axis of `CameraBasis.lookAt` when the view looks
+  straight along the up axis;
+- the plane a ground plane lies in;
+- which navigation cube face is Top;
+- mesh triangle winding, so that faces point outward in either
+  handedness.
+
+*Why declare, not convert*: without a declaration the package either
+assumes one convention, or ships a converter that every app calls on
+every point. Declaring once lets each orientation decision use the
+app's own space, and the app never converts its data for the package
+(§req:constraints). A converter helper was rejected for that reason.
+
+*Why no default*: a wrong default fails silently. A Y-up scene treated
+as Z-up draws its ground plane as a wall.
+
+## Renderer contract §spec:renderer-contract
+
+*Status: not started*
+
+A renderer reproduces the style when it honors what each primitive
+means. The package guarantees placement: where a primitive lands on
+screen and how big it is. Pixel fidelity, such as anti-aliasing, glyph
+rasterization, and blending quality, is the renderer's
+(§req:constraints).
+
+A renderer shall:
+
+- draw with a perspective camera whose position, target, vertical field
+  of view, and viewport size match those it passed to the package for
+  the same frame;
+- draw a Line at its width in screen pixels, constant along its length
+  at any depth;
+- draw a Label at its pixel height, in the app's typeface, at its anchor
+  alignment, facing the viewer in a viewer-facing mode;
+- draw a Marker's mesh at the transform the package returns for the
+  frame;
+- apply each primitive's opacity;
+- draw a primitive that carries a draw rank over scene geometry
+  regardless of depth, and a higher rank over a lower one;
+- update per-frame transforms in every frame in which the camera or an
+  anchor moves;
+- take every annotation's geometry from its primitives, with no asset
+  file (§req:constraints).
+
+A renderer should anti-alias a line narrower than one pixel.
+
+The app measures each label's text in its typeface and passes the
+measured size in. The package never measures text.
+
+*Why placement, not pixels*: the package controls where an element lands
+and how big it is, and nothing about how an engine fills its pixels. A
+contract on pixels would bind every engine to one rasterizer
+(§req:problem-statement).
+
+### Reference screen geometry
+
+Fixtures of §spec:golden-vectors cover a set of sample scenes. For each
+camera and viewport, a fixture records every primitive's expected screen
+position and pixel size: label boxes, leader endpoints, line widths, and
+marker diameters. A renderer author renders the sample scene, measures
+the frame, and compares the measurements with the fixture within a
+tolerance that the renderer records. A renderer's recorded tolerance
+only tightens (§req:quality-attributes).
+
+*Why numbers, not reference images*: an image fixes one typeface, one
+rasterizer, and one anti-aliasing filter, so no second engine could
+match it. Screen positions and sizes hold for any engine and any
+typeface.
+
+*Why the renderer owns its images and tolerance*: fidelity varies by
+engine. The package states where things land; each renderer proves how
+closely it draws them, and ratchets that proof.
+
+### Markers
+
+A marker is a sphere with a diameter in screen pixels, centered on a
+world point. The package generates the sphere's mesh and, each frame,
+its transform, so the marker keeps its pixel diameter at any distance.
+
+*Why pixel size*: every other annotation keeps a pixel size. A marker
+sized in world units vanishes when the camera pulls back.
+
+*Why generated geometry*: a model file makes every renderer load an
+asset format to draw a dot (§req:constraints).
 
 ## Unit system §spec:unit-system
 
@@ -560,8 +689,8 @@ respond to input (§req:priorities).
 - The package describes a cube with labeled faces (Top, Front, Right,
   and so on) and its rotation for the current camera. The app renders
   it with its own fixed camera in its corner.
-- The app names the world up axis and front axis. The defaults are
-  Z up, with the Front face's normal along −Y.
+- Top is the up axis of §spec:coordinate-convention. The app names the
+  front axis.
 - The cube's labels and orientation build on the package's coordinate
   frame descriptors.
 
@@ -569,9 +698,9 @@ respond to input (§req:priorities).
 views. A viewer reads the visible face labels to know where they are
 looking from.
 
-*Why the app names the axes*: Z-up is the convention of the first
-applications and of the package's meshes, but many engines are Y-up. A
-fixed convention would label a Y-up scene's floor as its front.
+*Why the convention gives Top*: many engines are Y-up and others Z-up. A
+fixed up axis would label a scene's floor as its front in the other
+convention.
 
 *Why no click-to-snap*: snapping to a clicked face, edge, or corner
 needs hit-testing and camera animation, which belong to the app. How
