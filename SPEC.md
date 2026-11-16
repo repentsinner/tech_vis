@@ -1077,9 +1077,10 @@ the work splits between app and package is an open question
 Pure Python, no runtime dependencies (§req:constraints). It provides
 the style tokens, the typed primitives of §spec:scene-model with the
 factories and screen-space math of §spec:renderer-contract, the scale bar
-and navigation cube of §spec:viewport-overlays, and, in time, every
-layout function and annotation primitive the Dart package provides
-(§req:user-stories).
+and navigation cube of §spec:viewport-overlays, the ground plane of
+§spec:ground-plane, the smart dimensions of §spec:smart-dimensions, and,
+in time, every layout function and annotation primitive the Dart package
+provides (§req:user-stories).
 
 - Points cross the API as plain tuples of floats. Mesh buffers are
   read-only 32-bit memoryviews, matching the Dart package's buffers.

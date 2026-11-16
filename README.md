@@ -92,8 +92,9 @@ The Python package takes and returns points as plain `(x, y, z)` tuples of
 floats, so it needs no vector library. It carries the style tokens, the
 display formats, overlay placement, the scale bar, the navigation cube,
 the camera projection, and the typed primitives with their box,
-coordinate-frame, envelope-label, marker, and callout factories. It
-trails the Dart package, and the rest follows; see [ROADMAP.md](ROADMAP.md).
+coordinate-frame, envelope-label, marker, callout, ground-grid, and
+dimension factories. It trails the Dart package, and the rest follows; see
+[ROADMAP.md](ROADMAP.md).
 
 ## Renderer guide
 
