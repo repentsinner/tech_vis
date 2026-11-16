@@ -91,6 +91,16 @@ DIMENSION_TEXT_GAP_PIXELS: float = 4.0
 # points, at which a dimension still measures one axis. Unit: ratio.
 DIMENSION_ALIGNMENT_TOLERANCE: float = 0.001
 
+# Radius of an angular dimension's arc, from its vertex. Unit: px.
+DIMENSION_ARC_RADIUS_PIXELS: float = 64.0
+
+# Longest segment of an angular dimension's arc, measured along the arc at the
+# vertex's depth. Sets how many lines draw the arc. Unit: px.
+DIMENSION_ARC_SEGMENT_PIXELS: float = 4.0
+
+# Step an angular dimension's value rounds to. Unit: deg.
+DIMENSION_ANGLE_RESOLUTION_DEGREES: float = 0.1
+
 # Default marker diameter in screen-space logical pixels. Unit: px.
 MARKER_DIAMETER_PIXELS: float = 8.0
 
@@ -219,6 +229,9 @@ ALL: dict[str, float] = {
     "dimensionTextPixelSize": DIMENSION_TEXT_PIXEL_SIZE,
     "dimensionTextGapPixels": DIMENSION_TEXT_GAP_PIXELS,
     "dimensionAlignmentTolerance": DIMENSION_ALIGNMENT_TOLERANCE,
+    "dimensionArcRadiusPixels": DIMENSION_ARC_RADIUS_PIXELS,
+    "dimensionArcSegmentPixels": DIMENSION_ARC_SEGMENT_PIXELS,
+    "dimensionAngleResolutionDegrees": DIMENSION_ANGLE_RESOLUTION_DEGREES,
     "markerDiameterPixels": MARKER_DIAMETER_PIXELS,
     "markerSubdivisions": MARKER_SUBDIVISIONS,
     "scaleBarCorner": SCALE_BAR_CORNER,

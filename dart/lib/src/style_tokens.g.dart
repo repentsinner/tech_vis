@@ -97,6 +97,16 @@ abstract final class StyleTokens {
   /// ratio.
   static const double dimensionAlignmentTolerance = 0.001;
 
+  /// Radius of an angular dimension's arc, from its vertex. Unit: px.
+  static const double dimensionArcRadiusPixels = 64.0;
+
+  /// Longest segment of an angular dimension's arc, measured along the arc at
+  /// the vertex's depth. Sets how many lines draw the arc. Unit: px.
+  static const double dimensionArcSegmentPixels = 4.0;
+
+  /// Step an angular dimension's value rounds to. Unit: deg.
+  static const double dimensionAngleResolutionDegrees = 0.1;
+
   /// Default marker diameter in screen-space logical pixels. Unit: px.
   static const double markerDiameterPixels = 8.0;
 
@@ -229,6 +239,9 @@ abstract final class StyleTokens {
     'dimensionTextPixelSize': dimensionTextPixelSize,
     'dimensionTextGapPixels': dimensionTextGapPixels,
     'dimensionAlignmentTolerance': dimensionAlignmentTolerance,
+    'dimensionArcRadiusPixels': dimensionArcRadiusPixels,
+    'dimensionArcSegmentPixels': dimensionArcSegmentPixels,
+    'dimensionAngleResolutionDegrees': dimensionAngleResolutionDegrees,
     'markerDiameterPixels': markerDiameterPixels,
     'markerSubdivisions': markerSubdivisions,
     'scaleBarCorner': scaleBarCorner,

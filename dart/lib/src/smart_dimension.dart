@@ -95,6 +95,9 @@ class DimensionStyle {
     this.textGapPixels = StyleTokens.dimensionTextGapPixels,
     this.alignmentTolerance = StyleTokens.dimensionAlignmentTolerance,
     this.leader = const LeaderLineStyle(),
+    this.arcRadiusPixels = StyleTokens.dimensionArcRadiusPixels,
+    this.arcSegmentPixels = StyleTokens.dimensionArcSegmentPixels,
+    this.angleResolutionDegrees = StyleTokens.dimensionAngleResolutionDegrees,
   });
 
   /// Width of witness, dimension, and arrowhead lines in screen pixels.
@@ -128,6 +131,16 @@ class DimensionStyle {
 
   /// Leader of a referencing dimension, the same as a callout's.
   final LeaderLineStyle leader;
+
+  /// Radius of an angular dimension's arc, from its vertex.
+  final double arcRadiusPixels;
+
+  /// Longest segment of an angular dimension's arc, along the arc at the
+  /// vertex's depth.
+  final double arcSegmentPixels;
+
+  /// Step an angular dimension's value rounds to, in degrees.
+  final double angleResolutionDegrees;
 
   /// Returns the witness line gap under [standard]: [witnessGapPixels]
   /// when set, else the standard's token.
@@ -235,6 +248,81 @@ class SmartDimensionFactory {
       primitives.addAll(dimension);
     }
     return primitives;
+  }
+
+  /// Returns the primitives of an angular dimension: the angle at [vertex]
+  /// between the legs [first] and [second], vectors from [vertex] to the
+  /// far end of each, seen by [camera] with vertical field of view
+  /// [verticalFovRadians] in a [viewportSize] viewport.
+  ///
+  /// The dimension line is an arc in the legs' plane, centered on
+  /// [vertex], [DimensionStyle.arcRadiusPixels] from it, from [first] to
+  /// [second] the short way round. It draws as straight lines no longer
+  /// than [DimensionStyle.arcSegmentPixels] along the arc.
+  ///
+  /// The dimension emits, in order: a witness line along each leg that
+  /// ends short of the arc, extending it past the arc; the arc's lines,
+  /// in two runs when inlined text breaks it; two lines per arrowhead, at
+  /// the [first] end and then the [second] end; the two leader lines of
+  /// a referencing dimension; and the text billboard.
+  ///
+  /// The text is the angle in decimal degrees, rounded to
+  /// [DimensionStyle.angleResolutionDegrees] and written with [numbers],
+  /// and [resolveText] answers its request. [convention] places it at the
+  /// arc's midpoint, along the arc's tangent there, and falls back to
+  /// referencing when it does not fit along the arc on screen.
+  ///
+  /// Returns an empty list when a leg is zero, when the legs are parallel
+  /// or opposed, or when a point the dimension needs lies on or behind
+  /// the camera plane.
+  static List<Primitive> createAngular({
+    required vm.Vector3 vertex,
+    required vm.Vector3 first,
+    required vm.Vector3 second,
+    required DraftingConvention convention,
+    required CameraBasis camera,
+    required double verticalFovRadians,
+    required vm.Vector2 viewportSize,
+    required TextResolver resolveText,
+    required Object? key,
+    NumberFormatting numbers = const NumberFormatting(),
+    DimensionStyle style = const DimensionStyle(),
+    double opacity = 1.0,
+  }) {
+    final firstLength = first.length;
+    final secondLength = second.length;
+    if (firstLength <= _epsilon || secondLength <= _epsilon) return const [];
+    final along = first / firstLength;
+    final toward = second / secondLength;
+    final sine = along.cross(toward).length;
+    // Parallel legs span no angle, and opposed legs span no plane.
+    if (sine <= _epsilon) return const [];
+    final angle = math.atan2(sine, along.dot(toward));
+
+    final builder = _DimensionBuilder(
+      camera: camera,
+      verticalFovRadians: verticalFovRadians,
+      viewportSize: viewportSize,
+      convention: convention,
+      style: style,
+      resolveText: resolveText,
+      key: key,
+      opacity: opacity,
+    );
+    return builder.angular(
+          vertex,
+          along,
+          (toward - along * along.dot(toward)).normalized(),
+          angle,
+          firstLength,
+          secondLength,
+          formatDegreesLabel(
+            angle * 180 / math.pi,
+            step: style.angleResolutionDegrees,
+            numbers: numbers,
+          ),
+        ) ??
+        const [];
   }
 }
 
@@ -391,6 +479,129 @@ class _DimensionBuilder {
       ..addAll(_arrowhead(footTo, -direction, footToPixel))
       ..addAll(
         _text(placement, content, middle, lineOnScreen, offset, middlePixel),
+      );
+  }
+
+  /// An arc of [angle] radians from the leg [along] toward [across], the
+  /// unit perpendicular to it in the legs' plane, centered on [vertex].
+  /// The legs end [firstLength] and [secondLength] from [vertex].
+  List<Primitive>? angular(
+    vm.Vector3 vertex,
+    vm.Vector3 along,
+    vm.Vector3 across,
+    double angle,
+    double firstLength,
+    double secondLength,
+    String label,
+  ) {
+    final vertexPixel = _pixel(vertex);
+    if (vertexPixel == null) return null;
+    final radius = style.arcRadiusPixels * vertexPixel;
+    vm.Vector3 radial(double t) => along * math.cos(t) + across * math.sin(t);
+    vm.Vector3 point(double t) => vertex + radial(t) * radius;
+    vm.Vector3 tangent(double t) => along * -math.sin(t) + across * math.cos(t);
+    // Segments are counted from the arc's length at the vertex's depth,
+    // which no view foreshortens, so the count depends on the style and
+    // the angle alone.
+    int segments(double span) => math.max(
+      1,
+      (style.arcRadiusPixels * span / style.arcSegmentPixels).ceil(),
+    );
+
+    final count = segments(angle);
+    final screen = [
+      for (var i = 0; i <= count; i++)
+        ScreenSpaceUtils.worldToScreen(
+          point(angle * i / count),
+          camera,
+          verticalFovRadians,
+          viewportSize,
+        ),
+    ];
+    final half = angle / 2;
+    final middle = point(half);
+    final firstEnd = point(0);
+    final secondEnd = point(angle);
+    final middlePixel = _pixel(middle);
+    final firstEndPixel = _pixel(firstEnd);
+    final secondEndPixel = _pixel(secondEnd);
+    final firstTipPixel = _pixel(vertex + along * firstLength);
+    final secondTipPixel = _pixel(vertex + radial(angle) * secondLength);
+    if (screen.contains(null) ||
+        middlePixel == null ||
+        firstEndPixel == null ||
+        secondEndPixel == null ||
+        firstTipPixel == null ||
+        secondTipPixel == null) {
+      return null;
+    }
+    var screenLength = 0.0;
+    for (var i = 1; i <= count; i++) {
+      screenLength += screen[i]!.distanceTo(screen[i - 1]!);
+    }
+
+    final gap = style.witnessGapFor(convention.standard);
+    final primitives = <Primitive>[];
+    void witness(
+      vm.Vector3 leg,
+      double length,
+      double tipPixel,
+      double endPixel,
+    ) {
+      final start = length + gap * tipPixel;
+      if (start >= radius) return;
+      primitives.add(
+        _line(
+          vertex + leg * start,
+          vertex + leg * (radius + style.witnessExtensionPixels * endPixel),
+        ),
+      );
+    }
+
+    witness(along, firstLength, firstTipPixel, firstEndPixel);
+    witness(radial(angle), secondLength, secondTipPixel, secondEndPixel);
+
+    final content = resolveText(
+      TextRequest(text: label, heightPixels: style.textPixelSize),
+    );
+    final lineOnScreen = _onScreen(tangent(half));
+    final (placement, extent) = _fit(content, lineOnScreen, screenLength);
+
+    void run(double from, double to) {
+      final n = segments(to - from);
+      for (var i = 0; i < n; i++) {
+        primitives.add(
+          _line(
+            point(from + (to - from) * i / n),
+            point(from + (to - from) * (i + 1) / n),
+          ),
+        );
+      }
+    }
+
+    if (placement == DimensionTextPlacement.inlined) {
+      final halfBreak = math.min(
+        _halfBreak(extent, middlePixel, lineOnScreen) / radius,
+        half,
+      );
+      run(0, half - halfBreak);
+      run(half + halfBreak, angle);
+    } else {
+      run(0, angle);
+    }
+
+    return primitives
+      ..addAll(_arrowhead(firstEnd, tangent(0), firstEndPixel))
+      ..addAll(_arrowhead(secondEnd, -tangent(angle), secondEndPixel))
+      ..addAll(
+        _text(
+          placement,
+          content,
+          middle,
+          lineOnScreen,
+          radial(half),
+          middlePixel,
+        ),
       );
   }
 
