@@ -796,13 +796,28 @@ orientation relative to the world axes. It is a passive indicator: it
 helps a viewer see which side of the scene faces them, and does not
 respond to input (§req:priorities).
 
-- The package describes a cube with labeled faces (Top, Front, Right,
-  and so on) and its rotation for the current camera. The app renders
-  it with its own fixed camera in its corner.
-- Top is the up axis of §spec:coordinate-convention. The app names the
-  front axis.
-- The cube's labels and orientation build on the package's coordinate
-  frame descriptors.
+- `NavigationCube` names six faces, TOP, BOTTOM, FRONT, BACK, LEFT, and
+  RIGHT, each with a world normal and a label frame: the directions its
+  text runs and points up.
+- Top is the up axis of §spec:coordinate-convention. Front faces away
+  from the convention's fallback axis, unless the app names another
+  horizontal world axis. Right is the face a viewer of Front sees on
+  their right, by the declared hand rule.
+- Side labels stand upright. Top and Bottom labels point away from
+  Front, as the top and bottom views of `CameraBasis.lookAt` hold them,
+  so a top view shows TOP upright with FRONT along its bottom edge.
+- `visibleFaces` describes the cube in the overlay's pixel rectangle
+  for a camera. The cube turns with the camera's rotation only and
+  projects orthographically about the rectangle's center, with an edge
+  of min(width, height)/√3, so no corner leaves the rectangle.
+- It returns only the faces turned toward the viewer, least direct
+  first, each as four pixel corners in label order (bottom-left,
+  bottom-right, top-right, top-left) and the cosine it faces the viewer
+  by. Facings within 1e-9 tie, and ties keep face order. The app draws
+  each label onto its face with an affine map.
+- `vectors/navigation_cube.json` pins face frames and visible faces in
+  Y-up and Z-up, both handednesses, and an app-named front
+  (§spec:golden-vectors).
 
 *Why a cube*: its six labeled faces map directly to the six orthographic
 views. A viewer reads the visible face labels to know where they are
@@ -811,6 +826,26 @@ looking from.
 *Why the convention gives Top*: many engines are Y-up and others Z-up. A
 fixed up axis would label a scene's floor as its front in the other
 convention.
+
+*Why Front faces away from the fallback axis*: the fallback axis is the
+screen-up direction of a top view, so Front then sits at the bottom of
+TOP, where CAD view cubes put it. In Z-up this makes -Y the front, as
+plan views use. A Y-up scene gets -X, which is why the app may name
+another front instead.
+
+*Why the overlay owns the projection*: the overlay is pixel output
+(§spec:viewport-overlays). Handing the app a rotation and leaving it a
+second camera would let each renderer pick its own projection and size.
+Orthographic projection keeps the cube's size fixed as the scene camera
+changes field of view, and keeps each face a parallelogram.
+
+*Why only facing faces*: the cube is convex and opaque, so a face turned
+away is always hidden. Facing faces overlap only along shared edges, and
+least-direct-first order draws those edges consistently.
+
+*Why the app sets label text*: text on a face is skewed by the face's
+projection, so it is not a Billboard. The package gives the label string
+and its frame. The app fits its own typeface into the face.
 
 *Why no click-to-snap*: snapping to a clicked face, edge, or corner
 needs hit-testing and camera animation, which belong to the app. How
