@@ -246,7 +246,7 @@ and formula that drifts between copies (§req:problem-statement).
 
 ## Coordinate convention §spec:coordinate-convention
 
-*Status: not started*
+*Status: in progress*
 
 The app declares the convention of the space it hands the package:
 which world axis points up, and whether the axes are right- or
@@ -262,6 +262,10 @@ The declared convention decides:
 - which navigation cube face is Top;
 - mesh triangle winding, so that faces point outward in either
   handedness.
+
+The fallback axis is the axis before the up axis in the cycle X, Y, Z,
+so a Z-up top view keeps +Y up on screen. Screen axes and face normals
+take their cross products by the declared hand rule.
 
 *Why declare, not convert*: without a declaration the package either
 assumes one convention, or ships a converter that every app calls on
