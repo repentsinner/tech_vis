@@ -58,11 +58,6 @@ as its Dart test.
 Closes §spec:annotation-primitives. Every workstream here emits the
 typed primitives.
 
-### Angular and radial dimensions §road:angular-radial-dimensions
-
-The angular and radial cases of §spec:smart-dimensions, under the same
-drafting convention as the point-to-point dimensions.
-
 ### Color ramp legend §road:color-ramp-legend
 
 Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
