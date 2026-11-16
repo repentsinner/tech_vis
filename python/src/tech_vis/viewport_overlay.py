@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import NamedTuple
 
@@ -61,7 +61,7 @@ class ViewportRect(NamedTuple):
     bottom: float
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ViewportOverlayPlacement:
     """Where an overlay sits: a corner, an offset from it, and a size, in pixels.
 
@@ -90,13 +90,16 @@ class ViewportOverlayPlacement:
 
         Each given value takes the place of its token default.
         """
-        d_corner, d_x, d_y, d_w, d_h = _DEFAULTS[kind]
-        return cls(
-            corner=ViewportCorner.from_token(d_corner) if corner is None else corner,
-            offset_x_pixels=d_x if offset_x_pixels is None else offset_x_pixels,
-            offset_y_pixels=d_y if offset_y_pixels is None else offset_y_pixels,
-            width_pixels=d_w if width_pixels is None else width_pixels,
-            height_pixels=d_h if height_pixels is None else height_pixels,
+        overrides = {
+            "corner": corner,
+            "offset_x_pixels": offset_x_pixels,
+            "offset_y_pixels": offset_y_pixels,
+            "width_pixels": width_pixels,
+            "height_pixels": height_pixels,
+        }
+        return replace(
+            _DEFAULTS[kind],
+            **{name: value for name, value in overrides.items() if value is not None},
         )
 
     def rect(self, viewport_size: tuple[float, float]) -> ViewportRect:
@@ -121,22 +124,34 @@ class ViewportOverlayPlacement:
         )
 
 
-_DEFAULTS: dict[ViewportOverlayKind, tuple[float, float, float, float, float]] = {
-    ViewportOverlayKind.SCALE_BAR: (
+def _default(
+    corner: float, offset_x: float, offset_y: float, width: float, height: float
+) -> ViewportOverlayPlacement:
+    return ViewportOverlayPlacement(
+        corner=ViewportCorner.from_token(corner),
+        offset_x_pixels=offset_x,
+        offset_y_pixels=offset_y,
+        width_pixels=width,
+        height_pixels=height,
+    )
+
+
+_DEFAULTS: dict[ViewportOverlayKind, ViewportOverlayPlacement] = {
+    ViewportOverlayKind.SCALE_BAR: _default(
         tokens.SCALE_BAR_CORNER,
         tokens.SCALE_BAR_OFFSET_XPIXELS,
         tokens.SCALE_BAR_OFFSET_YPIXELS,
         tokens.SCALE_BAR_WIDTH_PIXELS,
         tokens.SCALE_BAR_HEIGHT_PIXELS,
     ),
-    ViewportOverlayKind.COLOR_RAMP_LEGEND: (
+    ViewportOverlayKind.COLOR_RAMP_LEGEND: _default(
         tokens.COLOR_RAMP_LEGEND_CORNER,
         tokens.COLOR_RAMP_LEGEND_OFFSET_XPIXELS,
         tokens.COLOR_RAMP_LEGEND_OFFSET_YPIXELS,
         tokens.COLOR_RAMP_LEGEND_WIDTH_PIXELS,
         tokens.COLOR_RAMP_LEGEND_HEIGHT_PIXELS,
     ),
-    ViewportOverlayKind.NAVIGATION_CUBE: (
+    ViewportOverlayKind.NAVIGATION_CUBE: _default(
         tokens.NAVIGATION_CUBE_CORNER,
         tokens.NAVIGATION_CUBE_OFFSET_XPIXELS,
         tokens.NAVIGATION_CUBE_OFFSET_YPIXELS,

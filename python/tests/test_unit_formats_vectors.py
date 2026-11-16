@@ -1,31 +1,22 @@
 """The display formats agree with the Dart reference's golden vectors."""
 
-import json
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 import pytest
 
+from conftest import load_vectors
 from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, tokens
-
-# The fixtures sit outside the package, so they exist in a repository checkout
-# and are absent from an installed or unpacked distribution.
-FIXTURE = Path(__file__).resolve().parents[2] / "vectors" / "unit_formats.json"
 
 # Absolute tolerance on every numeric output, in the format's base unit.
 TOLERANCE = 1e-9
-
-pytestmark = pytest.mark.skipif(
-    not FIXTURE.exists(), reason="vectors/ is outside the sdist"
-)
 
 type Json = dict[str, Any]
 
 
 @pytest.fixture(scope="module")
 def fixture() -> Json:
-    return json.loads(FIXTURE.read_text())
+    return load_vectors("unit_formats.json")
 
 
 def _expect_steps(
