@@ -553,6 +553,80 @@ Map<String, Object?> referenceScreenGeometryFixture() => {
   ],
 };
 
+Map<String, Object?> _placement(ViewportOverlayPlacement p) => {
+  'corner': p.corner.name,
+  'offsetXPixels': p.offsetXPixels,
+  'offsetYPixels': p.offsetYPixels,
+  'widthPixels': p.widthPixels,
+  'heightPixels': p.heightPixels,
+};
+
+/// Viewport sizes from a phone in portrait to a wide desktop, plus one
+/// too small to hold the default legend, which the rectangle overruns.
+final _overlayViewports = [
+  vm.Vector2(1280, 720),
+  vm.Vector2(390, 844),
+  vm.Vector2(2560, 1080),
+  vm.Vector2(160, 120),
+];
+
+/// Each kind's token defaults, and one placement per corner with
+/// unequal offsets so a swapped axis shows.
+List<({String name, ViewportOverlayPlacement placement})> _placements() => [
+  for (final kind in ViewportOverlayKind.values)
+    (
+      name: '${kind.name} defaults',
+      placement: ViewportOverlayPlacement.of(kind),
+    ),
+  for (final corner in ViewportCorner.values)
+    (
+      name: '${corner.name}, custom offset and size',
+      placement: ViewportOverlayPlacement(
+        corner: corner,
+        offsetXPixels: 12.5,
+        offsetYPixels: 30,
+        widthPixels: 220,
+        heightPixels: 64.25,
+      ),
+    ),
+];
+
+/// The viewport-overlay fixture: each kind's default placement from the
+/// tokens, and the pixel rectangle a placement resolves to per viewport.
+Map<String, Object?> viewportOverlaysFixture() => {
+  'screenCoordinates':
+      'pixels from the top-left corner of the viewport, x right, y down',
+  'ViewportOverlayPlacement.of': [
+    for (final kind in ViewportOverlayKind.values)
+      {
+        'name': kind.name,
+        'input': {'kind': kind.name},
+        'output': _placement(ViewportOverlayPlacement.of(kind)),
+      },
+  ],
+  'ViewportOverlayPlacement.rect': [
+    for (final (:name, :placement) in _placements())
+      for (final viewport in _overlayViewports)
+        {
+          'name': '$name, ${viewport.x.toInt()}x${viewport.y.toInt()}',
+          'input': {
+            'placement': _placement(placement),
+            'viewport': _vector(viewport),
+          },
+          'output': {
+            'rect': switch (placement.rect(viewport)) {
+              (:final left, :final top, :final right, :final bottom) => [
+                left,
+                top,
+                right,
+                bottom,
+              ],
+            },
+          },
+        },
+  ],
+};
+
 /// Renders a fixture family under the header and style version every
 /// fixture file carries.
 String _render(Map<String, Object?> family) {
@@ -571,6 +645,7 @@ void main(List<String> args) {
     'vectors/reference_screen_geometry.json': _render(
       referenceScreenGeometryFixture(),
     ),
+    'vectors/viewport_overlays.json': _render(viewportOverlaysFixture()),
   };
 
   final stale = [
