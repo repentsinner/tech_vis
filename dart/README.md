@@ -437,6 +437,35 @@ By default the navigation cube sits top-right, the scale bar
 bottom-left, and the color ramp legend bottom-right, so the three never
 share a corner. The rectangle is not clipped to the viewport.
 
+### Navigation cube
+
+A `NavigationCube` shows which side of the scene faces the viewer. Top
+is the convention's up axis. Front faces away from the convention's
+fallback axis, so a top view shows TOP upright with FRONT along its
+bottom edge. Right is the face a viewer of Front sees on their right.
+Pass `front` to name another horizontal world axis:
+
+```dart
+final cube = NavigationCube(convention: convention);
+final rect = ViewportOverlayPlacement.of(
+  ViewportOverlayKind.navigationCube,
+).rect(Vector2(1280, 720));
+
+for (final view in cube.visibleFaces(camera, rect)) {
+  // Corners run bottom-left, bottom-right, top-right, top-left of the
+  // label, in viewport pixels.
+  drawFace(view.corners, label: view.face.label);
+}
+```
+
+`visibleFaces` turns the cube with the camera's rotation and projects it
+orthographically about the rectangle's center, sized so that no corner
+leaves the rectangle. It returns only the faces turned toward the
+viewer, least direct first, so drawing them in order puts the face seen
+most squarely on top. The projected faces are parallelograms, so an
+affine map draws each label onto its face. The cube is a passive
+indicator and doesn't respond to input.
+
 ## Style tokens
 
 `StyleTokens` holds every style constant, generated from the repository's
