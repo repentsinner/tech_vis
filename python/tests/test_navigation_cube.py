@@ -4,11 +4,17 @@ import math
 
 import pytest
 
-from conftest import TOLERANCE, assert_close
+from conftest import (
+    TOLERANCE,
+    Y_UP_LEFT,
+    Y_UP_RIGHT,
+    Z_UP_LEFT,
+    Z_UP_RIGHT,
+    assert_close,
+)
 from tech_vis import (
     CameraBasis,
     CoordinateConvention,
-    Handedness,
     NavigationCube,
     NavigationCubeFace,
     SignedAxis,
@@ -19,11 +25,6 @@ from tech_vis import (
     ViewportOverlayPlacement,
 )
 from tech_vis._vec import add, scale
-
-Y_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT)
-Y_UP_LEFT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.LEFT)
-Z_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
-Z_UP_LEFT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.LEFT)
 
 # The default placement's rectangle in a 1280 x 720 viewport.
 RECT = ViewportOverlayPlacement.of(ViewportOverlayKind.NAVIGATION_CUBE).rect(

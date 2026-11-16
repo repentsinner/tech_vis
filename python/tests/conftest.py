@@ -8,9 +8,12 @@ import pytest
 
 from tech_vis import (
     BillboardContent,
+    CoordinateConvention,
     DecimalMarker,
+    Handedness,
     LeaderLineStyle,
     NumberFormatting,
+    SpatialAxis,
     TextRequest,
     Vector3,
     ViewportCorner,
@@ -103,3 +106,16 @@ def json_number_formatting(n: dict) -> NumberFormatting:
         decimal_marker=DecimalMarker(n["decimalMarker"]),
         show_leading_zero=n["showLeadingZero"],
     )
+
+
+def json_convention(c: dict) -> CoordinateConvention:
+    """Decodes a fixture's ``{up, handedness}`` convention record."""
+    return CoordinateConvention(
+        up=SpatialAxis(c["up"]), handedness=Handedness(c["handedness"])
+    )
+
+
+Y_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT)
+Y_UP_LEFT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.LEFT)
+Z_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
+Z_UP_LEFT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.LEFT)

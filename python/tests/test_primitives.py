@@ -4,16 +4,22 @@ import math
 
 import pytest
 
-from conftest import TOLERANCE, assert_close, fake_text_resolver
+from conftest import (
+    TOLERANCE,
+    Y_UP_LEFT,
+    Y_UP_RIGHT,
+    Z_UP_LEFT,
+    Z_UP_RIGHT,
+    assert_close,
+    fake_text_resolver,
+)
 from tech_vis import (
     BillboardContent,
     BillboardPrimitive,
     BoundingBox,
     CameraBasis,
-    CoordinateConvention,
     CoordinateFrameDescriptor,
     CoplanarOrientation,
-    Handedness,
     LabelAlignment,
     LabelCorner,
     LabelEdge,
@@ -45,11 +51,6 @@ from tech_vis._vec import dot, length, sub
 
 # A mesh buffer holds 32-bit floats.
 FLOAT32_TOLERANCE = 1e-6
-
-Y_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.RIGHT)
-Y_UP_LEFT = CoordinateConvention(up=SpatialAxis.Y, handedness=Handedness.LEFT)
-Z_UP_RIGHT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.RIGHT)
-Z_UP_LEFT = CoordinateConvention(up=SpatialAxis.Z, handedness=Handedness.LEFT)
 
 
 class TestPrimitives:

@@ -4,11 +4,15 @@ from typing import Any
 
 import pytest
 
-from conftest import TOLERANCE, assert_close, json_vector3, load_vectors
+from conftest import (
+    TOLERANCE,
+    assert_close,
+    json_convention,
+    json_vector3,
+    load_vectors,
+)
 from tech_vis import (
     CameraBasis,
-    CoordinateConvention,
-    Handedness,
     NavigationCube,
     NavigationCubeFace,
     SignedAxis,
@@ -25,16 +29,10 @@ def fixture() -> Json:
     return load_vectors("navigation_cube.json")
 
 
-def _convention(c: Json) -> CoordinateConvention:
-    return CoordinateConvention(
-        up=SpatialAxis(c["up"]), handedness=Handedness(c["handedness"])
-    )
-
-
 def _cube(given: Json) -> NavigationCube:
     front = given["front"]
     return NavigationCube(
-        convention=_convention(given["convention"]),
+        convention=json_convention(given["convention"]),
         front=SignedAxis(SpatialAxis(front["axis"]), negative=front["negative"]),
     )
 
@@ -69,7 +67,7 @@ def test_visible_faces(fixture: Json) -> None:
         camera = CameraBasis.look_at(
             position=json_vector3(given["cameraPosition"]),
             target=json_vector3(given["cameraTarget"]),
-            convention=_convention(given["convention"]),
+            convention=json_convention(given["convention"]),
         )
         seen = _cube(given).visible_faces(camera, ViewportRect(*given["rect"]))
         want = c["output"]["faces"]

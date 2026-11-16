@@ -171,7 +171,9 @@ def _kept(
     if previous is None or not display_format.is_scale_bar_step(previous):
         return None
     step = display_format.scale_bar_step_at_most(previous)
-    if step is None or step > fitting:
+    # A scale-bar step is at most itself, so the query cannot miss.
+    assert step is not None
+    if step > fitting:
         return None
     clearing = display_format.scale_bar_step_at_most(max_length * (1 - hysteresis))
     return step if clearing is None or clearing <= step else None

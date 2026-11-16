@@ -11,6 +11,7 @@ from conftest import (
     TOLERANCE,
     assert_close,
     fake_text_resolver,
+    json_convention,
     json_leader_style,
     json_vector3,
     load_vectors,
@@ -27,7 +28,6 @@ from tech_vis import (
     MarkerPrimitive,
     Primitive,
     QuadPrimitive,
-    SpatialAxis,
     TextRequest,
     Vector2,
     Vector3,
@@ -51,12 +51,6 @@ type Json = dict[str, Any]
 @pytest.fixture(scope="module")
 def fixture() -> Json:
     return load_vectors("reference_screen_geometry.json")
-
-
-def _convention(c: Json) -> CoordinateConvention:
-    return CoordinateConvention(
-        up=SpatialAxis(c["up"]), handedness=Handedness(c["handedness"])
-    )
 
 
 class _Frame:
@@ -253,7 +247,7 @@ def _check_primitive(
 
 def _views(fixture: Json) -> Iterator[tuple[Json, Json, CoordinateConvention]]:
     for scene in fixture["scenes"]:
-        convention = _convention(scene["convention"])
+        convention = json_convention(scene["convention"])
         for view in scene["views"]:
             yield scene, view, convention
 
@@ -268,7 +262,7 @@ def test_records_the_stand_in_typeface(fixture: Json):
 
 
 def test_covers_every_factory_two_up_axes_and_both_handednesses(fixture: Json):
-    conventions = {_convention(s["convention"]) for s in fixture["scenes"]}
+    conventions = {json_convention(s["convention"]) for s in fixture["scenes"]}
     assert len({c.up for c in conventions}) == 2
     assert {c.handedness for c in conventions} == set(Handedness)
     assert {s["build"]["factory"] for s in fixture["scenes"]} == {
