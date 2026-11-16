@@ -396,7 +396,7 @@ List<_Scene> _scenes() => [
         length: 2,
         lineThickness: 2,
         labelPixelSize: 16,
-        labelOffsetPixels: 12,
+        labelOffsetPixels: 10,
       ),
     ),
     views: [
