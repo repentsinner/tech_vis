@@ -287,7 +287,7 @@ as Z-up draws its ground plane as a wall.
 
 ## Renderer contract §spec:renderer-contract
 
-*Status: in progress*
+*Status: complete*
 
 A renderer reproduces the style when it honors what each primitive
 means. The package guarantees placement: where a primitive lands on
@@ -321,6 +321,9 @@ The app prepares each Billboard's content, including the content for
 the package's text requests, and reports its pixel size. The package
 never measures or rasterizes content.
 
+The renderer guide in `dart/README.md` states this contract for renderer
+authors, and the root README points to it.
+
 *Why placement, not pixels*: the package controls where an element lands
 and how big it is, and nothing about how an engine fills its pixels. A
 contract on pixels would bind every engine to one rasterizer
@@ -336,18 +339,12 @@ the frame, and compares the measurements with the fixture within a
 tolerance that the renderer records. A renderer's recorded tolerance
 only tightens (§req:quality-attributes).
 
-- `vectors/reference_screen_geometry.json` holds the sample scenes. Each
-  scene records its declared convention and the factory inputs that
-  build it. Each view records a camera, a vertical field of view, and a
-  viewport, then every primitive in emission order and every callout
-  leader.
-- Screen points are in the coordinates of `worldToScreen`
+- `vectors/reference_screen_geometry.json` holds the sample scenes, in
+  the screen coordinates of `worldToScreen`
   (§spec:screen-space-placement).
-- A Billboard records its placed anchor, its alignment, and its text
-  request, which hold for any typeface. It also records the content size
-  the generator's stand-in typeface gave and the box that size places. A
-  renderer substitutes its own measured size and places the box from the
-  same anchor and alignment.
+- A Billboard's anchor, alignment, and text request hold for any
+  typeface. Its recorded box follows from the generator's stand-in
+  typeface, so a renderer places the box from its own measured size.
 - The sample scenes cover Y-up and Z-up conventions, both handednesses,
   off-axis cameras, and a view along the up axis.
 
@@ -376,8 +373,7 @@ sized in world units vanishes when the camera pulls back.
 *Why generated geometry*: a model file makes every renderer load an
 asset format to draw a dot (§req:constraints).
 
-The mesh is an icosphere whose subdivision level is a style token. Every
-marker in one handedness shares one mesh.
+The mesh is an icosphere whose subdivision level is a style token.
 
 *Why an icosphere*: its triangles are close to equal in size and shape,
 so a low subdivision level reads as round at marker sizes. A UV sphere
