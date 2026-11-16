@@ -109,6 +109,7 @@ from tech_vis.unit_system import (
     UnitSystem,
     format_degrees_label,
     format_number_label,
+    nice_step_at_least,
 )
 from tech_vis.viewport_overlay import (
     ViewportCorner,
@@ -200,6 +201,7 @@ __all__ = [
     "create_rectangle_outline",
     "format_degrees_label",
     "format_number_label",
+    "nice_step_at_least",
     "ground_minor_step",
     "marker_sphere_mesh",
     "marker_transform",

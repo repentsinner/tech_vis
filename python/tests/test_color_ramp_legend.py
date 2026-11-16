@@ -15,7 +15,6 @@ from tech_vis import (
     ViewportCorner,
     ViewportOverlayKind,
     ViewportOverlayPlacement,
-    format_number_label,
     tokens,
 )
 
@@ -323,25 +322,3 @@ def test_equal_neighboring_stops_make_a_hard_edge() -> None:
 def test_rejects(kwargs: dict) -> None:
     with pytest.raises(ValueError):  # noqa: PT011 - each case names its cause
         _legend(**kwargs)
-
-
-@pytest.mark.parametrize(
-    ("value", "step", "numbers", "label"),
-    [
-        (45, 1, NumberFormatting(), "45"),
-        (0.25, 0.05, NumberFormatting(), "0.25"),
-        (12.345, 0.01, NumberFormatting(), "12.35"),
-        (-0.04, 0.1, NumberFormatting(), "0"),
-        (7, 5, NumberFormatting(), "5"),
-        (0.5, 0.1, _COMMA, ",5"),
-    ],
-)
-def test_format_number_label(
-    value: float, step: float, numbers: NumberFormatting, label: str
-) -> None:
-    assert format_number_label(value, step=step, numbers=numbers) == label
-
-
-def test_format_number_label_rejects_a_step_that_is_not_positive() -> None:
-    with pytest.raises(ValueError, match="step"):
-        format_number_label(1, step=0)

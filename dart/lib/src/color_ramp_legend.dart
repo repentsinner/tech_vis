@@ -9,13 +9,6 @@ import 'viewport_overlay.dart';
 /// so a range end computed as 0.1 + 0.2 still keeps the tick at 0.3.
 const _rangeSlack = 1e-9;
 
-/// The interval sequence automatic ticks snap to: 1, 2, and 5 times every
-/// power of ten, the decimal formats' scale-bar steps.
-const _intervals = DisplayFormat.metric;
-
-/// The widest ratio between adjacent intervals, from 2 to 5.
-const _widestIntervalRatio = 2.5;
-
 /// The direction a color ramp legend's bar runs.
 enum ColorRampOrientation {
   /// The bar runs left to right, from the range's minimum to its maximum.
@@ -195,7 +188,7 @@ final class ColorRampLegendLayout {
     final span = maxValue - minValue;
     final interval =
         tickInterval ??
-        _autoInterval(minTickSpacingPixels * span / lengthPixels);
+        niceStepAtLeast(minTickSpacingPixels * span / lengthPixels);
     final values = _tickValues(minValue, maxValue, interval);
     final texts = [
       for (final v in values)
@@ -293,22 +286,6 @@ void _checkStops(List<ColorRampStop> stops) {
       throw ArgumentError.value(stops, 'stops', 'must not descend');
     }
   }
-}
-
-/// The smallest of 1, 2, and 5 times a power of ten at least [atLeast].
-double _autoInterval(double atLeast) {
-  final bound = atLeast * (1 - _rangeSlack);
-  // The interval sequence widens by at most 2.5 between neighbors, so the
-  // answer is no longer than 2.5 times the bound.
-  var interval = _intervals.scaleBarStepAtMost(atLeast * _widestIntervalRatio)!;
-  for (
-    var below = _intervals.scaleBarStepBelow(interval);
-    below != null && below >= bound;
-    below = _intervals.scaleBarStepBelow(below)
-  ) {
-    interval = below;
-  }
-  return interval;
 }
 
 /// Every whole multiple of [interval] from [minValue] to [maxValue],

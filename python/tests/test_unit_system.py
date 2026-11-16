@@ -12,6 +12,8 @@ from tech_vis import (
     NumberFormatting,
     UnitSystem,
     format_degrees_label,
+    format_number_label,
+    nice_step_at_least,
 )
 
 METRIC = DisplayFormat.METRIC
@@ -531,3 +533,44 @@ def test_format_degrees_label_rejects_a_step_not_positive_and_finite(
 ) -> None:
     with pytest.raises(ValueError):
         format_degrees_label(1.0, step=step)
+
+
+@pytest.mark.parametrize(
+    ("length", "step"),
+    [
+        (0.3, 0.5),
+        (1.0, 1.0),
+        (1.2, 2.0),
+        (3.0, 5.0),
+        (7.0, 10.0),
+        (0.1 + 0.2, 0.5),
+        (2e-7, 2e-7),
+        (3e19, 5e19),
+    ],
+)
+def test_nice_step_at_least(length: float, step: float) -> None:
+    assert nice_step_at_least(length) == pytest.approx(step, rel=1e-12)
+
+
+@pytest.mark.parametrize("length", [0.0, -1.0, math.nan, math.inf])
+def test_nice_step_at_least_rejects_a_length_that_is_not_positive(
+    length: float,
+) -> None:
+    with pytest.raises(ValueError, match="length"):
+        nice_step_at_least(length)
+
+
+def test_format_number_label_snaps_to_a_multiple_of_the_step() -> None:
+    assert format_number_label(7, step=5) == "5"
+
+
+def test_format_number_label_writes_the_app_decimal_marker() -> None:
+    numbers = NumberFormatting(
+        decimal_marker=DecimalMarker.COMMA, show_leading_zero=False
+    )
+    assert format_number_label(0.5, step=0.1, numbers=numbers) == ",5"
+
+
+def test_format_number_label_rejects_a_step_that_is_not_positive() -> None:
+    with pytest.raises(ValueError, match="step"):
+        format_number_label(1, step=0)

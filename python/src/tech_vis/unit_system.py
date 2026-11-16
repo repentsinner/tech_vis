@@ -225,9 +225,9 @@ def format_degrees_label(
 ) -> str:
     """Returns ``degrees`` as a decimal-degree label: ``45°`` or ``30.5°``.
 
-    The label rounds to ``step`` and shows the fewest decimal places that
-    represent ``step`` exactly, with no trailing zeros, as a length label
-    does. ``numbers`` sets the decimal marker and leading zero. An angle has
+    The label snaps ``degrees`` to the nearest multiple of ``step``, then
+    shows the fewest decimal places that represent ``step`` exactly, with no
+    trailing zeros. ``numbers`` sets the decimal marker and leading zero. An angle has
     no display format, so the label is the same in every unit system.
 
     Raises ``ValueError`` when ``step`` is not positive and finite.
@@ -241,9 +241,9 @@ def format_number_label(
     """Returns ``value`` as a plain decimal label with no unit: ``45`` or
     ``0.25``.
 
-    The label rounds to ``step`` and shows the fewest decimal places that
-    represent ``step`` exactly, with no trailing zeros, as a length label
-    does. ``numbers`` sets the decimal marker and leading zero. Use it for a
+    The label snaps ``value`` to the nearest multiple of ``step``, then shows
+    the fewest decimal places that represent ``step`` exactly, with no
+    trailing zeros. ``numbers`` sets the decimal marker and leading zero. Use it for a
     value that is not a length, which has no display format.
 
     Raises ``ValueError`` when ``step`` is not positive and finite.
@@ -522,3 +522,19 @@ def _fractional_labels(values: Sequence[float], step: float) -> list[str]:
         return f"-{text}" if count < 0 else text
 
     return [label(c) for c in counts]
+
+
+# 1, 2, and 5 times every power of ten, for values with no display format.
+_NICE_STEPS = _StepSequence(mantissas=(1, 2, 5))
+
+
+def nice_step_at_least(length: float) -> float:
+    """Returns the smallest of 1, 2, and 5 times a power of ten at least
+    ``length``.
+
+    Use it to choose a clean interval for a value that is not a length, which
+    has no display format.
+
+    Raises ``ValueError`` when ``length`` is not positive and finite.
+    """
+    return _NICE_STEPS.at_least(_positive(length, "length"))

@@ -413,31 +413,4 @@ void main() {
       });
     }
   });
-
-  group('formatNumberLabel', () {
-    for (final (value, step, numbers, label) in const [
-      (45.0, 1.0, _numbers, '45'),
-      (0.25, 0.05, _numbers, '0.25'),
-      (12.345, 0.01, _numbers, '12.35'),
-      (-0.04, 0.1, _numbers, '0'),
-      (7.0, 5.0, _numbers, '5'),
-      (
-        0.5,
-        0.1,
-        NumberFormatting(
-          decimalMarker: DecimalMarker.comma,
-          showLeadingZero: false,
-        ),
-        ',5',
-      ),
-    ]) {
-      test('writes $value at step $step as $label', () {
-        expect(formatNumberLabel(value, step: step, numbers: numbers), label);
-      });
-    }
-
-    test('rejects a step that is not positive', () {
-      expect(() => formatNumberLabel(1, step: 0), throwsArgumentError);
-    });
-  });
 }

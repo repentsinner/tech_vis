@@ -10,7 +10,11 @@ from typing import Self
 from tech_vis import tokens
 from tech_vis._vec import Vector2
 from tech_vis.primitives import TextRequest
-from tech_vis.unit_system import DisplayFormat, NumberFormatting, format_number_label
+from tech_vis.unit_system import (
+    NumberFormatting,
+    format_number_label,
+    nice_step_at_least,
+)
 from tech_vis.viewport_overlay import (
     ViewportOverlayKind,
     ViewportOverlayPlacement,
@@ -20,13 +24,6 @@ from tech_vis.viewport_overlay import (
 # Relative slack when testing whether a tick falls inside the value range, so
 # a range end computed as 0.1 + 0.2 still keeps the tick at 0.3.
 _RANGE_SLACK = 1e-9
-
-# The interval sequence automatic ticks snap to: 1, 2, and 5 times every power
-# of ten, the decimal formats' scale-bar steps.
-_INTERVALS = DisplayFormat.METRIC
-
-# The widest ratio between adjacent intervals, from 2 to 5.
-_WIDEST_INTERVAL_RATIO = 2.5
 
 _MIN_STOPS = 2
 
@@ -196,7 +193,7 @@ class ColorRampLegendLayout:
 
         span = max_value - min_value
         interval = (
-            _auto_interval(min_tick_spacing_pixels * span / length_pixels)
+            nice_step_at_least(min_tick_spacing_pixels * span / length_pixels)
             if tick_interval is None
             else tick_interval
         )
@@ -282,22 +279,6 @@ def _bar_rect(
     if placement.corner.is_bottom:
         return ViewportRect(rect.left, rect.bottom - thickness, rect.right, rect.bottom)
     return ViewportRect(rect.left, rect.top, rect.right, rect.top + thickness)
-
-
-def _auto_interval(at_least: float) -> float:
-    """Returns the smallest of 1, 2, and 5 times a power of ten at least
-    ``at_least``."""
-    bound = at_least * (1 - _RANGE_SLACK)
-    # The interval sequence widens by at most 2.5 between neighbors, so the
-    # answer is no longer than 2.5 times the bound.
-    interval = _INTERVALS.scale_bar_step_at_most(at_least * _WIDEST_INTERVAL_RATIO)
-    # The decimal steps run down without end, so the query cannot miss.
-    assert interval is not None
-    below = _INTERVALS.scale_bar_step_below(interval)
-    while below is not None and below >= bound:
-        interval = below
-        below = _INTERVALS.scale_bar_step_below(below)
-    return interval
 
 
 def _tick_values(min_value: float, max_value: float, interval: float) -> list[float]:

@@ -230,9 +230,9 @@ enum DisplayFormat {
 
 /// Returns [degrees] as a decimal-degree label: `45°` or `30.5°`.
 ///
-/// The label rounds to [step] and shows the fewest decimal places that
-/// represent [step] exactly, with no trailing zeros, as a length label
-/// does. [numbers] sets the decimal marker and leading zero. An angle has
+/// The label snaps [degrees] to the nearest multiple of [step], then
+/// shows the fewest decimal places that represent [step] exactly, with no
+/// trailing zeros. [numbers] sets the decimal marker and leading zero. An angle has
 /// no display format, so the label is the same in every unit system.
 String formatDegreesLabel(
   double degrees, {
@@ -240,11 +240,23 @@ String formatDegreesLabel(
   NumberFormatting numbers = const NumberFormatting(),
 }) => '${formatNumberLabel(degrees, step: step, numbers: numbers)}°';
 
+/// 1, 2, and 5 times every power of ten, for values with no display format.
+const _niceSteps = _StepSequence(mantissas: [1, 2, 5]);
+
+/// Returns the smallest of 1, 2, and 5 times a power of ten at least
+/// [length].
+///
+/// Use it to choose a clean interval for a value that is not a length,
+/// which has no display format. Throws an [ArgumentError] when [length] is
+/// not positive and finite.
+double niceStepAtLeast(double length) =>
+    _niceSteps.atLeast(_positive(length, 'length'));
+
 /// Returns [value] as a plain decimal label with no unit: `45` or `0.25`.
 ///
-/// The label rounds to [step] and shows the fewest decimal places that
-/// represent [step] exactly, with no trailing zeros, as a length label
-/// does. [numbers] sets the decimal marker and leading zero. Use it for a
+/// The label snaps [value] to the nearest multiple of [step], then shows
+/// the fewest decimal places that represent [step] exactly, with no
+/// trailing zeros. [numbers] sets the decimal marker and leading zero. Use it for a
 /// value that is not a length, which has no display format. Throws an
 /// [ArgumentError] when [step] is not positive and finite.
 String formatNumberLabel(
