@@ -5,9 +5,16 @@ from collections.abc import Callable
 
 import pytest
 
-from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, UnitSystem
-
-TOLERANCE = 1e-9
+from conftest import TOLERANCE
+from tech_vis import (
+    DecimalMarker,
+    DisplayFormat,
+    NumberFormatting,
+    UnitSystem,
+    format_degrees_label,
+    format_number_label,
+    nice_step_at_least,
+)
 
 METRIC = DisplayFormat.METRIC
 DECIMAL_INCH = DisplayFormat.DECIMAL_INCH
@@ -491,3 +498,79 @@ def test_format_labels_returns_no_labels_for_no_values(
     display_format: DisplayFormat,
 ) -> None:
     assert display_format.format_labels([]) == []
+
+
+@pytest.mark.parametrize(
+    ("degrees", "step", "numbers", "label"),
+    [
+        (45.0, 0.1, NumberFormatting(), "45°"),
+        (30.04, 0.1, NumberFormatting(), "30°"),
+        (30.06, 0.1, NumberFormatting(), "30.1°"),
+        (12.345, 0.01, NumberFormatting(), "12.35°"),
+        (89.6, 1.0, NumberFormatting(), "90°"),
+        (179.96, 0.1, NumberFormatting(), "180°"),
+        (0.25, 0.05, NO_LEADING_ZERO, ".25°"),
+        (0.5, 0.1, COMMA, "0,5°"),
+        (22.5, 0.1, COMMA, "22,5°"),
+    ],
+)
+def test_format_degrees_label(
+    degrees: float, step: float, numbers: NumberFormatting, label: str
+) -> None:
+    assert format_degrees_label(degrees, step=step, numbers=numbers) == label
+
+
+def test_format_degrees_label_rounds_ties_away_from_zero() -> None:
+    # Dart's roundToDouble rounds a tie away from zero; Python's round() would
+    # write 2° and -2°.
+    assert format_degrees_label(2.5, step=1.0) == "3°"
+    assert format_degrees_label(-2.5, step=1.0) == "-3°"
+
+
+@pytest.mark.parametrize("step", NOT_POSITIVE_AND_FINITE)
+def test_format_degrees_label_rejects_a_step_not_positive_and_finite(
+    step: float,
+) -> None:
+    with pytest.raises(ValueError):
+        format_degrees_label(1.0, step=step)
+
+
+@pytest.mark.parametrize(
+    ("length", "step"),
+    [
+        (0.3, 0.5),
+        (1.0, 1.0),
+        (1.2, 2.0),
+        (3.0, 5.0),
+        (7.0, 10.0),
+        (0.1 + 0.2, 0.5),
+        (2e-7, 2e-7),
+        (3e19, 5e19),
+    ],
+)
+def test_nice_step_at_least(length: float, step: float) -> None:
+    assert nice_step_at_least(length) == pytest.approx(step, rel=1e-12)
+
+
+@pytest.mark.parametrize("length", [0.0, -1.0, math.nan, math.inf])
+def test_nice_step_at_least_rejects_a_length_that_is_not_positive(
+    length: float,
+) -> None:
+    with pytest.raises(ValueError, match="length"):
+        nice_step_at_least(length)
+
+
+def test_format_number_label_snaps_to_a_multiple_of_the_step() -> None:
+    assert format_number_label(7, step=5) == "5"
+
+
+def test_format_number_label_writes_the_app_decimal_marker() -> None:
+    numbers = NumberFormatting(
+        decimal_marker=DecimalMarker.COMMA, show_leading_zero=False
+    )
+    assert format_number_label(0.5, step=0.1, numbers=numbers) == ",5"
+
+
+def test_format_number_label_rejects_a_step_that_is_not_positive() -> None:
+    with pytest.raises(ValueError, match="step"):
+        format_number_label(1, step=0)

@@ -69,8 +69,32 @@ DisplayFormat.FRACTIONAL_INCH.format_labels([inches])  # ['4\' 11 1/16"']
 step = DisplayFormat.METRIC.scale_bar_step_at_most(130)  # 100.0
 ```
 
-The Python package carries the tokens and the display formats. More layout
-functions follow; see [ROADMAP.md](ROADMAP.md).
+```python
+from tech_vis import ViewportOverlayKind, ViewportOverlayPlacement
+
+cube = ViewportOverlayPlacement.of(ViewportOverlayKind.NAVIGATION_CUBE)
+left, top, right, bottom = cube.rect((1280.0, 720.0))
+```
+
+```python
+from tech_vis import CalloutQuadrant, compute_callout_leader_geometry
+
+leader = compute_callout_leader_geometry(
+    anchor=anchor,
+    camera_right=camera_right,
+    camera_up=camera_up,
+    world_units_per_pixel=world_units_per_pixel,
+    quadrant=CalloutQuadrant.TOP_RIGHT,
+)
+```
+
+The Python package takes and returns points as plain `(x, y, z)` tuples of
+floats, so it needs no vector library. It carries the style tokens, the
+display formats, overlay placement, the scale bar, the color ramp legend,
+the navigation cube, the camera projection, and the typed primitives with
+their box, coordinate-frame, envelope-label, marker, callout, ground-grid,
+and dimension factories. It trails the Dart package, and the rest follows; see
+[ROADMAP.md](ROADMAP.md).
 
 ## Renderer guide
 

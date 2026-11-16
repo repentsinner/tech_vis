@@ -6,8 +6,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'support/fake_text_resolver.dart';
 import 'support/pinhole.dart';
-
-const _tolerance = 1e-9;
+import 'support/primitives.dart';
 
 const _zUp = CoordinateConvention(
   up: SpatialAxis.z,
@@ -29,7 +28,7 @@ final _topView = CameraBasis.lookAt(
 List<Primitive> _dimension(
   vm.Vector3 from,
   vm.Vector3 to, {
-  DraftingConvention convention = DraftingConvention.isoOriented,
+  DraftingConvention drafting = DraftingConvention.isoOriented,
   DisplayFormat format = DisplayFormat.metric,
   UnitSystem worldUnits = UnitSystem.metric,
   CameraBasis? camera,
@@ -42,7 +41,7 @@ List<Primitive> _dimension(
 }) => SmartDimensionFactory.create(
   from: from,
   to: to,
-  convention: convention,
+  drafting: drafting,
   format: format,
   worldUnits: worldUnits,
   camera: camera ?? _topView,
@@ -57,16 +56,6 @@ List<Primitive> _dimension(
   opacity: opacity,
 );
 
-List<BillboardPrimitive> _labels(List<Primitive> primitives) =>
-    primitives.whereType<BillboardPrimitive>().toList();
-
-List<String> _texts(List<Primitive> primitives) => [
-  for (final b in _labels(primitives)) (b.content.value! as TextRequest).text,
-];
-
-List<LinePrimitive> _lines(List<Primitive> primitives) =>
-    primitives.whereType<LinePrimitive>().toList();
-
 vm.Vector2 _px(vm.Vector3 point) => projectPinhole(
   point,
   _topView,
@@ -75,12 +64,6 @@ vm.Vector2 _px(vm.Vector3 point) => projectPinhole(
 );
 
 double _pxLength(vm.Vector3 a, vm.Vector3 b) => (_px(a) - _px(b)).length;
-
-void expectVector(vm.Vector3 actual, vm.Vector3 expected, String reason) {
-  for (var i = 0; i < 3; i++) {
-    expect(actual[i], closeTo(expected[i], _tolerance), reason: '$reason[$i]');
-  }
-}
 
 void main() {
   group('DraftingConvention', () {
@@ -215,9 +198,9 @@ void main() {
           c.to,
           multiAxis: c.multiAxis,
           style: c.style,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
         );
-        expect(_texts(primitives), c.texts);
+        expect(textsOf(primitives), c.texts);
       });
     }
 
@@ -225,9 +208,9 @@ void main() {
       final primitives = _dimension(
         vm.Vector3.zero(),
         vm.Vector3(12000, 500, 0),
-        convention: DraftingConvention.isoReferencing,
+        drafting: DraftingConvention.isoReferencing,
       );
-      expect(_texts(primitives), ['12 m', '0.5 m']);
+      expect(textsOf(primitives), ['12 m', '0.5 m']);
     });
 
     test('coincident points have no dimension', () {
@@ -286,9 +269,9 @@ void main() {
           format: c.format,
           numbers: c.numbers,
         );
-        expect(_texts(primitives), [c.text]);
+        expect(textsOf(primitives), [c.text]);
         expect(
-          (_labels(primitives).single.content.value! as TextRequest)
+          (billboardsOf(primitives).single.content.value! as TextRequest)
               .heightPixels,
           StyleTokens.dimensionTextPixelSize,
         );
@@ -315,7 +298,7 @@ void main() {
           convention: _zUp,
         );
         final primitives = _dimension(vm.Vector3.zero(), c.to, camera: oblique);
-        final [witnessFrom, witnessTo, ...] = _lines(primitives);
+        final [witnessFrom, witnessTo, ...] = linesOf(primitives);
         for (final w in [witnessFrom, witnessTo]) {
           expect((w.end - w.start).normalized().dot(c.axis), closeTo(0, 1e-9));
         }
@@ -336,8 +319,8 @@ void main() {
       test('leave the ${convention.standard.name} gap and overshoot', () {
         final from = vm.Vector3.zero();
         final to = vm.Vector3(100, 0, 0);
-        final primitives = _dimension(from, to, convention: convention);
-        final [witnessFrom, witnessTo, ...] = _lines(primitives);
+        final primitives = _dimension(from, to, drafting: convention);
+        final [witnessFrom, witnessTo, ...] = linesOf(primitives);
         expect(_pxLength(from, witnessFrom.start), closeTo(gap, 1e-9));
         expect(_pxLength(to, witnessTo.start), closeTo(gap, 1e-9));
         expect(
@@ -357,8 +340,8 @@ void main() {
         vm.Vector3(100, 0, 0),
         offsetDirection: vm.Vector3(0.5, -1, 0),
       );
-      final [witnessFrom, ...] = _lines(primitives);
-      expectVector(
+      final [witnessFrom, ...] = linesOf(primitives);
+      expectVector3(
         (witnessFrom.end - witnessFrom.start).normalized(),
         vm.Vector3(0, -1, 0),
         'witness direction',
@@ -367,8 +350,8 @@ void main() {
 
     test('point up on screen by default', () {
       final primitives = _dimension(vm.Vector3.zero(), vm.Vector3(100, 0, 0));
-      final [witnessFrom, ...] = _lines(primitives);
-      expectVector(
+      final [witnessFrom, ...] = linesOf(primitives);
+      expectVector3(
         (witnessFrom.end - witnessFrom.start).normalized(),
         vm.Vector3(0, 1, 0),
         'witness direction',
@@ -381,13 +364,13 @@ void main() {
       final from = vm.Vector3.zero();
       final to = vm.Vector3(100, 0, 0);
       final primitives = _dimension(from, to);
-      final lines = _lines(primitives);
+      final lines = linesOf(primitives);
       final dimensionLine = lines[2];
       final arrows = lines.sublist(3, 7);
       for (final (i, tip) in [dimensionLine.start, dimensionLine.end].indexed) {
         final [a, b] = arrows.sublist(2 * i, 2 * i + 2);
-        expectVector(a.start, tip, 'arrow $i tip');
-        expectVector(b.start, tip, 'arrow $i tip');
+        expectVector3(a.start, tip, 'arrow $i tip');
+        expectVector3(b.start, tip, 'arrow $i tip');
         final base = (a.end + b.end) / 2;
         expect(
           _pxLength(tip, base),
@@ -414,20 +397,20 @@ void main() {
 
     test('ISO oriented sits above the line, parallel and upright', () {
       final primitives = _dimension(from, long);
-      final label = _labels(primitives).single;
+      final label = billboardsOf(primitives).single;
       final orientation = label.orientation as CoplanarOrientation;
-      expectVector(orientation.normal, _topView.toViewer, 'normal');
-      expectVector(orientation.right, vm.Vector3(1, 0, 0), 'right');
+      expectVector3(orientation.normal, _topView.toViewer, 'normal');
+      expectVector3(orientation.right, vm.Vector3(1, 0, 0), 'right');
       expect(label.alignment.storage, [0.5, 0.0]);
       expect(label.offset!.pixels, StyleTokens.dimensionTextGapPixels);
-      expectVector(label.offset!.direction, vm.Vector3(0, 1, 0), 'up');
+      expectVector3(label.offset!.direction, vm.Vector3(0, 1, 0), 'up');
       // The text lifts off the line along its own vertical axis.
-      expectVector(
+      expectVector3(
         _zUp.cross(orientation.normal, orientation.right),
         label.offset!.direction,
         'text up',
       );
-      expect(_lines(primitives), hasLength(7));
+      expect(linesOf(primitives), hasLength(7));
     });
 
     final upright = [
@@ -436,9 +419,9 @@ void main() {
     ];
     for (final c in upright) {
       test('ISO oriented text stays upright, ${c.name}', () {
-        final label = _labels(_dimension(from, c.to)).single;
+        final label = billboardsOf(_dimension(from, c.to)).single;
         final orientation = label.orientation as CoplanarOrientation;
-        expectVector(
+        expectVector3(
           orientation.right,
           vm.Vector3.array([for (final v in c.right) v.toDouble()]),
           'right',
@@ -450,16 +433,16 @@ void main() {
       final primitives = _dimension(
         from,
         long,
-        convention: DraftingConvention.asmeInlined,
+        drafting: DraftingConvention.asmeInlined,
       );
-      final label = _labels(primitives).single;
+      final label = billboardsOf(primitives).single;
       expect(label.orientation, isA<ViewerFacingOrientation>());
       expect(label.alignment.storage, [0.5, 0.5]);
       expect(label.offset, isNull);
-      final lines = _lines(primitives);
+      final lines = linesOf(primitives);
       expect(lines, hasLength(8));
       final [_, _, first, second, ...] = lines;
-      expectVector(label.anchor, (first.start + second.end) / 2, 'center');
+      expectVector3(label.anchor, (first.start + second.end) / 2, 'center');
       expect(
         _pxLength(first.end, second.start),
         closeTo(
@@ -474,14 +457,14 @@ void main() {
       DraftingConvention.asmeReferencing,
     ]) {
       test('${convention.name} leads the text off the line', () {
-        final primitives = _dimension(from, long, convention: convention);
-        final lines = _lines(primitives);
+        final primitives = _dimension(from, long, drafting: convention);
+        final lines = linesOf(primitives);
         expect(lines, hasLength(9));
-        final label = _labels(primitives).single;
+        final label = billboardsOf(primitives).single;
         expect(label.orientation, isA<ViewerFacingOrientation>());
         final dimensionLine = lines[2];
         final leader = lines[7];
-        expectVector(
+        expectVector3(
           leader.start,
           computeCalloutLeaderGeometry(
             anchor: (dimensionLine.start + dimensionLine.end) / 2,
@@ -506,10 +489,10 @@ void main() {
       DraftingConvention.asmeInlined,
     ]) {
       test('${convention.name} falls back to referencing when cramped', () {
-        final primitives = _dimension(from, short, convention: convention);
-        expect(_lines(primitives), hasLength(9));
+        final primitives = _dimension(from, short, drafting: convention);
+        expect(linesOf(primitives), hasLength(9));
         expect(
-          _labels(primitives).single.orientation,
+          billboardsOf(primitives).single.orientation,
           isA<ViewerFacingOrientation>(),
         );
       });
@@ -544,15 +527,15 @@ void main() {
         final primitives = _dimension(
           from,
           c.to,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
           multiAxis: MultiAxisDimension.direct,
           offsetDirection: c.offset,
         );
         expect(
-          _labels(primitives).single.alignment.storage,
+          billboardsOf(primitives).single.alignment.storage,
           calloutAnchorAlignment(c.quadrant).storage,
         );
-        final lines = _lines(primitives);
+        final lines = linesOf(primitives);
         final dimensionLine = lines[2];
         final [angled, _] = lines.sublist(7);
         final expected = computeCalloutLeaderGeometry(
@@ -567,7 +550,7 @@ void main() {
           )!,
           quadrant: c.quadrant,
         );
-        expectVector(angled.end, expected.elbow, 'elbow');
+        expectVector3(angled.end, expected.elbow, 'elbow');
       });
     }
   });
@@ -576,7 +559,7 @@ void main() {
     final primitives = _dimension(
       vm.Vector3.zero(),
       vm.Vector3(30, 40, 5),
-      convention: DraftingConvention.asmeReferencing,
+      drafting: DraftingConvention.asmeReferencing,
       key: #dimension,
       opacity: 0.4,
     );
