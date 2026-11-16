@@ -73,6 +73,10 @@ _LEFT_EDGE_MIDDLE: Vector2 = (0.0, 0.5)
 _RIGHT_EDGE_MIDDLE: Vector2 = (1.0, 0.5)
 
 
+def _scale(v: Vector3, k: float) -> Vector3:
+    return (v[0] * k, v[1] * k, v[2] * k)
+
+
 def _along(origin: Vector3, direction: Vector3, distance: float) -> Vector3:
     return (
         origin[0] + direction[0] * distance,
@@ -101,16 +105,8 @@ def compute_callout_leader_geometry(
     right_scale = math.cos(angle) * h_sign
     up_scale = math.sin(angle) * v_sign
 
-    angled: Vector3 = (
-        camera_right[0] * right_scale + camera_up[0] * up_scale,
-        camera_right[1] * right_scale + camera_up[1] * up_scale,
-        camera_right[2] * right_scale + camera_up[2] * up_scale,
-    )
-    horizontal: Vector3 = (
-        camera_right[0] * h_sign,
-        camera_right[1] * h_sign,
-        camera_right[2] * h_sign,
-    )
+    angled = _along(_scale(camera_right, right_scale), camera_up, up_scale)
+    horizontal = _scale(camera_right, h_sign)
 
     gap_end = _along(anchor, angled, style.gap_pixels * world_units_per_pixel)
     elbow = _along(gap_end, angled, style.angled_length_pixels * world_units_per_pixel)
