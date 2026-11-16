@@ -67,44 +67,22 @@ void main() {
   });
 
   group('FilledRectangleFactory', () {
-    final cases = <(String, QuadPrimitive Function(), vm.Vector3)>[
-      (
-        'XY',
-        () => FilledRectangleFactory.createXYFilledRectangle(
+    final thirdCorners = {
+      RectanglePlane.xy: vm.Vector3(2, 1, 0),
+      RectanglePlane.xz: vm.Vector3(2, 0, 1),
+      RectanglePlane.yz: vm.Vector3(0, 2, 1),
+    };
+    for (final MapEntry(key: plane, value: thirdCorner)
+        in thirdCorners.entries) {
+      test('creates a ${plane.name} quad carrying its key and opacity', () {
+        final quad = FilledRectangleFactory.createFilledRectangle(
           center: vm.Vector3.zero(),
           width: 4,
           height: 2,
+          plane: plane,
           key: 'fill',
           opacity: 0.5,
-        ),
-        vm.Vector3(2, 1, 0),
-      ),
-      (
-        'XZ',
-        () => FilledRectangleFactory.createXZFilledRectangle(
-          center: vm.Vector3.zero(),
-          width: 4,
-          height: 2,
-          key: 'fill',
-          opacity: 0.5,
-        ),
-        vm.Vector3(2, 0, 1),
-      ),
-      (
-        'YZ',
-        () => FilledRectangleFactory.createYZFilledRectangle(
-          center: vm.Vector3.zero(),
-          width: 4,
-          height: 2,
-          key: 'fill',
-          opacity: 0.5,
-        ),
-        vm.Vector3(0, 2, 1),
-      ),
-    ];
-    for (final (plane, create, thirdCorner) in cases) {
-      test('creates a $plane quad carrying its key and opacity', () {
-        final quad = create();
+        );
         expect(quad.key, 'fill');
         expect(quad.opacity, 0.5);
         expect(quad.corners, hasLength(4));
@@ -114,36 +92,29 @@ void main() {
   });
 
   group('FilledRectangleFactory.createOutline', () {
-    final rectangle = FilledRectangleFactory.createXYFilledRectangle(
+    final rectangle = FilledRectangleFactory.createFilledRectangle(
       center: vm.Vector3.zero(),
       width: 4,
       height: 2,
+      plane: RectanglePlane.xy,
       key: 'fill',
+      opacity: 0.5,
     );
 
     test('emits the four perimeter lines at the width in pixels', () {
       final outline = FilledRectangleFactory.createOutline(
         rectangle,
         widthPixels: 0.5,
-        key: 'edge',
       );
       expect(outline, hasLength(4));
       for (final line in outline) {
         expect(line.widthPixels, 0.5);
-        expect(line.key, 'edge');
-        expect(line.opacity, 1.0);
+        expect(line.key, 'fill');
+        expect(line.opacity, 0.5);
       }
       expect(outline[0].start, _closeToVector(vm.Vector3(-2, -1, 0)));
       expect(outline[0].end, _closeToVector(vm.Vector3(2, -1, 0)));
       expect(outline[3].end, _closeToVector(vm.Vector3(-2, -1, 0)));
-    });
-
-    test('takes the quad key when given none', () {
-      final outline = FilledRectangleFactory.createOutline(
-        rectangle,
-        widthPixels: 1,
-      );
-      expect(outline.map((l) => l.key), everyElement('fill'));
     });
   });
 

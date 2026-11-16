@@ -58,45 +58,17 @@ List<vm.Vector3> rectangleCorners({
 /// Each rectangle is a [QuadPrimitive]. The app key passes through to the
 /// quad untouched.
 class FilledRectangleFactory {
-  /// Creates a filled rectangle in the XY plane.
-  static QuadPrimitive createXYFilledRectangle({
+  /// Creates a filled rectangle of [width] by [height] centered on
+  /// [center] in [plane], turned [rotation] radians within the plane.
+  static QuadPrimitive createFilledRectangle({
     required vm.Vector3 center,
     required double width,
     required double height,
+    required RectanglePlane plane,
     required Object? key,
     double opacity = 1.0,
     double rotation = 0.0,
-  }) => _create(center, width, height, .xy, key, opacity, rotation);
-
-  /// Creates a filled rectangle in the XZ plane.
-  static QuadPrimitive createXZFilledRectangle({
-    required vm.Vector3 center,
-    required double width,
-    required double height,
-    required Object? key,
-    double opacity = 1.0,
-    double rotation = 0.0,
-  }) => _create(center, width, height, .xz, key, opacity, rotation);
-
-  /// Creates a filled rectangle in the YZ plane.
-  static QuadPrimitive createYZFilledRectangle({
-    required vm.Vector3 center,
-    required double width,
-    required double height,
-    required Object? key,
-    double opacity = 1.0,
-    double rotation = 0.0,
-  }) => _create(center, width, height, .yz, key, opacity, rotation);
-
-  static QuadPrimitive _create(
-    vm.Vector3 center,
-    double width,
-    double height,
-    RectanglePlane plane,
-    Object? key,
-    double opacity,
-    double rotation,
-  ) => QuadPrimitive(
+  }) => QuadPrimitive(
     corners: rectangleCorners(
       center: center,
       width: width,
@@ -110,13 +82,11 @@ class FilledRectangleFactory {
 
   /// Returns the perimeter of [quad] as four lines, [widthPixels] wide.
   ///
-  /// Each line runs from one corner to the next. The lines carry [key], or
-  /// the quad's key when [key] is omitted, and the given [opacity].
+  /// Each line runs from one corner to the next and carries the quad's key
+  /// and opacity.
   static List<LinePrimitive> createOutline(
     QuadPrimitive quad, {
     required double widthPixels,
-    Object? key,
-    double opacity = 1.0,
   }) {
     final corners = quad.corners;
     return [
@@ -125,8 +95,8 @@ class FilledRectangleFactory {
           start: corners[i],
           end: corners[(i + 1) % corners.length],
           widthPixels: widthPixels,
-          key: key ?? quad.key,
-          opacity: opacity,
+          key: quad.key,
+          opacity: quad.opacity,
         ),
     ];
   }

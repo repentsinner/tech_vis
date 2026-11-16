@@ -64,34 +64,24 @@ class BoundingBoxFactory {
     final hi = bounds.maxBounds;
     final center = bounds.center;
     final size = bounds.size;
+    // Each pair of opposite faces lies in one plane, at the low and high
+    // bound of the axis normal to it.
+    final planes = [
+      (plane: RectanglePlane.xy, normal: 2, width: size.x, height: size.y),
+      (plane: RectanglePlane.xz, normal: 1, width: size.x, height: size.z),
+      (plane: RectanglePlane.yz, normal: 0, width: size.y, height: size.z),
+    ];
     return [
-      // XY plane faces (bottom and top)
-      for (final z in [lo.z, hi.z])
-        FilledRectangleFactory.createXYFilledRectangle(
-          center: vm.Vector3(center.x, center.y, z),
-          width: size.x.abs(),
-          height: size.y.abs(),
-          key: key,
-          opacity: opacity,
-        ),
-      // XZ plane faces (front and back)
-      for (final y in [lo.y, hi.y])
-        FilledRectangleFactory.createXZFilledRectangle(
-          center: vm.Vector3(center.x, y, center.z),
-          width: size.x.abs(),
-          height: size.z.abs(),
-          key: key,
-          opacity: opacity,
-        ),
-      // YZ plane faces (left and right)
-      for (final x in [lo.x, hi.x])
-        FilledRectangleFactory.createYZFilledRectangle(
-          center: vm.Vector3(x, center.y, center.z),
-          width: size.y.abs(),
-          height: size.z.abs(),
-          key: key,
-          opacity: opacity,
-        ),
+      for (final (:plane, :normal, :width, :height) in planes)
+        for (final bound in [lo, hi])
+          FilledRectangleFactory.createFilledRectangle(
+            center: center.clone()..[normal] = bound[normal],
+            width: width.abs(),
+            height: height.abs(),
+            plane: plane,
+            key: key,
+            opacity: opacity,
+          ),
     ];
   }
 }
