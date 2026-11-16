@@ -155,6 +155,9 @@ graph and draws them with its own engine (§req:constraints).
   has a fill. `FilledRectangleFactory.createOutline` emits a lone
   rectangle's perimeter, and `createCalloutLeaderLines` a callout
   leader's two segments.
+- The closed set covers world-space output. A viewport overlay is a
+  second, pixel-space output beside it, placed by
+  §spec:viewport-overlays, and is not a primitive.
 - The package defines no scene container, no renderer interface, and no
   type for scene content such as a loaded model.
 - A primitive or factory belongs in the package when a visualizer in an
@@ -313,6 +316,8 @@ A renderer shall:
   regardless of depth, and a higher rank over a lower one;
 - update per-frame transforms in every frame in which the camera or an
   anchor moves;
+- draw each viewport overlay inside the pixel rectangle its placement
+  gives, in a 2D layer above the scene (§spec:viewport-overlays);
 - take every annotation's geometry from its primitives, with no asset
   file (§req:constraints).
 
@@ -541,7 +546,7 @@ the next.
 
 ## Annotation primitives §spec:annotation-primitives
 
-*Status: not started*
+*Status: in progress*
 
 The package provides annotation primitives for engineering 3D scenes.
 Each primitive produces data, pure geometry and labels, without
@@ -611,11 +616,28 @@ overlays. An overlay is described in viewport pixels, not world
 coordinates, and the app draws it in a 2D layer above the scene.
 
 - An overlay anchors to one viewport corner, with an offset from that
-  corner in pixels.
-- Each overlay has a default corner, offset, and size, held as style
-  tokens. The app may override each one (§req:success-criteria).
+  corner in pixels. The offset points toward the viewport center, so one
+  offset keeps an overlay equally far from its two edges in any corner.
+- A placement is a corner, an offset, and a size. It resolves to a pixel
+  rectangle for a viewport size, in the screen coordinates of
+  `worldToScreen` (§spec:screen-space-placement). The rectangle is not
+  clipped to the viewport.
+- Each overlay kind has a default corner, offset, and size, held as style
+  tokens. The app may override each one, and an override changes only
+  that value (§req:success-criteria). A corner token holds a numeric
+  code, because every token is a number.
+- The default corners are distinct, so the three overlays share no
+  corner by default. The navigation cube sits top-right, where CAD tools
+  place a view cube. The scale bar sits bottom-left, and the color ramp
+  legend bottom-right. Top-left stays free for the app.
+- An overlay's content, such as a scale bar's ticks or a legend's
+  labels, is described in pixels inside its rectangle. It is a separate
+  output from the primitives of §spec:scene-model, which stay
+  world-space.
 - Given the same camera, viewport size, and settings, an overlay's
   description is identical in both packages.
+  `vectors/viewport_overlays.json` pins each kind's defaults and the
+  rectangles placements resolve to (§spec:golden-vectors).
 
 *Why pixels, not world geometry*: an overlay's job is to hold still
 while the scene moves. Placing it as world geometry near the camera
@@ -625,6 +647,17 @@ with no camera math in the test.
 
 *Tradeoff accepted*: the package has two kinds of output, a world-space
 scene and a pixel-space overlay. A renderer handles both.
+
+*Why not primitives with pixel coordinates*: every primitive's points are
+world points, and a renderer projects them. A Line or Billboard that held
+pixels in one use and world points in another would make each renderer
+check which it had, which is the ambiguity the closed set exists to
+remove (§spec:scene-model).
+
+*Why the offset points inward*: an offset measured along the viewport's
+axes would have to change sign with the corner. Measuring toward the
+center lets one default offset serve every corner, so overriding only
+the corner keeps the margin.
 
 ### Ground plane §spec:ground-plane
 
