@@ -21,12 +21,6 @@ Done when a merged `feat:` PR publishes both packages with no manual step.
 
 Closes §spec:golden-vectors and the layout half of §spec:python-package.
 
-### Python overlay annotations §road:python-overlay-annotations
-
-Port the scale bar and the navigation cube (§spec:scale-bar,
-§spec:navigation-cube), tested against `vectors/scale_bar.json` and
-`vectors/navigation_cube.json`.
-
 ### Python world annotations §road:python-world-annotations
 
 Port the ground plane and smart dimensions (§spec:ground-plane,
