@@ -26,22 +26,6 @@ Closes §spec:golden-vectors and the layout half of §spec:python-package.
 Port the leader-line functions to Python. Test them against
 `vectors/leader_line.json`.
 
-## Measurement and overlays §road:measurement-and-overlays
-
-Closes §spec:unit-system, which §road:annotation-primitives consumes. Its
-workstreams name the dependency.
-
-### Measurement formats §road:measurement-formats
-
-Format measurements in the metric, decimal-inch, and fractional-inch
-display formats, with each format's scale-bar and grid step sequences,
-one unit per label set, and the app's decimal marker and leading-zero
-choice, in `dart/lib/src/unit_system.dart` (§spec:unit-system).
-
-**Verify:** In `dart/`, format 1500 mm, 0.125 in, and 40.5 in in each
-display format and confirm the labels match §spec:unit-system, including
-`3' 4 1/2"` for fractional inch.
-
 ## Annotation primitives §road:annotation-primitives
 
 Closes §spec:annotation-primitives. Every workstream here emits the
@@ -50,18 +34,15 @@ typed primitives.
 ### Smart dimensions §road:smart-dimensions
 
 Point-to-point dimensions under the app's drafting convention
-(§spec:smart-dimensions, §spec:drafting-convention). Depends on
-§road:measurement-formats.
+(§spec:smart-dimensions, §spec:drafting-convention).
 
 ### Ground plane §road:ground-plane
 
-Adaptive grid with a major/minor hierarchy (§spec:ground-plane). Depends
-on §road:measurement-formats.
+Adaptive grid with a major/minor hierarchy (§spec:ground-plane).
 
 ### Scale bar §road:scale-bar
 
-Screen-space ruler with adaptive subdivision (§spec:scale-bar). Depends
-on §road:measurement-formats.
+Screen-space ruler with adaptive subdivision (§spec:scale-bar).
 
 ### Color ramp legend §road:color-ramp-legend
 
