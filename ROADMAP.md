@@ -40,10 +40,6 @@ Point-to-point dimensions under the app's drafting convention
 
 Adaptive grid with a major/minor hierarchy (§spec:ground-plane).
 
-### Scale bar §road:scale-bar
-
-Screen-space ruler with adaptive subdivision (§spec:scale-bar).
-
 ### Color ramp legend §road:color-ramp-legend
 
 Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
