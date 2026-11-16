@@ -872,7 +872,8 @@ dimension reads.
   as a leader-line callout.
 - Number formatting follows §spec:unit-system. The app names the unit
   system of its world coordinates, and the label is the measured length
-  written by the display format with no step.
+  written by the display format with no step. The component dimensions of one
+  pair of points form one label set, so they share a unit.
 - The dimension line sits a token-set number of pixels from the
   measured points, along a direction perpendicular to the measured one.
   The app may give the direction. By default it is the perpendicular

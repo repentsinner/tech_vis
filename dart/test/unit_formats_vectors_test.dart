@@ -84,12 +84,7 @@ void main() {
               .formatLabels(
                 jsonNumbers(input['values']),
                 step: step == null ? null : jsonNumber(step),
-                numbers: NumberFormatting(
-                  decimalMarker: DecimalMarker.values.byName(
-                    numbers['decimalMarker'] as String,
-                  ),
-                  showLeadingZero: numbers['showLeadingZero'] as bool,
-                ),
+                numbers: jsonNumberFormatting(numbers),
               ),
           (c['output'] as Json)['labels'],
           reason: c['name'] as String,

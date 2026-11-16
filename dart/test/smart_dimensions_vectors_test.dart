@@ -28,13 +28,8 @@ DimensionStyle _style(Object? json) {
 }
 
 List<Primitive> _create(Json input) {
-  final convention = input['convention'] as Json;
   final camera = input['camera'] as Json;
-  final numbers = input['numbers'] as Json;
-  final space = CoordinateConvention(
-    up: SpatialAxis.values.byName(convention['up'] as String),
-    handedness: Handedness.values.byName(convention['handedness'] as String),
-  );
+  final space = jsonConvention(input['convention']);
   return SmartDimensionFactory.create(
     from: jsonVector3(input['from']),
     to: jsonVector3(input['to']),
@@ -55,77 +50,9 @@ List<Primitive> _create(Json input) {
     offsetDirection: input['offsetDirection'] == null
         ? null
         : jsonVector3(input['offsetDirection']),
-    numbers: NumberFormatting(
-      decimalMarker: DecimalMarker.values.byName(
-        numbers['decimalMarker'] as String,
-      ),
-      showLeadingZero: numbers['showLeadingZero'] as bool,
-    ),
+    numbers: jsonNumberFormatting(input['numbers']),
     style: _style(input['style']),
   );
-}
-
-void _expectPrimitive(Primitive actual, Json want, String reason) {
-  expect(actual, isA<Primitive>());
-  switch (actual) {
-    case LinePrimitive():
-      expect(want['type'], 'line', reason: reason);
-      expectNumbers(actual.start.storage, want['start'], '$reason start');
-      expectNumbers(actual.end.storage, want['end'], '$reason end');
-      expect(
-        actual.widthPixels,
-        closeTo(jsonNumber(want['widthPixels']), vectorTolerance),
-        reason: '$reason width',
-      );
-    case BillboardPrimitive():
-      expect(want['type'], 'billboard', reason: reason);
-      expectNumbers(actual.anchor.storage, want['anchor'], '$reason anchor');
-      expectNumbers(
-        actual.alignment.storage,
-        want['alignment'],
-        '$reason alignment',
-      );
-      final orientation = want['orientation'] as Json;
-      switch (actual.orientation) {
-        case ViewerFacingOrientation():
-          expect(orientation['type'], 'viewerFacing', reason: reason);
-        case CoplanarOrientation(:final normal, :final right):
-          expect(orientation['type'], 'coplanar', reason: reason);
-          expectNumbers(normal.storage, orientation['normal'], '$reason n');
-          expectNumbers(right.storage, orientation['right'], '$reason r');
-      }
-      final offset = want['offset'] as Json?;
-      if (offset == null) {
-        expect(actual.offset, isNull, reason: '$reason offset');
-      } else {
-        expectNumbers(
-          actual.offset!.direction.storage,
-          offset['direction'],
-          '$reason offset direction',
-        );
-        expect(
-          actual.offset!.pixels,
-          closeTo(jsonNumber(offset['pixels']), vectorTolerance),
-          reason: '$reason offset pixels',
-        );
-      }
-      final request = want['textRequest'] as Json;
-      expect(
-        actual.content.value,
-        TextRequest(
-          text: request['text'] as String,
-          heightPixels: jsonNumber(request['heightPixels']),
-        ),
-        reason: '$reason text',
-      );
-      expectNumbers(
-        [actual.content.widthPixels, actual.content.heightPixels],
-        want['contentSize'],
-        '$reason content size',
-      );
-    case QuadPrimitive() || MarkerPrimitive() || MeshPrimitive():
-      fail('$reason: a dimension emits lines and billboards');
-  }
 }
 
 void main() {
@@ -157,7 +84,7 @@ void main() {
         final actual = _create(c['input'] as Json);
         expect(actual, hasLength(want.length), reason: name);
         for (var i = 0; i < want.length; i++) {
-          _expectPrimitive(actual[i], want[i], '$name [$i]');
+          expectWorldPrimitive(actual[i], want[i], '$name [$i]');
         }
       }
     });

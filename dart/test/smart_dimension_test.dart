@@ -84,18 +84,19 @@ void expectVector(vm.Vector3 actual, vm.Vector3 expected, String reason) {
 
 void main() {
   group('DraftingConvention', () {
+    const oriented = DimensionTextPlacement.oriented;
+    const inlined = DimensionTextPlacement.inlined;
+    const referencing = DimensionTextPlacement.referencing;
     final cases = [
-      (DraftingConvention.isoOriented, DraftingStandard.iso, false),
-      (DraftingConvention.isoReferencing, DraftingStandard.iso, true),
-      (DraftingConvention.asmeInlined, DraftingStandard.asme, false),
-      (DraftingConvention.asmeReferencing, DraftingStandard.asme, true),
+      (DraftingConvention.isoOriented, DraftingStandard.iso, oriented),
+      (DraftingConvention.isoReferencing, DraftingStandard.iso, referencing),
+      (DraftingConvention.asmeInlined, DraftingStandard.asme, inlined),
+      (DraftingConvention.asmeReferencing, DraftingStandard.asme, referencing),
     ];
-    for (final (convention, standard, referencing) in cases) {
-      test('${convention.name} is $standard and falls back in it', () {
+    for (final (convention, standard, placement) in cases) {
+      test('${convention.name} is ${standard.name}, ${placement.name}', () {
         expect(convention.standard, standard);
-        expect(convention.isReferencing, referencing);
-        expect(convention.referencing.standard, standard);
-        expect(convention.referencing.isReferencing, isTrue);
+        expect(convention.placement, placement);
       });
     }
   });
@@ -219,6 +220,15 @@ void main() {
         expect(_texts(primitives), c.texts);
       });
     }
+
+    test('component labels form one set and share a unit', () {
+      final primitives = _dimension(
+        vm.Vector3.zero(),
+        vm.Vector3(12000, 500, 0),
+        convention: DraftingConvention.isoReferencing,
+      );
+      expect(_texts(primitives), ['12 m', '0.5 m']);
+    });
 
     test('coincident points have no dimension', () {
       expect(_dimension(vm.Vector3(1, 2, 3), vm.Vector3(1, 2, 3)), isEmpty);

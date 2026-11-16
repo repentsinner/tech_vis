@@ -667,6 +667,11 @@ Map<String, Object?> _convention(CoordinateConvention c) => {
   'handedness': c.handedness.name,
 };
 
+Map<String, Object?> _numbers(NumberFormatting n) => {
+  'decimalMarker': n.decimalMarker.name,
+  'showLeadingZero': n.showLeadingZero,
+};
+
 Map<String, Object?> _cubeInput(NavigationCube cube) => {
   'convention': _convention(cube.convention),
   'front': {'axis': cube.front.axis.name, 'negative': cube.front.negative},
@@ -855,10 +860,7 @@ Map<String, Object?> unitFormatsFixture() => {
           'format': c.format.name,
           'values': c.values,
           'step': c.step,
-          'numbers': {
-            'decimalMarker': c.numbers.decimalMarker.name,
-            'showLeadingZero': c.numbers.showLeadingZero,
-          },
+          'numbers': _numbers(c.numbers),
         },
         'output': {
           'labels': c.format.formatLabels(
@@ -1035,10 +1037,7 @@ Map<String, Object?> scaleBarFixture() => {
                 ViewportOverlayPlacement.of(ViewportOverlayKind.scaleBar),
           ),
           'previousStep': c.previousStep,
-          'numbers': {
-            'decimalMarker': c.numbers.decimalMarker.name,
-            'showLeadingZero': c.numbers.showLeadingZero,
-          },
+          'numbers': _numbers(c.numbers),
           'minTickSpacingPixels': StyleTokens.scaleBarMinTickSpacingPixels,
           'hysteresis': StyleTokens.scaleBarStepHysteresis,
           'labelHeightPixels': StyleTokens.scaleBarLabelHeightPixels,
@@ -1156,26 +1155,6 @@ Map<String, Object?> _groundPatch(GroundPatch p) => switch (p) {
 
 /// A ground-grid primitive in world coordinates, with the key the case
 /// gave it.
-Map<String, Object?> _groundPrimitive(Primitive p) => switch (p) {
-  LinePrimitive() => {
-    'type': 'line',
-    'key': p.key,
-    'start': _vector(p.start),
-    'end': _vector(p.end),
-    'widthPixels': p.widthPixels,
-    'opacity': p.opacity,
-  },
-  BillboardPrimitive(content: BillboardContent(value: final TextRequest t)) => {
-    'type': 'billboard',
-    'key': p.key,
-    'anchor': _vector(p.anchor),
-    'alignment': _vector(p.alignment),
-    'textRequest': {'text': t.text, 'heightPixels': t.heightPixels},
-    'opacity': p.opacity,
-  },
-  _ => throw UnsupportedError('a ground grid emits lines and text labels'),
-};
-
 Map<String, Object?> _groundCase(_GroundCase c) {
   final camera = CameraBasis.lookAt(
     position: c.view.position,
@@ -1221,7 +1200,7 @@ Map<String, Object?> _groundCase(_GroundCase c) {
     'output': {
       'minorStep': grid.minorStep,
       'majorStep': grid.majorStep,
-      'primitives': [for (final p in grid.primitives) _groundPrimitive(p)],
+      'primitives': [for (final p in grid.primitives) _worldPrimitive(p)],
     },
   };
 }
@@ -1412,15 +1391,20 @@ Map<String, Object?> _dimensionStyle(DimensionStyle s) => {
 };
 
 /// A primitive as emitted, in world space.
+/// A line or billboard in world space, with its key and opacity, as the
+/// ground-plane and smart-dimension families record them.
 Map<String, Object?> _worldPrimitive(Primitive p) => switch (p) {
   LinePrimitive() => {
     'type': 'line',
+    'key': p.key,
     'start': _vector(p.start),
     'end': _vector(p.end),
     'widthPixels': p.widthPixels,
+    'opacity': p.opacity,
   },
   BillboardPrimitive() => {
     'type': 'billboard',
+    'key': p.key,
     'anchor': _vector(p.anchor),
     'orientation': switch (p.orientation) {
       ViewerFacingOrientation() => {'type': 'viewerFacing'},
@@ -1441,9 +1425,10 @@ Map<String, Object?> _worldPrimitive(Primitive p) => switch (p) {
         'heightPixels': request.heightPixels,
       },
     'contentSize': [p.content.widthPixels, p.content.heightPixels],
+    'opacity': p.opacity,
   },
   QuadPrimitive() || MarkerPrimitive() || MeshPrimitive() =>
-    throw UnsupportedError('a dimension emits lines and billboards'),
+    throw UnsupportedError('these families emit lines and billboards'),
 };
 
 Map<String, Object?> _dimension(_DimensionCase c) {
@@ -1476,10 +1461,7 @@ Map<String, Object?> _dimension(_DimensionCase c) {
       'drafting': c.drafting.name,
       'format': c.format.name,
       'worldUnits': c.worldUnits.name,
-      'convention': {
-        'up': c.convention.up.name,
-        'handedness': c.convention.handedness.name,
-      },
+      'convention': _convention(c.convention),
       'camera': {
         'position': _vector(c.view.position),
         'target': _vector(c.view.target),
@@ -1490,10 +1472,7 @@ Map<String, Object?> _dimension(_DimensionCase c) {
       'offsetDirection': c.offsetDirection == null
           ? null
           : _vector(c.offsetDirection!),
-      'numbers': {
-        'decimalMarker': c.numbers.decimalMarker.name,
-        'showLeadingZero': c.numbers.showLeadingZero,
-      },
+      'numbers': _numbers(c.numbers),
       'style': _dimensionStyle(c.style),
     },
     'output': {

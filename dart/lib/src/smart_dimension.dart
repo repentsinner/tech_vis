@@ -12,9 +12,6 @@ import 'unit_system.dart';
 /// Below this length, a vector is treated as zero.
 const double _epsilon = 1e-9;
 
-/// Opacity of a dimension unless the app sets one: fully opaque.
-const double _opaque = 1.0;
-
 /// Alignment of oriented text: the middle of its bottom edge on the anchor.
 final vm.Vector2 _bottomCenter = vm.Vector2(0.5, 0);
 
@@ -27,6 +24,18 @@ enum DraftingStandard {
   asme,
 }
 
+/// Where a dimension's text sits relative to its dimension line.
+enum DimensionTextPlacement {
+  /// Parallel to the dimension line, above it, turned to stay upright.
+  oriented,
+
+  /// Horizontal, in a break in the dimension line.
+  inlined,
+
+  /// Horizontal, on a reference line led off the dimension line.
+  referencing,
+}
+
 /// A drafting standard and a style within it, which together decide where
 /// a dimension's text sits and which way it reads.
 ///
@@ -35,34 +44,29 @@ enum DraftingStandard {
 enum DraftingConvention {
   /// ISO, with text parallel to the dimension line, above it, turned to
   /// stay upright.
-  isoOriented(DraftingStandard.iso),
+  isoOriented(DraftingStandard.iso, DimensionTextPlacement.oriented),
 
   /// ISO, with horizontal text on a reference line led off the dimension
   /// line.
-  isoReferencing(DraftingStandard.iso),
+  isoReferencing(DraftingStandard.iso, DimensionTextPlacement.referencing),
 
   /// ASME, with horizontal text in a break in the dimension line.
-  asmeInlined(DraftingStandard.asme),
+  asmeInlined(DraftingStandard.asme, DimensionTextPlacement.inlined),
 
   /// ASME, with horizontal text on a reference line led off the dimension
   /// line.
-  asmeReferencing(DraftingStandard.asme);
+  asmeReferencing(DraftingStandard.asme, DimensionTextPlacement.referencing);
 
-  const DraftingConvention(this.standard);
+  const DraftingConvention(this.standard, this.placement);
 
   /// The standard this convention belongs to.
   final DraftingStandard standard;
 
-  /// Whether text sits on a reference line led off the dimension line.
-  bool get isReferencing => this == isoReferencing || this == asmeReferencing;
-
-  /// The referencing style of this convention's standard, which a
-  /// dimension falls back to when its text does not fit between its
-  /// witness lines on screen.
-  DraftingConvention get referencing => switch (standard) {
-    DraftingStandard.iso => isoReferencing,
-    DraftingStandard.asme => asmeReferencing,
-  };
+  /// Where this convention puts a dimension's text.
+  ///
+  /// Oriented and inlined text that does not fit between its witness
+  /// lines on screen falls back to referencing, under the same standard.
+  final DimensionTextPlacement placement;
 }
 
 /// What a dimension between points that differ along more than one axis
@@ -184,7 +188,7 @@ class SmartDimensionFactory {
     vm.Vector3? offsetDirection,
     NumberFormatting numbers = const NumberFormatting(),
     DimensionStyle style = const DimensionStyle(),
-    double opacity = _opaque,
+    double opacity = 1.0,
   }) {
     final delta = to - from;
     final distance = delta.length;
@@ -192,9 +196,8 @@ class SmartDimensionFactory {
 
     final varying = [
       for (final axis in SpatialAxis.values)
-        if (delta.dot(axis.unitVector).abs() >
-            style.alignmentTolerance * distance)
-          axis.unitVector * delta.dot(axis.unitVector).sign,
+        if (delta[axis.index].abs() > style.alignmentTolerance * distance)
+          axis.unitVector * delta[axis.index].sign,
     ];
     final directions =
         varying.length == 1 ||
@@ -202,22 +205,32 @@ class SmartDimensionFactory {
         ? varying
         : [delta / distance];
 
+    // The dimensions of one call show together, so their labels form one
+    // set and share a unit.
+    final labels = format.formatLabels([
+      for (final direction in directions)
+        worldUnits.convertTo(delta.dot(direction), format.unitSystem),
+    ], numbers: numbers);
+
     final builder = _DimensionBuilder(
       camera: camera,
       verticalFovRadians: verticalFovRadians,
       viewportSize: viewportSize,
       convention: convention,
-      format: format,
-      worldUnits: worldUnits,
-      numbers: numbers,
       style: style,
       resolveText: resolveText,
       key: key,
       opacity: opacity,
     );
     final primitives = <Primitive>[];
-    for (final direction in directions) {
-      final dimension = builder.build(from, to, direction, offsetDirection);
+    for (var i = 0; i < directions.length; i++) {
+      final dimension = builder.build(
+        from,
+        to,
+        directions[i],
+        offsetDirection,
+        labels[i],
+      );
       if (dimension == null) return const [];
       primitives.addAll(dimension);
     }
@@ -231,9 +244,6 @@ class _DimensionBuilder {
     required this.verticalFovRadians,
     required this.viewportSize,
     required this.convention,
-    required this.format,
-    required this.worldUnits,
-    required this.numbers,
     required this.style,
     required this.resolveText,
     required this.key,
@@ -244,9 +254,6 @@ class _DimensionBuilder {
   final double verticalFovRadians;
   final vm.Vector2 viewportSize;
   final DraftingConvention convention;
-  final DisplayFormat format;
-  final UnitSystem worldUnits;
-  final NumberFormatting numbers;
   final DimensionStyle style;
   final TextResolver resolveText;
   final Object? key;
@@ -302,6 +309,7 @@ class _DimensionBuilder {
     vm.Vector3 to,
     vm.Vector3 direction,
     vm.Vector3? requestedOffset,
+    String label,
   ) {
     final measured = (to - from).dot(direction);
     final pointsPixel = _pixel((from + to) / 2);
@@ -354,9 +362,6 @@ class _DimensionBuilder {
       );
     }
 
-    final label = format.formatLabels([
-      worldUnits.convertTo(measured, format.unitSystem),
-    ], numbers: numbers).single;
     final content = resolveText(
       TextRequest(text: label, heightPixels: style.textPixelSize),
     );
@@ -367,7 +372,7 @@ class _DimensionBuilder {
     final screenDirection = lineOnScreen.length > _epsilon
         ? lineOnScreen.normalized()
         : vm.Vector2.zero();
-    final textExtent = convention == DraftingConvention.isoOriented
+    final textExtent = convention.placement == DimensionTextPlacement.oriented
         ? content.widthPixels
         : content.widthPixels * screenDirection.x.abs() +
               content.heightPixels * screenDirection.y.abs();
@@ -376,16 +381,16 @@ class _DimensionBuilder {
         lineOnScreen.length > _epsilon &&
         textExtent + 2 * (style.arrowLengthPixels + style.textGapPixels) <=
             screenLength;
-    final placement = convention.isReferencing || fits
-        ? convention
-        : convention.referencing;
+    final placement = fits
+        ? convention.placement
+        : DimensionTextPlacement.referencing;
 
     final primitives = <Primitive>[
       witness(from, footFrom, fromPixel, footFromPixel),
       witness(to, footTo, toPixel, footToPixel),
     ];
 
-    if (placement == DraftingConvention.asmeInlined) {
+    if (placement == DimensionTextPlacement.inlined) {
       // Half the break, converted from pixels along the line's screen
       // direction to world units along the line.
       final halfBreak =
@@ -404,9 +409,9 @@ class _DimensionBuilder {
       ..addAll(_arrowhead(footTo, -direction, footToPixel));
 
     switch (placement) {
-      case DraftingConvention.isoOriented:
+      case DimensionTextPlacement.oriented:
         primitives.add(_orientedText(content, middle, lineOnScreen));
-      case DraftingConvention.asmeInlined:
+      case DimensionTextPlacement.inlined:
         primitives.add(
           BillboardPrimitive(
             content: content,
@@ -415,8 +420,7 @@ class _DimensionBuilder {
             opacity: opacity,
           ),
         );
-      case DraftingConvention.isoReferencing ||
-          DraftingConvention.asmeReferencing:
+      case DimensionTextPlacement.referencing:
         final quadrant = _referenceQuadrant(screenDirection, _onScreen(offset));
         final leader = computeCalloutLeaderGeometry(
           anchor: middle,
@@ -490,19 +494,8 @@ class _DimensionBuilder {
   /// [along]. When no quadrant leaves on the outer side, every quadrant
   /// competes. Ties go to the earlier quadrant.
   CalloutQuadrant _referenceQuadrant(vm.Vector2 along, vm.Vector2 outward) {
-    final angle = style.leader.angleDegrees * math.pi / 180;
-    vm.Vector2 leaving(CalloutQuadrant q) => switch (q) {
-      CalloutQuadrant.topRight => vm.Vector2(math.cos(angle), math.sin(angle)),
-      CalloutQuadrant.topLeft => vm.Vector2(-math.cos(angle), math.sin(angle)),
-      CalloutQuadrant.bottomRight => vm.Vector2(
-        math.cos(angle),
-        -math.sin(angle),
-      ),
-      CalloutQuadrant.bottomLeft => vm.Vector2(
-        -math.cos(angle),
-        -math.sin(angle),
-      ),
-    };
+    vm.Vector2 leaving(CalloutQuadrant q) =>
+        calloutLeaderDirection(q, style: style.leader);
     final outer = [
       for (final q in CalloutQuadrant.values)
         if (leaving(q).dot(outward) > _epsilon) q,

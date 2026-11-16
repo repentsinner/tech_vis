@@ -17,14 +17,6 @@ CameraBasis _camera(Object? json) {
   );
 }
 
-NumberFormatting _numbers(Object? json) {
-  final n = json! as Json;
-  return NumberFormatting(
-    decimalMarker: DecimalMarker.values.byName(n['decimalMarker'] as String),
-    showLeadingZero: n['showLeadingZero'] as bool,
-  );
-}
-
 void main() {
   final skip = skipUnlessPresent(_fixture);
 
@@ -55,7 +47,7 @@ void main() {
           format: DisplayFormat.values.byName(input['format'] as String),
           placement: jsonPlacement(input['placement']),
           previousStep: previous == null ? null : jsonNumber(previous),
-          numbers: _numbers(input['numbers']),
+          numbers: jsonNumberFormatting(input['numbers']),
           minTickSpacingPixels: jsonNumber(input['minTickSpacingPixels']),
           hysteresis: jsonNumber(input['hysteresis']),
           labelHeightPixels: jsonNumber(input['labelHeightPixels']),
