@@ -17,20 +17,6 @@ Both registries need a first step that automation cannot take.
 
 Done when a merged `feat:` PR publishes both packages with no manual step.
 
-## Shared layout §road:shared-layout
-
-Closes §spec:golden-vectors and the layout half of §spec:python-package.
-
-### Python world annotations §road:python-world-annotations
-
-Port the ground plane and smart dimensions (§spec:ground-plane,
-§spec:smart-dimensions), tested against `vectors/ground_plane.json` and
-`vectors/smart_dimensions.json`.
-
-**Verify:** In `python/`, run `uv run pytest` and confirm every fixture
-family in `vectors/` has a passing Python test, with the same tolerance
-as its Dart test.
-
 ## Annotation primitives §road:annotation-primitives
 
 Closes §spec:annotation-primitives. Every workstream here emits the
