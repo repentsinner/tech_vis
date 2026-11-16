@@ -260,12 +260,16 @@ The declared convention decides:
   straight along the up axis;
 - the plane a ground plane lies in;
 - which navigation cube face is Top;
+- the top face of a box that an envelope label sits on, and the
+  direction its text runs;
 - mesh triangle winding, so that faces point outward in either
   handedness.
 
 The fallback axis is the axis before the up axis in the cycle X, Y, Z,
-so a Z-up top view keeps +Y up on screen. Screen axes and face normals
-take their cross products by the declared hand rule.
+so a Z-up top view keeps +Y up on screen. Screen axes, face normals,
+and label text directions take their cross products by the declared hand
+rule. A label's text runs along the fallback axis crossed with the up
+axis, so it reads left to right in a top view.
 
 *Why declare, not convert*: without a declaration the package either
 assumes one convention, or ships a converter that every app calls on
