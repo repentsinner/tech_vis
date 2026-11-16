@@ -627,6 +627,126 @@ Map<String, Object?> viewportOverlaysFixture() => {
   ],
 };
 
+const _yUpLeft = CoordinateConvention(
+  up: SpatialAxis.y,
+  handedness: Handedness.left,
+);
+
+/// Camera offsets from the target: straight along each world axis, along
+/// a cube diagonal where three faces tie, and three oblique views.
+final _cubeViewOffsets = <({String name, vm.Vector3 offset})>[
+  for (final axis in SpatialAxis.values) ...[
+    (name: '+${axis.label}', offset: axis.unitVector * 10),
+    (name: '-${axis.label}', offset: axis.unitVector * -10),
+  ],
+  (name: 'diagonal', offset: vm.Vector3(5, 5, 5)),
+  (name: 'oblique', offset: vm.Vector3(-3, 1.5, 4.25)),
+  (name: 'oblique from below', offset: vm.Vector3(2, -6, -1.5)),
+];
+
+typedef _Cube = ({
+  String name,
+  CoordinateConvention convention,
+  vm.Vector3? front,
+});
+
+/// Each convention's cube with its derived front, plus one app-named front.
+List<_Cube> _cubes() => [
+  for (final convention in [_yUpRight, _yUpLeft, _zUpRight, _zUpLeft])
+    (name: '$convention', convention: convention, front: null),
+  (
+    name: '$_yUpRight, front +Z',
+    convention: _yUpRight,
+    front: vm.Vector3(0, 0, 1),
+  ),
+];
+
+Map<String, Object?> _cubeInput(_Cube c) => {
+  'convention': {
+    'up': c.convention.up.name,
+    'handedness': c.convention.handedness.name,
+  },
+  'front': c.front == null ? null : _vector(c.front!),
+};
+
+Map<String, Object?> _cubeFaces(_Cube c) {
+  final cube = NavigationCube(convention: c.convention, front: c.front);
+  return {
+    for (final face in NavigationCubeFace.values)
+      face.name: {
+        'label': face.label,
+        'normal': _vector(cube.normal(face)),
+        'textRight': _vector(cube.textRight(face)),
+        'textUp': _vector(cube.textUp(face)),
+      },
+  };
+}
+
+Map<String, Object?> _cubeView(
+  _Cube c,
+  ({String name, vm.Vector3 offset}) view,
+  ViewportOverlayPlacement placement,
+  vm.Vector2 viewport,
+) {
+  final cube = NavigationCube(convention: c.convention, front: c.front);
+  final camera = CameraBasis.lookAt(
+    position: view.offset,
+    target: vm.Vector3.zero(),
+    convention: c.convention,
+  );
+  final rect = placement.rect(viewport);
+  return {
+    'name': '${c.name}, camera at ${view.name}, ${placement.corner.name}',
+    'input': {
+      ..._cubeInput(c),
+      'cameraPosition': _vector(view.offset),
+      'cameraTarget': [0.0, 0.0, 0.0],
+      'rect': [rect.left, rect.top, rect.right, rect.bottom],
+    },
+    'output': {
+      'faces': [
+        for (final v in cube.visibleFaces(camera, rect))
+          {
+            'face': v.face.name,
+            'label': v.face.label,
+            'facing': v.facing,
+            'corners': [for (final p in v.corners) _vector(p)],
+          },
+      ],
+    },
+  };
+}
+
+/// The navigation-cube fixture: each cube's face frames, and the faces a
+/// camera sees in the default rectangle and in a non-square one.
+Map<String, Object?> navigationCubeFixture() {
+  final viewport = vm.Vector2(1280, 720);
+  final placements = [
+    ViewportOverlayPlacement.of(ViewportOverlayKind.navigationCube),
+    ViewportOverlayPlacement.of(
+      ViewportOverlayKind.navigationCube,
+      corner: ViewportCorner.bottomLeft,
+      widthPixels: 150,
+      heightPixels: 120,
+    ),
+  ];
+  return {
+    'screenCoordinates':
+        'pixels from the top-left corner of the viewport, x right, y down',
+    'cornerOrder': "label's bottom-left, bottom-right, top-right, top-left",
+    'NavigationCube.faces': [
+      for (final c in _cubes())
+        {'name': c.name, 'input': _cubeInput(c), 'output': _cubeFaces(c)},
+    ],
+    'NavigationCube.visibleFaces': [
+      for (final c in _cubes())
+        for (final placement in placements)
+          for (final view in _cubeViewOffsets)
+            _cubeView(c, view, placement, viewport),
+    ],
+  };
+}
+
 /// Lengths, in each format's base unit, that land on, between, and either
 /// side of the leading run of fractional-inch steps.
 const _stepLengths = <double>[
@@ -767,6 +887,7 @@ void main(List<String> args) {
     ),
     'vectors/viewport_overlays.json': _render(viewportOverlaysFixture()),
     'vectors/unit_formats.json': _render(unitFormatsFixture()),
+    'vectors/navigation_cube.json': _render(navigationCubeFixture()),
   };
 
   final stale = [
