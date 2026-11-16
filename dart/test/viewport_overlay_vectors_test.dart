@@ -7,17 +7,6 @@ import 'support/vectors.dart';
 
 final _fixture = vectorFixture('viewport_overlays.json');
 
-ViewportOverlayPlacement _placement(Object? json) {
-  final p = json! as Json;
-  return ViewportOverlayPlacement(
-    corner: ViewportCorner.values.byName(p['corner'] as String),
-    offsetXPixels: jsonNumber(p['offsetXPixels']),
-    offsetYPixels: jsonNumber(p['offsetYPixels']),
-    widthPixels: jsonNumber(p['widthPixels']),
-    heightPixels: jsonNumber(p['heightPixels']),
-  );
-}
-
 void main() {
   final skip = skipUnlessPresent(_fixture);
 
@@ -44,7 +33,7 @@ void main() {
         );
         expect(
           ViewportOverlayPlacement.of(kind),
-          _placement(c['output']),
+          jsonPlacement(c['output']),
           reason: c['name'] as String,
         );
       }
@@ -55,7 +44,7 @@ void main() {
       expect(cases, isNotEmpty);
       for (final c in cases) {
         final input = c['input'] as Json;
-        final rect = _placement(
+        final rect = jsonPlacement(
           input['placement'],
         ).rect(jsonVector2(input['viewport']));
         expectNumbers(
