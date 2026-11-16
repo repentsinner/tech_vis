@@ -91,6 +91,27 @@ class CalloutLeaderGeometry {
   });
 }
 
+/// The horizontal and vertical sign of [quadrant]'s corner, on screen
+/// with y up.
+(double, double) _quadrantSigns(CalloutQuadrant quadrant) => switch (quadrant) {
+  CalloutQuadrant.topRight => (1.0, 1.0),
+  CalloutQuadrant.topLeft => (-1.0, 1.0),
+  CalloutQuadrant.bottomRight => (1.0, -1.0),
+  CalloutQuadrant.bottomLeft => (-1.0, -1.0),
+};
+
+/// Returns the unit screen direction, y up, in which [quadrant]'s leader
+/// leaves its anchor: [LeaderLineStyle.angleDegrees] above or below the
+/// horizontal, toward the quadrant's corner.
+vm.Vector2 calloutLeaderDirection(
+  CalloutQuadrant quadrant, {
+  LeaderLineStyle style = const LeaderLineStyle(),
+}) {
+  final angleRad = style.angleDegrees * math.pi / 180.0;
+  final (hSign, vSign) = _quadrantSigns(quadrant);
+  return vm.Vector2(math.cos(angleRad) * hSign, math.sin(angleRad) * vSign);
+}
+
 /// Compute leader line geometry in camera-aligned world space.
 ///
 /// Projects a 2D screen-space leader line (gap → angled → horizontal)
@@ -108,28 +129,9 @@ CalloutLeaderGeometry computeCalloutLeaderGeometry({
   required CalloutQuadrant quadrant,
   LeaderLineStyle style = const LeaderLineStyle(),
 }) {
-  final angleRad = style.angleDegrees * math.pi / 180.0;
-
-  final double hSign;
-  final double vSign;
-  switch (quadrant) {
-    case CalloutQuadrant.topRight:
-      hSign = 1.0;
-      vSign = 1.0;
-    case CalloutQuadrant.topLeft:
-      hSign = -1.0;
-      vSign = 1.0;
-    case CalloutQuadrant.bottomRight:
-      hSign = 1.0;
-      vSign = -1.0;
-    case CalloutQuadrant.bottomLeft:
-      hSign = -1.0;
-      vSign = -1.0;
-  }
-
-  final angledDir =
-      cameraRight * (math.cos(angleRad) * hSign) +
-      cameraUp * (math.sin(angleRad) * vSign);
+  final (hSign, _) = _quadrantSigns(quadrant);
+  final screen = calloutLeaderDirection(quadrant, style: style);
+  final angledDir = cameraRight * screen.x + cameraUp * screen.y;
   final horizontalDir = cameraRight * hSign;
 
   final gapEnd = anchor + angledDir * (style.gapPixels * worldUnitsPerPixel);

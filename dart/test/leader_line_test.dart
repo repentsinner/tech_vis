@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
@@ -168,6 +170,41 @@ void main() {
 
       expect(result.labelEdge.x, lessThan(0));
       expect(result.labelEdge.y, lessThan(0));
+    });
+  });
+
+  group('calloutLeaderDirection', () {
+    const style = LeaderLineStyle(angleDegrees: 45);
+    for (final (quadrant, x, y) in [
+      (CalloutQuadrant.topRight, 1.0, 1.0),
+      (CalloutQuadrant.topLeft, -1.0, 1.0),
+      (CalloutQuadrant.bottomRight, 1.0, -1.0),
+      (CalloutQuadrant.bottomLeft, -1.0, -1.0),
+    ]) {
+      test('${quadrant.name} leaves at the style angle toward its corner', () {
+        final direction = calloutLeaderDirection(quadrant, style: style);
+        expect(direction.x, closeTo(x * math.sqrt1_2, 1e-9));
+        expect(direction.y, closeTo(y * math.sqrt1_2, 1e-9));
+      });
+    }
+
+    test('matches the angled segment of the leader geometry', () {
+      final right = vm.Vector3(1, 0, 0);
+      final up = vm.Vector3(0, 1, 0);
+      for (final quadrant in CalloutQuadrant.values) {
+        final leader = computeCalloutLeaderGeometry(
+          anchor: vm.Vector3.zero(),
+          cameraRight: right,
+          cameraUp: up,
+          worldUnitsPerPixel: 1,
+          quadrant: quadrant,
+          style: style,
+        );
+        final segment = (leader.elbow - leader.gapEnd).normalized();
+        final direction = calloutLeaderDirection(quadrant, style: style);
+        expect(segment.x, closeTo(direction.x, 1e-9), reason: quadrant.name);
+        expect(segment.y, closeTo(direction.y, 1e-9), reason: quadrant.name);
+      }
     });
   });
 

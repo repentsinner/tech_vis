@@ -77,7 +77,8 @@ final class ViewerFacingOrientation extends BillboardOrientation {
 /// [normal], its horizontal axis along [right].
 ///
 /// The content keeps its pixel size when viewed along the normal and
-/// foreshortens with perspective at oblique angles.
+/// foreshortens with perspective at oblique angles. Its vertical axis is
+/// [normal] cross [right] by the declared hand rule.
 final class CoplanarOrientation extends BillboardOrientation {
   const CoplanarOrientation({required this.normal, required this.right});
 
