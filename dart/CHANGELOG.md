@@ -1,6 +1,6 @@
 # Changelog
 
-Current version: 0.2.0
+Current version: 0.3.0
 
 Both `tech_vis` packages release together from one repository. The notes
 for every version are in

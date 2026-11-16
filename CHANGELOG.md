@@ -1,3 +1,12 @@
+# [0.3.0](https://github.com/repentsinner/tech_vis/compare/v0.2.0...v0.3.0) (2026-11-16)
+
+
+### Features
+
+* **dart:** draw coordinate frames as scene objects ([5a52318](https://github.com/repentsinner/tech_vis/commit/5a52318058cf6c4f900c5c32da8b6358277fb149))
+* **dart:** emit bounding box edges once, as lines ([d789192](https://github.com/repentsinner/tech_vis/commit/d7891923acbe3c3077ff7b9b76a33d3807a6baa2))
+* **dart:** use 64-bit vectors and matrices in the public API ([8806770](https://github.com/repentsinner/tech_vis/commit/8806770deb3bf1220b39edcbc5e75977c96f4a71))
+
 # [0.2.0](https://github.com/repentsinner/tech_vis/compare/v0.1.0...v0.2.0) (2026-11-16)
 
 
