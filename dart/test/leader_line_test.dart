@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
+
+import 'support/fake_text_resolver.dart';
 
 void main() {
   group('LeaderLineStyle', () {
@@ -169,6 +173,41 @@ void main() {
     });
   });
 
+  group('calloutLeaderDirection', () {
+    const style = LeaderLineStyle(angleDegrees: 45);
+    for (final (quadrant, x, y) in [
+      (CalloutQuadrant.topRight, 1.0, 1.0),
+      (CalloutQuadrant.topLeft, -1.0, 1.0),
+      (CalloutQuadrant.bottomRight, 1.0, -1.0),
+      (CalloutQuadrant.bottomLeft, -1.0, -1.0),
+    ]) {
+      test('${quadrant.name} leaves at the style angle toward its corner', () {
+        final direction = calloutLeaderDirection(quadrant, style: style);
+        expect(direction.x, closeTo(x * math.sqrt1_2, 1e-9));
+        expect(direction.y, closeTo(y * math.sqrt1_2, 1e-9));
+      });
+    }
+
+    test('matches the angled segment of the leader geometry', () {
+      final right = vm.Vector3(1, 0, 0);
+      final up = vm.Vector3(0, 1, 0);
+      for (final quadrant in CalloutQuadrant.values) {
+        final leader = computeCalloutLeaderGeometry(
+          anchor: vm.Vector3.zero(),
+          cameraRight: right,
+          cameraUp: up,
+          worldUnitsPerPixel: 1,
+          quadrant: quadrant,
+          style: style,
+        );
+        final segment = (leader.elbow - leader.gapEnd).normalized();
+        final direction = calloutLeaderDirection(quadrant, style: style);
+        expect(segment.x, closeTo(direction.x, 1e-9), reason: quadrant.name);
+        expect(segment.y, closeTo(direction.y, 1e-9), reason: quadrant.name);
+      }
+    });
+  });
+
   group('calloutAnchorAlignment', () {
     test('right quadrants anchor at left edge', () {
       expect(
@@ -193,7 +232,76 @@ void main() {
     });
   });
 
-  /// @spec §spec:billboard-labels — Callout opacity fades with anchor distance
+  group('createCalloutLabel', () {
+    final cases = <(CalloutQuadrant, vm.Vector2)>[
+      (CalloutQuadrant.topRight, vm.Vector2(0, 0.5)),
+      (CalloutQuadrant.bottomRight, vm.Vector2(0, 0.5)),
+      (CalloutQuadrant.topLeft, vm.Vector2(1, 0.5)),
+      (CalloutQuadrant.bottomLeft, vm.Vector2(1, 0.5)),
+    ];
+    for (final (quadrant, alignment) in cases) {
+      test('sets the label at the leader end, ${quadrant.name}', () {
+        final leader = computeCalloutLeaderGeometry(
+          anchor: vm.Vector3(1, 2, 3),
+          cameraRight: vm.Vector3(1, 0, 0),
+          cameraUp: vm.Vector3(0, 1, 0),
+          worldUnitsPerPixel: 0.5,
+          quadrant: quadrant,
+        );
+        final content = fakeTextResolver(
+          const TextRequest(
+            text: 'note',
+            heightPixels: SceneLayoutConstants.calloutLabelPixelSize,
+          ),
+        );
+        final label = createCalloutLabel(
+          leader: leader,
+          quadrant: quadrant,
+          content: content,
+          key: 'callout',
+          opacity: 0.25,
+        );
+        expect(label.anchor, leader.labelEdge);
+        expect(label.alignment, alignment);
+        expect(label.orientation, isA<ViewerFacingOrientation>());
+        expect(label.offset, isNull);
+        expect(label.content, same(content));
+        expect(label.key, 'callout');
+        expect(label.opacity, 0.25);
+      });
+    }
+  });
+
+  group('createCalloutLeaderLines', () {
+    test('draws the leader as its two segments at its own width', () {
+      // A custom width the call below does not repeat, so the lines can
+      // only take it from the leader.
+      final leader = computeCalloutLeaderGeometry(
+        anchor: vm.Vector3(1, 2, 3),
+        cameraRight: vm.Vector3(1, 0, 0),
+        cameraUp: vm.Vector3(0, 1, 0),
+        worldUnitsPerPixel: 0.5,
+        quadrant: CalloutQuadrant.topLeft,
+        style: const LeaderLineStyle(lineWidth: 2),
+      );
+      final lines = createCalloutLeaderLines(
+        leader: leader,
+        key: 'callout',
+        opacity: 0.25,
+      );
+      expect(lines, hasLength(2));
+      expect(lines[0].start, leader.gapEnd);
+      expect(lines[0].end, leader.elbow);
+      expect(lines[1].start, leader.elbow);
+      expect(lines[1].end, leader.labelEdge);
+      for (final line in lines) {
+        expect(line.widthPixels, 2);
+        expect(line.key, 'callout');
+        expect(line.opacity, 0.25);
+      }
+    });
+  });
+
   group('computeCalloutOpacity', () {
     test('returns max opacity at near distance', () {
       expect(

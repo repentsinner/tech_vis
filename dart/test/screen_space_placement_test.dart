@@ -4,23 +4,20 @@ import 'package:tech_vis/tech_vis.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'support/pinhole.dart';
+
 // The golden-vector tolerance of §spec:golden-vectors.
 const _tolerance = 1e-9;
 const _pixelTolerance = 1e-9;
 const _fov = math.pi / 4;
 const _viewportHeight = 1080.0;
 
-/// Projects [point] through a pinhole camera and returns its pixel
-/// position relative to the viewport center, y up.
-vm.Vector2 _project(vm.Vector3 point, CameraBasis camera) {
-  final focalPixels = (_viewportHeight / 2.0) / math.tan(_fov / 2.0);
-  final relative = point - camera.position;
-  final depth = relative.dot(camera.forward);
-  return vm.Vector2(
-    relative.dot(camera.right) * focalPixels / depth,
-    relative.dot(camera.up) * focalPixels / depth,
-  );
-}
+vm.Vector2 _project(vm.Vector3 point, CameraBasis camera) => projectPinhole(
+  point,
+  camera,
+  verticalFovRadians: _fov,
+  viewportHeight: _viewportHeight,
+);
 
 Matcher _closeToVector(vm.Vector3 expected) => predicate<vm.Vector3>(
   (actual) => (actual - expected).length < _tolerance,
@@ -206,6 +203,79 @@ void main() {
           ),
           isNull,
         );
+      }
+    });
+  });
+
+  group('ScreenSpaceUtils.worldToScreen', () {
+    final viewport = vm.Vector2(1920, _viewportHeight);
+    final oblique = CameraBasis.lookAt(
+      position: vm.Vector3(30, -40, 25),
+      target: vm.Vector3(1, 2, 3),
+      convention: _zUpRightHanded,
+    );
+
+    vm.Vector2? project(vm.Vector3 point, CameraBasis basis) =>
+        ScreenSpaceUtils.worldToScreen(point, basis, _fov, viewport);
+
+    test('puts the view target at the viewport center', () {
+      final center = project(vm.Vector3(1, 2, 3), oblique)!;
+      expect(center.x, closeTo(viewport.x / 2, _pixelTolerance));
+      expect(center.y, closeTo(viewport.y / 2, _pixelTolerance));
+    });
+
+    test('runs x right and y down from the top-left corner', () {
+      final center = project(vm.Vector3(1, 2, 3), oblique)!;
+      final right = project(vm.Vector3(1, 2, 3) + oblique.right, oblique)!;
+      final up = project(vm.Vector3(1, 2, 3) + oblique.up, oblique)!;
+      expect(right.x, greaterThan(center.x));
+      expect(right.y, closeTo(center.y, _pixelTolerance));
+      expect(up.y, lessThan(center.y));
+      expect(up.x, closeTo(center.x, _pixelTolerance));
+    });
+
+    test('agrees with an independent pinhole projection', () {
+      for (final point in [
+        vm.Vector3(4, -7, 9),
+        vm.Vector3(-12, 3, 0.5),
+        vm.Vector3(20, 15, -6),
+      ]) {
+        final pinhole = projectPinhole(
+          point,
+          oblique,
+          verticalFovRadians: _fov,
+          viewportHeight: _viewportHeight,
+        );
+        final screen = project(point, oblique)!;
+        expect(
+          screen.x,
+          closeTo(viewport.x / 2 + pinhole.x, _pixelTolerance),
+          reason: '$point x',
+        );
+        expect(
+          screen.y,
+          closeTo(viewport.y / 2 - pinhole.y, _pixelTolerance),
+          reason: '$point y',
+        );
+      }
+    });
+
+    test('spans one pixel per worldUnitsPerPixelAt across the screen', () {
+      final point = vm.Vector3(4, -7, 9);
+      final perPixel = ScreenSpaceUtils.worldUnitsPerPixelAt(
+        point,
+        oblique,
+        _fov,
+        _viewportHeight,
+      )!;
+      final a = project(point, oblique)!;
+      final b = project(point + oblique.right * perPixel, oblique)!;
+      expect((b - a).length, closeTo(1.0, _pixelTolerance));
+    });
+
+    test('returns null for a point at or behind the camera plane', () {
+      for (final point in [vm.Vector3(5, 0, 0), vm.Vector3(0, 0, 10)]) {
+        expect(project(point, camera), isNull);
       }
     });
   });

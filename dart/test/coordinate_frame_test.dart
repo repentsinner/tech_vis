@@ -21,6 +21,25 @@ void main() {
     });
   });
 
+  group('SignedAxis', () {
+    for (final axis in SpatialAxis.values) {
+      test('${axis.label} runs along its axis, both ways', () {
+        expect(SignedAxis(axis).unitVector, axis.unitVector);
+        expect(SignedAxis(axis, negative: true).unitVector, -axis.unitVector);
+      });
+
+      test('negating ${axis.label} flips it and flips back', () {
+        expect(-SignedAxis(axis), SignedAxis(axis, negative: true));
+        expect(-(-SignedAxis(axis)), SignedAxis(axis));
+      });
+    }
+
+    test('names its sign and axis', () {
+      expect('${const SignedAxis(SpatialAxis.y, negative: true)}', '-Y');
+      expect('${const SignedAxis(SpatialAxis.z)}', '+Z');
+    });
+  });
+
   group('CoordinateFrameDescriptor', () {
     test('default constructor creates standard frame', () {
       final frame = CoordinateFrameDescriptor();

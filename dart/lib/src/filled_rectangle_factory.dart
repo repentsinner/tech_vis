@@ -2,7 +2,19 @@ import 'dart:math' as math;
 
 import 'package:vector_math/vector_math_64.dart' as vm;
 
-import 'scene_object.dart';
+import 'primitives.dart';
+
+/// Cardinal plane a rectangle lies in.
+enum RectanglePlane {
+  /// The plane of the X and Y axes.
+  xy,
+
+  /// The plane of the X and Z axes.
+  xz,
+
+  /// The plane of the Y and Z axes.
+  yz,
+}
 
 /// Corners of a [width] by [height] rectangle centered on [center] in
 /// [plane], counterclockwise from the corner at the plane's two minimum
@@ -41,120 +53,50 @@ List<vm.Vector3> rectangleCorners({
   ];
 }
 
-/// Factory for creating filled rectangle [SceneObject]s in 3D space.
+/// Factory for filled rectangles in the cardinal planes (XY, XZ, YZ).
 ///
-/// Provides methods for creating rectangles in each cardinal plane (XY, XZ,
-/// YZ). The [lineCategory] parameter accepts any domain-specific semantic
-/// category type — each consumer passes its own category enum.
+/// Each rectangle is a [QuadPrimitive]. The app key passes through to the
+/// quad untouched.
 class FilledRectangleFactory {
-  /// Create a filled rectangle in the XY plane.
-  static SceneObject createXYFilledRectangle({
+  /// Creates a filled rectangle of [width] by [height] centered on
+  /// [center] in [plane], turned [rotation] radians within the plane.
+  static QuadPrimitive createFilledRectangle({
     required vm.Vector3 center,
     required double width,
     required double height,
-    required Object? lineCategory,
-    double edgeWidth = 1.0,
+    required RectanglePlane plane,
+    required Object? key,
     double opacity = 1.0,
     double rotation = 0.0,
-    String? id,
-  }) {
-    return SceneObject(
-      type: .filledRectangle,
-      lineCategory: lineCategory,
-      id: id ?? 'filled_rectangle_xy_${center.hashCode}',
+  }) => QuadPrimitive(
+    corners: rectangleCorners(
       center: center,
       width: width,
       height: height,
-      plane: .xy,
+      plane: plane,
       rotation: rotation,
-      edgeWidth: edgeWidth,
-      opacity: opacity,
-    );
-  }
+    ),
+    key: key,
+    opacity: opacity,
+  );
 
-  /// Create a filled rectangle in the XZ plane.
-  static SceneObject createXZFilledRectangle({
-    required vm.Vector3 center,
-    required double width,
-    required double height,
-    required Object? lineCategory,
-    double edgeWidth = 1.0,
-    double opacity = 1.0,
-    double rotation = 0.0,
-    String? id,
-  }) {
-    return SceneObject(
-      type: .filledRectangle,
-      lineCategory: lineCategory,
-      id: id ?? 'filled_rectangle_xz_${center.hashCode}',
-      center: center,
-      width: width,
-      height: height,
-      plane: .xz,
-      rotation: rotation,
-      edgeWidth: edgeWidth,
-      opacity: opacity,
-    );
-  }
-
-  /// Create a filled rectangle in the YZ plane.
-  static SceneObject createYZFilledRectangle({
-    required vm.Vector3 center,
-    required double width,
-    required double height,
-    required Object? lineCategory,
-    double edgeWidth = 1.0,
-    double opacity = 1.0,
-    double rotation = 0.0,
-    String? id,
-  }) {
-    return SceneObject(
-      type: .filledRectangle,
-      lineCategory: lineCategory,
-      id: id ?? 'filled_rectangle_yz_${center.hashCode}',
-      center: center,
-      width: width,
-      height: height,
-      plane: .yz,
-      rotation: rotation,
-      edgeWidth: edgeWidth,
-      opacity: opacity,
-    );
-  }
-
-  /// The perimeter of a filled [rectangle] as four line [SceneObject]s.
+  /// Returns the perimeter of [quad] as four lines, [widthPixels] wide.
   ///
-  /// Each line has the rectangle's edge width as its thickness and the
-  /// rectangle's line category. Returns an empty list when [rectangle] is
-  /// not a filled rectangle or has no edge.
-  static List<SceneObject> createOutline(SceneObject rectangle) {
-    final center = rectangle.center;
-    final width = rectangle.width;
-    final height = rectangle.height;
-    final edgeWidth = rectangle.edgeWidth ?? 0;
-    if (rectangle.type != .filledRectangle ||
-        center == null ||
-        width == null ||
-        height == null ||
-        edgeWidth <= 0) {
-      return const [];
-    }
-    final corners = rectangleCorners(
-      center: center,
-      width: width,
-      height: height,
-      plane: rectangle.plane ?? .xy,
-      rotation: rectangle.rotation ?? 0,
-    );
+  /// Each line runs from one corner to the next and carries the quad's key
+  /// and opacity.
+  static List<LinePrimitive> createOutline(
+    QuadPrimitive quad, {
+    required double widthPixels,
+  }) {
+    final corners = quad.corners;
     return [
       for (var i = 0; i < corners.length; i++)
-        SceneObject(
-          type: .line,
-          lineCategory: rectangle.lineCategory,
-          id: '${rectangle.id}_edge_$i',
-          startPoint: corners[i],
-          endPoint: corners[(i + 1) % corners.length],
-          thickness: edgeWidth,
+        LinePrimitive(
+          start: corners[i],
+          end: corners[(i + 1) % corners.length],
+          widthPixels: widthPixels,
+          key: quad.key,
+          opacity: quad.opacity,
         ),
     ];
   }
