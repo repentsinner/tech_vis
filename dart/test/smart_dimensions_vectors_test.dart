@@ -45,7 +45,7 @@ List<Primitive> _createAngular(Json input) {
     vertex: jsonVector3(input['vertex']),
     first: jsonVector3(input['first']),
     second: jsonVector3(input['second']),
-    convention: DraftingConvention.values.byName(input['drafting'] as String),
+    drafting: DraftingConvention.values.byName(input['drafting'] as String),
     camera: _camera(camera, jsonConvention(input['convention'])),
     verticalFovRadians:
         jsonNumber(camera['verticalFovDegrees']) * math.pi / 180,
@@ -64,7 +64,7 @@ List<Primitive> _createRadial(Json input) {
     radius: jsonNumber(input['radius']),
     normal: jsonVector3(input['normal']),
     measure: RadialMeasure.values.byName(input['measure'] as String),
-    convention: DraftingConvention.values.byName(input['drafting'] as String),
+    drafting: DraftingConvention.values.byName(input['drafting'] as String),
     format: DisplayFormat.values.byName(input['format'] as String),
     worldUnits: UnitSystem.values.byName(input['worldUnits'] as String),
     camera: _camera(camera, jsonConvention(input['convention'])),
@@ -101,7 +101,7 @@ List<Primitive> _create(Json input) {
   return SmartDimensionFactory.create(
     from: jsonVector3(input['from']),
     to: jsonVector3(input['to']),
-    convention: DraftingConvention.values.byName(input['drafting'] as String),
+    drafting: DraftingConvention.values.byName(input['drafting'] as String),
     format: DisplayFormat.values.byName(input['format'] as String),
     worldUnits: UnitSystem.values.byName(input['worldUnits'] as String),
     camera: _camera(camera, jsonConvention(input['convention'])),

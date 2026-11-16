@@ -28,7 +28,7 @@ final _topView = CameraBasis.lookAt(
 List<Primitive> _dimension(
   vm.Vector3 from,
   vm.Vector3 to, {
-  DraftingConvention convention = DraftingConvention.isoOriented,
+  DraftingConvention drafting = DraftingConvention.isoOriented,
   DisplayFormat format = DisplayFormat.metric,
   UnitSystem worldUnits = UnitSystem.metric,
   CameraBasis? camera,
@@ -41,7 +41,7 @@ List<Primitive> _dimension(
 }) => SmartDimensionFactory.create(
   from: from,
   to: to,
-  convention: convention,
+  drafting: drafting,
   format: format,
   worldUnits: worldUnits,
   camera: camera ?? _topView,
@@ -198,7 +198,7 @@ void main() {
           c.to,
           multiAxis: c.multiAxis,
           style: c.style,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
         );
         expect(textsOf(primitives), c.texts);
       });
@@ -208,7 +208,7 @@ void main() {
       final primitives = _dimension(
         vm.Vector3.zero(),
         vm.Vector3(12000, 500, 0),
-        convention: DraftingConvention.isoReferencing,
+        drafting: DraftingConvention.isoReferencing,
       );
       expect(textsOf(primitives), ['12 m', '0.5 m']);
     });
@@ -319,7 +319,7 @@ void main() {
       test('leave the ${convention.standard.name} gap and overshoot', () {
         final from = vm.Vector3.zero();
         final to = vm.Vector3(100, 0, 0);
-        final primitives = _dimension(from, to, convention: convention);
+        final primitives = _dimension(from, to, drafting: convention);
         final [witnessFrom, witnessTo, ...] = linesOf(primitives);
         expect(_pxLength(from, witnessFrom.start), closeTo(gap, 1e-9));
         expect(_pxLength(to, witnessTo.start), closeTo(gap, 1e-9));
@@ -433,7 +433,7 @@ void main() {
       final primitives = _dimension(
         from,
         long,
-        convention: DraftingConvention.asmeInlined,
+        drafting: DraftingConvention.asmeInlined,
       );
       final label = billboardsOf(primitives).single;
       expect(label.orientation, isA<ViewerFacingOrientation>());
@@ -457,7 +457,7 @@ void main() {
       DraftingConvention.asmeReferencing,
     ]) {
       test('${convention.name} leads the text off the line', () {
-        final primitives = _dimension(from, long, convention: convention);
+        final primitives = _dimension(from, long, drafting: convention);
         final lines = linesOf(primitives);
         expect(lines, hasLength(9));
         final label = billboardsOf(primitives).single;
@@ -489,7 +489,7 @@ void main() {
       DraftingConvention.asmeInlined,
     ]) {
       test('${convention.name} falls back to referencing when cramped', () {
-        final primitives = _dimension(from, short, convention: convention);
+        final primitives = _dimension(from, short, drafting: convention);
         expect(linesOf(primitives), hasLength(9));
         expect(
           billboardsOf(primitives).single.orientation,
@@ -527,7 +527,7 @@ void main() {
         final primitives = _dimension(
           from,
           c.to,
-          convention: DraftingConvention.isoReferencing,
+          drafting: DraftingConvention.isoReferencing,
           multiAxis: MultiAxisDimension.direct,
           offsetDirection: c.offset,
         );
@@ -559,7 +559,7 @@ void main() {
     final primitives = _dimension(
       vm.Vector3.zero(),
       vm.Vector3(30, 40, 5),
-      convention: DraftingConvention.asmeReferencing,
+      drafting: DraftingConvention.asmeReferencing,
       key: #dimension,
       opacity: 0.4,
     );
