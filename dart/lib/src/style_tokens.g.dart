@@ -164,6 +164,21 @@ abstract final class StyleTokens {
   /// Default height of the color ramp legend overlay. Unit: px.
   static const double colorRampLegendHeightPixels = 200.0;
 
+  /// Thickness of the color ramp legend's gradient bar, across its length.
+  /// The bar sits on the overlay rectangle's edge nearer its corner. Unit:
+  /// px.
+  static const double colorRampLegendBarThicknessPixels = 12.0;
+
+  /// Least distance between adjacent automatic ticks along the color ramp
+  /// legend's bar. Unit: px.
+  static const double colorRampLegendMinTickSpacingPixels = 32.0;
+
+  /// Gap between the color ramp legend's bar and its tick labels. Unit: px.
+  static const double colorRampLegendLabelGapPixels = 4.0;
+
+  /// Text height of the color ramp legend's tick labels. Unit: px.
+  static const double colorRampLegendLabelHeightPixels = 12.0;
+
   /// Default viewport corner of the navigation cube overlay. Top-right, where
   /// CAD tools place their view cube. Codes: 0 top-left, 1 top-right, 2
   /// bottom-left, 3 bottom-right. Unit: corner.
@@ -257,6 +272,10 @@ abstract final class StyleTokens {
     'colorRampLegendOffsetYPixels': colorRampLegendOffsetYPixels,
     'colorRampLegendWidthPixels': colorRampLegendWidthPixels,
     'colorRampLegendHeightPixels': colorRampLegendHeightPixels,
+    'colorRampLegendBarThicknessPixels': colorRampLegendBarThicknessPixels,
+    'colorRampLegendMinTickSpacingPixels': colorRampLegendMinTickSpacingPixels,
+    'colorRampLegendLabelGapPixels': colorRampLegendLabelGapPixels,
+    'colorRampLegendLabelHeightPixels': colorRampLegendLabelHeightPixels,
     'navigationCubeCorner': navigationCubeCorner,
     'navigationCubeOffsetXPixels': navigationCubeOffsetXPixels,
     'navigationCubeOffsetYPixels': navigationCubeOffsetYPixels,

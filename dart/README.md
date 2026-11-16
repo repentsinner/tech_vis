@@ -672,6 +672,49 @@ step only once the longer step fits with a style-set margin to spare.
 `atTarget` returns null when the target is behind the camera, or when
 even the format's shortest step is longer than the bar's rectangle.
 
+### Color ramp legend
+
+A color ramp legend keys a color-coded value, such as a temperature or a
+speed, to its colors. The app owns the mapping from value to color and
+the value range. `ColorRampLegendLayout.forRange` lays out the bar, its
+color stops, and its ticks in viewport pixels:
+
+```dart
+final legend = ColorRampLegendLayout.forRange(
+  minValue: 0,
+  maxValue: 100,
+  stops: const [
+    ColorRampStop(position: 0, key: 'cold'),
+    ColorRampStop(position: 0.5, key: 'mild'),
+    ColorRampStop(position: 1, key: 'hot'),
+  ],
+  viewportSize: Vector2(1280, 720),
+  unit: '°C',
+);
+// Fill legend.barRect with a gradient through each stop's color, from
+// the minimum end of the bar: its bottom when vertical, its left when
+// horizontal.
+drawGradient(legend.barRect, legend.orientation, legend.stops);
+for (final tick in legend.ticks) {
+  // '0 °C', '20', '40', '60', '80', '100 °C'
+  drawText(tick.label, tick.labelAnchor, legend.labelAlignment);
+}
+```
+
+Each stop holds a position from 0 to 1 along the bar and the app's key.
+The app resolves each key to a color and blends between neighboring
+stops in the color space its renderer draws in. Two stops at one
+position make a hard edge.
+
+The bar spans the rectangle's length and sits on its edge nearer the
+corner, so the labels fall on the side toward the viewport center. A
+tick marks every whole multiple of the tick interval inside the range.
+By default the interval is the smallest of 1, 2, or 5 times a power of
+ten that keeps ticks a style-set distance apart, and `tickInterval`
+sets it instead. Labels round to the interval and follow the app's
+`NumberFormatting`, and `unit` follows the first and last labels.
+`formatNumberLabel` writes one such value on its own.
+
 ## Style tokens
 
 `StyleTokens` holds every style constant, generated from the repository's

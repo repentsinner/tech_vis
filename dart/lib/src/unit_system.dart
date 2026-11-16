@@ -238,12 +238,25 @@ String formatDegreesLabel(
   double degrees, {
   required double step,
   NumberFormatting numbers = const NumberFormatting(),
+}) => '${formatNumberLabel(degrees, step: step, numbers: numbers)}°';
+
+/// Returns [value] as a plain decimal label with no unit: `45` or `0.25`.
+///
+/// The label rounds to [step] and shows the fewest decimal places that
+/// represent [step] exactly, with no trailing zeros, as a length label
+/// does. [numbers] sets the decimal marker and leading zero. Use it for a
+/// value that is not a length, which has no display format. Throws an
+/// [ArgumentError] when [step] is not positive and finite.
+String formatNumberLabel(
+  double value, {
+  required double step,
+  NumberFormatting numbers = const NumberFormatting(),
 }) {
   final places = _decimalsFor(_positive(step, 'step'));
   final rounded = double.parse(
-    ((degrees / step).roundToDouble() * step).toStringAsFixed(places),
+    ((value / step).roundToDouble() * step).toStringAsFixed(places),
   );
-  return '${_decimal(rounded, places, numbers)}°';
+  return _decimal(rounded, places, numbers);
 }
 
 const _inchesPerFoot = 12;
