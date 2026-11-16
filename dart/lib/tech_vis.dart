@@ -13,6 +13,7 @@ export 'src/leader_line.dart';
 export 'src/marker.dart';
 export 'src/navigation_cube.dart';
 export 'src/primitives.dart';
+export 'src/scale_bar.dart';
 export 'src/scene_layout_constants.dart';
 export 'src/screen_space_utils.dart';
 export 'src/style_tokens.g.dart';
