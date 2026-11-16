@@ -403,10 +403,9 @@ final class _PatchShape {
   /// Half the length of the line at [offset], running along `v` when
   /// [alongV] and along `u` otherwise.
   double span(double offset, {required bool alongV}) => switch (patch) {
-    RectangularGroundPatch(:final halfExtentU, :final halfExtentV) =>
-      alongV ? halfExtentV : halfExtentU,
-    CircularGroundPatch(:final radius) => math.sqrt(
-      math.max(0, radius * radius - offset * offset),
+    RectangularGroundPatch() => alongV ? extentV : extentU,
+    CircularGroundPatch() => math.sqrt(
+      math.max(0, extentU * extentU - offset * offset),
     ),
   };
 }
