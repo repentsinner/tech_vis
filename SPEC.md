@@ -996,9 +996,20 @@ legend handles layout, ticks, and labels, and formats them through
 Orientation (horizontal or vertical), tick intervals, and unit-labeled
 endpoints are configurable.
 
-*Open*: how the gradient itself reaches the renderer is undecided. The
-choice is between color stops that the renderer interpolates and
-pre-sampled solid bands.
+- The gradient reaches the renderer as ordered color stops: each stop
+  has a position from 0 to 1 along the bar and the app's key. The app
+  resolves each key to a color and interpolates between neighboring
+  stops, in the color space its renderer needs.
+- The legend describes the bar's rectangle in viewport pixels, its
+  stops, and its ticks, each tick with a position along the bar and a
+  label request. The labels form one set in the display format.
+
+*Why stops by key*: the package holds no color and converts none
+(§spec:scene-color), so a stop names the app's color by key, as every
+primitive does. Interpolating in the renderer lets each app blend in
+the space it draws in. Pre-sampled bands were rejected: they fix the
+band count in the package and still need a color per band from the
+app.
 
 *Why an app-provided color map*: the legend is a display primitive,
 not a data interpreter. Keeping the scalar-to-color mapping outside lets
