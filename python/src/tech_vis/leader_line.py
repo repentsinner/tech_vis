@@ -11,6 +11,11 @@ from enum import StrEnum
 
 from tech_vis import tokens
 from tech_vis._vec import Vector2, Vector3, along, scale
+from tech_vis.primitives import (
+    BillboardContent,
+    BillboardPrimitive,
+    LinePrimitive,
+)
 
 
 class CalloutQuadrant(StrEnum):
@@ -57,6 +62,9 @@ class CalloutLeaderGeometry:
     label_edge: Vector3
     """End of the leader line, where the label is anchored."""
 
+    width_pixels: float
+    """Width of the leader's lines in screen pixels, from its style."""
+
 
 # Horizontal and vertical direction signs for each quadrant.
 _QUADRANT_SIGNS: dict[CalloutQuadrant, tuple[float, float]] = {
@@ -69,6 +77,19 @@ _QUADRANT_SIGNS: dict[CalloutQuadrant, tuple[float, float]] = {
 # A label to the right of its leader hangs from its left edge, and vice versa.
 _LEFT_EDGE_MIDDLE: Vector2 = (0.0, 0.5)
 _RIGHT_EDGE_MIDDLE: Vector2 = (1.0, 0.5)
+
+
+def callout_leader_direction(
+    quadrant: CalloutQuadrant, *, style: LeaderLineStyle = _DEFAULT_STYLE
+) -> Vector2:
+    """Returns the unit screen direction, y up, in which a leader leaves its anchor.
+
+    The direction lies ``style.angle_degrees`` above or below the horizontal,
+    toward the corner of ``quadrant``.
+    """
+    angle = math.radians(style.angle_degrees)
+    h_sign, v_sign = _QUADRANT_SIGNS[quadrant]
+    return (math.cos(angle) * h_sign, math.sin(angle) * v_sign)
 
 
 def compute_callout_leader_geometry(
@@ -86,10 +107,8 @@ def compute_callout_leader_geometry(
     ``camera_up`` span. ``world_units_per_pixel`` converts the pixel lengths
     in ``style`` to world distances at the anchor's depth.
     """
-    angle = math.radians(style.angle_degrees)
-    h_sign, v_sign = _QUADRANT_SIGNS[quadrant]
-    right_scale = math.cos(angle) * h_sign
-    up_scale = math.sin(angle) * v_sign
+    h_sign, _ = _QUADRANT_SIGNS[quadrant]
+    right_scale, up_scale = callout_leader_direction(quadrant, style=style)
 
     angled = along(scale(camera_right, right_scale), camera_up, up_scale)
     horizontal = scale(camera_right, h_sign)
@@ -99,7 +118,12 @@ def compute_callout_leader_geometry(
     label_edge = along(
         elbow, horizontal, style.horizontal_length_pixels * world_units_per_pixel
     )
-    return CalloutLeaderGeometry(gap_end=gap_end, elbow=elbow, label_edge=label_edge)
+    return CalloutLeaderGeometry(
+        gap_end=gap_end,
+        elbow=elbow,
+        label_edge=label_edge,
+        width_pixels=style.line_width,
+    )
 
 
 def callout_anchor_alignment(quadrant: CalloutQuadrant) -> Vector2:
@@ -109,6 +133,55 @@ def callout_anchor_alignment(quadrant: CalloutQuadrant) -> Vector2:
     """
     h_sign, _ = _QUADRANT_SIGNS[quadrant]
     return _LEFT_EDGE_MIDDLE if h_sign > 0 else _RIGHT_EDGE_MIDDLE
+
+
+def create_callout_leader_lines(
+    leader: CalloutLeaderGeometry, *, key: object, opacity: float
+) -> list[LinePrimitive]:
+    """Returns the two lines a renderer draws for ``leader``.
+
+    The angled segment runs from the gap end to the elbow, then the horizontal
+    segment from the elbow to the label edge. Both take the leader's own pixel
+    width and carry ``key`` and ``opacity``. The leader moves with the camera,
+    so the lines are rebuilt each frame with it.
+    """
+    return [
+        LinePrimitive(
+            start=start,
+            end=end,
+            width_pixels=leader.width_pixels,
+            key=key,
+            opacity=opacity,
+        )
+        for start, end in (
+            (leader.gap_end, leader.elbow),
+            (leader.elbow, leader.label_edge),
+        )
+    ]
+
+
+def create_callout_label(
+    leader: CalloutLeaderGeometry,
+    quadrant: CalloutQuadrant,
+    *,
+    content: BillboardContent,
+    key: object,
+    opacity: float,
+) -> BillboardPrimitive:
+    """Returns the callout's label, a viewer-facing billboard at the leader's end.
+
+    ``callout_anchor_alignment`` of ``quadrant`` aligns ``content`` so it extends
+    away from the leader. ``content`` is the app's, sized in pixels, such as the
+    answer to a ``TextRequest``. ``opacity`` is typically
+    ``compute_callout_opacity`` of the anchor's distance.
+    """
+    return BillboardPrimitive(
+        content=content,
+        anchor=leader.label_edge,
+        alignment=callout_anchor_alignment(quadrant),
+        key=key,
+        opacity=opacity,
+    )
 
 
 def compute_callout_opacity(distance: float) -> float:
