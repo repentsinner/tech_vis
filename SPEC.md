@@ -615,6 +615,11 @@ dimension's text sits and which way it reads:
   by the text gap along its own vertical axis.
 - Inlined text sits centered on the dimension line's midpoint. The break
   spans the text's extent plus a text gap at each side.
+- On an angular dimension's arc, the text sits at the arc's midpoint and
+  measures against the arc's tangent there. The fit compares it with the
+  arc's length on screen, and the arc's outer side is the angle's
+  bisector. A radial dimension line's outer side is the perpendicular
+  that faces the viewer, turned toward screen up.
 - A referencing leader leaves the dimension line's midpoint as a callout
   leader (§spec:callout-layout). Its quadrant is the one whose angled
   segment points to the outer side, the side the dimension line was
@@ -861,9 +866,18 @@ dimension reads.
   order, and the direct distance. A direct dimension is aligned: its
   dimension line runs parallel to the segment between the points.
 - **Angular.** The angle between two vectors from a common vertex, drawn
-  as an arc.
+  as an arc. Each vector runs from the vertex to the far end of its leg.
+  The arc lies in the legs' plane, a token-set number of pixels from the
+  vertex, and spans the angle under 180°. Parallel or opposed legs emit
+  nothing.
 - **Radial.** The radius or diameter of a circle or arc, given its
-  center, radius, and plane.
+  center, radius, and plane. The app chooses radius or diameter. A
+  radius line runs from the center to the rim, with one arrowhead on the
+  rim; a diameter line runs rim to rim through the center, with an
+  arrowhead on each rim. The line lies in the circle's plane, along a
+  direction the app may give. By default it runs toward the screen's
+  top-right corner, or toward screen right when that corner lies along
+  the plane's normal.
 - Witness line gap and extension, arrowhead size, and text size are
   style tokens, all in pixels. The witness line gap has one token per
   standard.
@@ -874,6 +888,19 @@ dimension reads.
   system of its world coordinates, and the label is the measured length
   written by the display format with no step. The component dimensions of one
   pair of points form one label set, so they share a unit.
+- A radial label prefixes the length with `R` for a radius and `⌀` for a
+  diameter, with no space: `R12 mm`, `⌀24 mm`.
+- An angular label is the angle in decimal degrees: `37.5°`. It rounds to
+  a token-set step, 0.1° by default, and shows the fewest decimals that
+  write the step, with the app's number formatting of
+  §spec:unit-system. The label is the same under every display format.
+- An angular arc draws as Lines. Its segment count is the arc's length
+  in pixels at the vertex's depth, divided by a token-set segment length
+  and rounded up. An inlined break splits the arc into two runs, each
+  counted the same way.
+- A leg that ends short of the arc gets a witness line along it, from
+  the witness gap past the leg's end to the extension past the arc. A leg
+  that reaches the arc needs none.
 - The dimension line sits a token-set number of pixels from the
   measured points, along a direction perpendicular to the measured one.
   The app may give the direction. By default it is the perpendicular
@@ -890,11 +917,15 @@ dimension reads.
   drawn: the witness gap at its measured point, the extension and
   arrowheads at the dimension line's ends, the offset at the midpoint of
   the measured points, and the break and leader at the dimension line's
-  midpoint.
-- A dimension with any of those points on or behind the camera plane
-  emits nothing, and so do coincident points.
-- `vectors/smart_dimensions.json` pins the emitted primitives in world
-  space (§spec:golden-vectors).
+  midpoint. An arc's radius converts at its vertex, and an angular
+  witness gap at the leg's end.
+- A dimension with any of those points, or any point of an arc, on or
+  behind the camera plane emits nothing, and so do coincident points, a
+  zero leg, and a radius that is not positive.
+- `vectors/smart_dimensions.json` pins the emitted primitives of the
+  linear, angular, and radial dimensions in world space, and
+  `vectors/unit_formats.json` pins the degree labels
+  (§spec:golden-vectors).
 
 *Why detect axis alignment*: a reader of a technical drawing thinks in
 per-axis distances, such as X travel or Z depth. Showing the single
@@ -922,6 +953,37 @@ second layout case for little gain in readability.
 *Why the app supplies the points*: what is worth measuring depends on
 the app's domain. A generic toolkit that guessed would name concepts
 from one consumer (§spec:dart-package).
+
+*Why a pixel radius for the arc*: every other offset of a dimension is in
+pixels, so the arc keeps its size on screen and its text stays as likely
+to fit at any zoom. A radius taken from the legs would shrink the arc
+with the scene and send every distant angle to the referencing fallback.
+
+*Why decimal degrees*: decimal degrees read the same in every display
+format and take the app's decimal marker, with no unit system to
+choose. Degrees, minutes, and seconds were rejected because they need a
+second rounding rule and a second label layout. A step token sets the
+precision, as the display formats' default rounding does for lengths.
+
+*Why count segments at the vertex's depth*: the count then depends on the
+style and the angle alone, so it is stable from frame to frame. The
+unforeshortened length is the longest the arc can appear, so no segment
+exceeds the token-set length on screen. Counting from the projected arc
+would change the line count as the camera moves.
+
+*Why the top-right corner for a radial line*: a diagonal line keeps clear
+of the horizontal and vertical edges that dominate engineering views, and
+it points the text away from the circle's center. It is the simplest rule
+that needs nothing but the camera.
+
+*Why `R` and `⌀`*: ISO 129 and ASME Y14.5 both write a radius after `R`
+and a diameter after `⌀`, so the prefix needs no per-standard rule.
+
+*Why reuse the fit and fallback*: the same inequality and the same
+referencing leader keep every dimension shape under one drafting
+convention. An arc's fit compares the text with the arc's length on
+screen, and a radial dimension counts an arrowhead at each end, as a
+linear one does, even when a radius has one arrowhead.
 
 ### Color ramp legend §spec:color-ramp-legend
 
