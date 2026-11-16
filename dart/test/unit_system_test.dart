@@ -9,6 +9,10 @@ const _fractionalInch = DisplayFormat.fractionalInch;
 
 const _noLeadingZero = NumberFormatting(showLeadingZero: false);
 const _comma = NumberFormatting(decimalMarker: DecimalMarker.comma);
+const _noLeadingZeroComma = NumberFormatting(
+  decimalMarker: DecimalMarker.comma,
+  showLeadingZero: false,
+);
 
 /// A step query: the format, the requested length in its base unit, and
 /// the step expected back.
@@ -271,6 +275,16 @@ void main() {
       }
     });
 
+    test('step queries stay exact past 64-bit integers', () {
+      _expectSteps([
+        (format: _metric, length: 3e19, step: 2e19),
+        (format: _decimalInch, length: 7e20, step: 5e20),
+      ], (format, length) => format.scaleBarStepAtMost(length));
+      _expectSteps([
+        (format: _metric, length: 3e19, step: 1e20),
+      ], (format, length) => format.gridStepAtLeast(length));
+    });
+
     test('each grid step is a whole multiple of the one before', () {
       for (final format in DisplayFormat.values) {
         var step = format.gridStepAtLeast(1e-3);
@@ -495,6 +509,110 @@ void main() {
       for (final format in DisplayFormat.values) {
         expect(format.formatLabels([]), isEmpty);
       }
+    });
+  });
+
+  group('formatDegreesLabel', () {
+    test('rounds to its step and writes the fewest decimals', () {
+      final cases = [
+        (
+          degrees: 45.0,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '45°',
+        ),
+        (
+          degrees: 30.04,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '30°',
+        ),
+        (
+          degrees: 30.06,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '30.1°',
+        ),
+        (
+          degrees: 12.345,
+          step: 0.01,
+          numbers: const NumberFormatting(),
+          want: '12.35°',
+        ),
+        (
+          degrees: 89.6,
+          step: 1.0,
+          numbers: const NumberFormatting(),
+          want: '90°',
+        ),
+        (
+          degrees: 179.96,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '180°',
+        ),
+        (
+          degrees: 0.25,
+          step: 0.05,
+          numbers: const NumberFormatting(showLeadingZero: false),
+          want: '.25°',
+        ),
+        (degrees: 0.5, step: 0.1, numbers: _comma, want: '0,5°'),
+        (degrees: 22.5, step: 0.1, numbers: _comma, want: '22,5°'),
+      ];
+      for (final (:degrees, :step, :numbers, :want) in cases) {
+        expect(
+          formatDegreesLabel(degrees, step: step, numbers: numbers),
+          want,
+          reason: '$degrees at $step',
+        );
+      }
+    });
+
+    test('rejects a step that is not positive and finite', () {
+      for (final step in [0.0, -1.0, double.nan, double.infinity]) {
+        expect(() => formatDegreesLabel(1, step: step), throwsArgumentError);
+      }
+    });
+  });
+
+  group('niceStepAtLeast', () {
+    for (final (length, step) in const [
+      (0.3, 0.5),
+      (1.0, 1.0),
+      (1.2, 2.0),
+      (3.0, 5.0),
+      (7.0, 10.0),
+      (0.1 + 0.2, 0.5),
+      (2e-7, 2e-7),
+      (3e19, 5e19),
+    ]) {
+      test('rounds $length up to $step', () {
+        expect(niceStepAtLeast(length), closeTo(step, step * 1e-12));
+      });
+    }
+
+    test('rejects a length that is not positive and finite', () {
+      for (final length in [0.0, -1.0, double.nan, double.infinity]) {
+        expect(() => niceStepAtLeast(length), throwsArgumentError);
+      }
+    });
+  });
+
+  group('formatNumberLabel', () {
+    test('snaps to a multiple of the step', () {
+      expect(formatNumberLabel(7, step: 5), '5');
+    });
+
+    test('writes the app decimal marker and leading zero', () {
+      expect(
+        formatNumberLabel(0.5, step: 0.1, numbers: _noLeadingZeroComma),
+        ',5',
+      );
+    });
+
+    test('rejects a step that is not positive', () {
+      expect(() => formatNumberLabel(1, step: 0), throwsArgumentError);
     });
   });
 }
