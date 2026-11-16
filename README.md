@@ -69,8 +69,15 @@ DisplayFormat.FRACTIONAL_INCH.format_labels([inches])  # ['4\' 11 1/16"']
 step = DisplayFormat.METRIC.scale_bar_step_at_most(130)  # 100.0
 ```
 
-The Python package carries the tokens and the display formats. More layout
-functions follow; see [ROADMAP.md](ROADMAP.md).
+```python
+from tech_vis import ViewportOverlayKind, ViewportOverlayPlacement
+
+cube = ViewportOverlayPlacement.of(ViewportOverlayKind.NAVIGATION_CUBE)
+left, top, right, bottom = cube.rect((1280.0, 720.0))
+```
+
+The Python package carries the tokens, the display formats, and overlay
+placement. More layout functions follow; see [ROADMAP.md](ROADMAP.md).
 
 ## Renderer guide
 
