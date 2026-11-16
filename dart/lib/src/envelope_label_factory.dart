@@ -3,6 +3,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'bounding_box.dart';
 import 'coordinate_convention.dart';
 import 'primitives.dart';
+import 'screen_space_utils.dart';
 
 /// Factory for text labels attached to bounding box corners and edges.
 ///
@@ -45,7 +46,7 @@ class EnvelopeLabelFactory {
       .topBackLeft => (-1.0, 1.0),
       .topBackRight => (1.0, 1.0),
     };
-    final outward = frame.up + frame.right * rightSign + frame.back * backSign;
+    final outward = frame.toward(right: rightSign, back: backSign);
     return BillboardPrimitive(
       content: resolveText(TextRequest(text: text, heightPixels: pixelSize)),
       anchor: _extremePoint(bounds, outward),
@@ -77,7 +78,8 @@ class EnvelopeLabelFactory {
     vm.Vector3? textDirection,
     vm.Vector2? anchorAlignment,
   }) {
-    final frame = _LabelFrame(convention);
+    // Built only when a default is needed.
+    late final frame = _LabelFrame(convention);
     return BillboardPrimitive(
       content: resolveText(TextRequest(text: text, heightPixels: pixelSize)),
       anchor: position,
@@ -115,14 +117,18 @@ class EnvelopeLabelFactory {
       .front => -1.0,
       .back => 1.0,
     };
-    final toward = frame.up + frame.right * rightSign + frame.back * backSign;
     return createCoplanarBillboardLabel(
       text: text,
-      position: _extremePoint(bounds, toward),
+      position: _extremePoint(
+        bounds,
+        frame.toward(right: rightSign, back: backSign),
+      ),
       convention: convention,
       resolveText: resolveText,
       key: key,
       pixelSize: pixelSize,
+      surfaceNormal: frame.up,
+      textDirection: frame.right,
       anchorAlignment: _anchorAlignmentForEdgeTab(edge, alignment),
     );
   }
@@ -165,11 +171,19 @@ class EnvelopeLabelFactory {
 }
 
 /// Unit directions of a label on a top face, in the declared convention.
+///
+/// They are the axes of the package's own top-view camera, so a label
+/// reads left to right in the same top view that [CameraBasis.lookAt]
+/// builds, from one derivation of the fallback axis and the hand rule.
 class _LabelFrame {
   factory _LabelFrame(CoordinateConvention convention) {
     final up = convention.up.unitVector;
-    final back = convention.fallbackAxis.unitVector;
-    return _LabelFrame._(up, back, convention.cross(back, up));
+    final topView = CameraBasis.lookAt(
+      position: up,
+      target: vm.Vector3.zero(),
+      convention: convention,
+    );
+    return _LabelFrame._(topView.toViewer, topView.up, topView.right);
   }
 
   const _LabelFrame._(this.up, this.back, this.right);
@@ -182,6 +196,11 @@ class _LabelFrame {
 
   /// Direction text runs, left to right in a top view.
   final vm.Vector3 right;
+
+  /// Returns the top-face direction [right] and [back] steps along each
+  /// axis, as a sum of signed unit axes.
+  vm.Vector3 toward({required double right, required double back}) =>
+      up + this.right * right + this.back * back;
 }
 
 /// Corner of the top face of a bounding box, named as seen in a top view
