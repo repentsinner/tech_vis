@@ -873,7 +873,38 @@ Map<String, Object?> unitFormatsFixture() => {
         },
       },
   ],
+  'formatDegreesLabel': [
+    for (final (degrees, step, numbers) in _degreeLabels)
+      {
+        'input': {
+          'degrees': degrees,
+          'step': step,
+          'numbers': _numbers(numbers),
+        },
+        'output': {
+          'label': formatDegreesLabel(degrees, step: step, numbers: numbers),
+        },
+      },
+  ],
 };
+
+/// Angles either side of a rounding boundary, at whole, tenth, and
+/// hundredth steps, under both decimal markers.
+const _degreeLabels = <(double, double, NumberFormatting)>[
+  (45, 0.1, _defaultNumbers),
+  (30.06, 0.1, _defaultNumbers),
+  (12.345, 0.01, _defaultNumbers),
+  (89.6, 1, _defaultNumbers),
+  (179.96, 0.1, _defaultNumbers),
+  (
+    0.25,
+    0.05,
+    NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+];
 
 typedef _ScaleBarCase = ({
   String name,

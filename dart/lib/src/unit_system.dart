@@ -228,6 +228,24 @@ enum DisplayFormat {
   }
 }
 
+/// Returns [degrees] as a decimal-degree label: `45°` or `30.5°`.
+///
+/// The label rounds to [step] and shows the fewest decimal places that
+/// represent [step] exactly, with no trailing zeros, as a length label
+/// does. [numbers] sets the decimal marker and leading zero. An angle has
+/// no display format, so the label is the same in every unit system.
+String formatDegreesLabel(
+  double degrees, {
+  required double step,
+  NumberFormatting numbers = const NumberFormatting(),
+}) {
+  final places = _decimalsFor(_positive(step, 'step'));
+  final rounded = double.parse(
+    ((degrees / step).roundToDouble() * step).toStringAsFixed(places),
+  );
+  return '${_decimal(rounded, places, numbers)}°';
+}
+
 const _inchesPerFoot = 12;
 const _mmPerMeter = 1000;
 

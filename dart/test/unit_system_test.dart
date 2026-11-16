@@ -507,4 +507,68 @@ void main() {
       }
     });
   });
+
+  group('formatDegreesLabel', () {
+    test('rounds to its step and writes the fewest decimals', () {
+      final cases = [
+        (
+          degrees: 45.0,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '45°',
+        ),
+        (
+          degrees: 30.04,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '30°',
+        ),
+        (
+          degrees: 30.06,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '30.1°',
+        ),
+        (
+          degrees: 12.345,
+          step: 0.01,
+          numbers: const NumberFormatting(),
+          want: '12.35°',
+        ),
+        (
+          degrees: 89.6,
+          step: 1.0,
+          numbers: const NumberFormatting(),
+          want: '90°',
+        ),
+        (
+          degrees: 179.96,
+          step: 0.1,
+          numbers: const NumberFormatting(),
+          want: '180°',
+        ),
+        (
+          degrees: 0.25,
+          step: 0.05,
+          numbers: const NumberFormatting(showLeadingZero: false),
+          want: '.25°',
+        ),
+        (degrees: 0.5, step: 0.1, numbers: _comma, want: '0,5°'),
+        (degrees: 22.5, step: 0.1, numbers: _comma, want: '22,5°'),
+      ];
+      for (final (:degrees, :step, :numbers, :want) in cases) {
+        expect(
+          formatDegreesLabel(degrees, step: step, numbers: numbers),
+          want,
+          reason: '$degrees at $step',
+        );
+      }
+    });
+
+    test('rejects a step that is not positive and finite', () {
+      for (final step in [0.0, -1.0, double.nan, double.infinity]) {
+        expect(() => formatDegreesLabel(1, step: step), throwsArgumentError);
+      }
+    });
+  });
 }
