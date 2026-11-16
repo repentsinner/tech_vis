@@ -42,6 +42,27 @@ jobs:
       - name: Generated token modules match style/tokens.json
         run: python3 tools/gen_tokens.py --check
 
+  # The generator runs the Dart reference, so it needs the pinned SDK rather
+  # than the standard-library Python that checks the tokens.
+  vectors:
+    needs: classify
+    if: needs.classify.outputs.derived_release_commit != 'true' && needs.classify.outputs.promotion_pr != 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dart
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@2286a0c042b44434fe26d292bbce8d34f7ec662b # v1.8.2
+        with:
+          sdk: 3.14.0
+      - name: Committed fixtures in vectors/ match the Dart reference
+        run: |
+          dart pub get
+          dart run tool/gen_vectors.dart --check
+
   # The shared Dart and Flutter check, on the SDK pinned here: the pinned
   # leg, the floor leg on environment.sdk's lower bound, and the downgrade
   # leg on the oldest dependency releases pubspec.yaml admits. A published
@@ -147,7 +168,7 @@ jobs:
 
   correctness:
     name: quality / correctness
-    needs: [classify, tokens, dart, dart-publish-dry-run, python, actionlint]
+    needs: [classify, tokens, vectors, dart, dart-publish-dry-run, python, actionlint]
     if: always()
     runs-on: ubuntu-latest
     steps:
