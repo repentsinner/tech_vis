@@ -3,7 +3,8 @@ Dart reference.
 
 ``UnitSystem`` converts between millimeters and inches. ``DisplayFormat``
 decides how a measurement reads: its scale-bar and grid steps and the text of
-its labels. Every query here agrees with ``vectors/unit_formats.json``.
+its labels, and ``format_degrees_label`` writes an angle's. Every query here
+agrees with ``vectors/unit_formats.json``.
 """
 
 import math
@@ -216,6 +217,23 @@ class DisplayFormat(StrEnum):
         if self is DisplayFormat.DECIMAL_INCH:
             return _decimal_labels(values, rounding, numbers, unit="in")
         return _fractional_labels(values, rounding)
+
+
+def format_degrees_label(
+    degrees: float, *, step: float, numbers: NumberFormatting = _DEFAULT_NUMBERS
+) -> str:
+    """Returns ``degrees`` as a decimal-degree label: ``45°`` or ``30.5°``.
+
+    The label rounds to ``step`` and shows the fewest decimal places that
+    represent ``step`` exactly, with no trailing zeros, as a length label
+    does. ``numbers`` sets the decimal marker and leading zero. An angle has
+    no display format, so the label is the same in every unit system.
+
+    Raises ``ValueError`` when ``step`` is not positive and finite.
+    """
+    places = _decimals_for(_positive(step, "step"))
+    rounded = float(_to_fixed(_round_half_away(degrees / step) * step, places))
+    return f"{_decimal(rounded, places, numbers)}°"
 
 
 _INCHES_PER_FOOT = 12

@@ -136,8 +136,126 @@ DisplayFormat.DECIMAL_INCH.format_labels(
 DisplayFormat.FRACTIONAL_INCH.grid_step_above(1)  # 12.0
 ```
 
+### Viewport overlays
+
+The scale bar and the navigation cube sit in the 2D layer above the
+scene. Each is laid out in viewport pixels, origin top-left with y down,
+inside the rectangle its `ViewportOverlayPlacement` gives it.
+`ScaleBarLayout.at_target` measures the scene at the point the camera
+looks at and picks the longest clean step that fits the bar's rectangle.
+Passing the previous frame's `step` as `previous_step` keeps the value
+from flickering as the camera zooms. `NavigationCube` lists the faces
+that face the viewer, least direct first, each as four pixel corners for
+an affine map of its label:
+
+```python
+from tech_vis import (
+    DisplayFormat,
+    NavigationCube,
+    ScaleBarLayout,
+    SignedAxis,
+    SpatialAxis,
+    UnitSystem,
+    ViewportOverlayKind,
+    ViewportOverlayPlacement,
+)
+
+bar = ScaleBarLayout.at_target(
+    camera=camera,
+    target=(0, 0, 0.75),
+    vertical_fov_radians=fov,
+    viewport_size=viewport,
+    world_units=UnitSystem.METRIC,
+    display_format=DisplayFormat.METRIC,
+    previous_step=None,  # last frame's bar.step
+)
+if bar is not None:
+    bar.label.text, bar.start_x, bar.end_x, bar.tick_xs
+
+cube = NavigationCube(convention=z_up, front=SignedAxis(SpatialAxis.Y, negative=True))
+rect = ViewportOverlayPlacement.of(ViewportOverlayKind.NAVIGATION_CUBE).rect(viewport)
+for view in cube.visible_faces(camera, rect):
+    view.face.label, view.corners  # "TOP", four (x, y) tuples
+```
+
 `tokens.STYLE_VERSION` identifies the token set. Two implementations that
 report the same style version produce the same layout.
+
+### Ground grid and dimensions
+
+A ground grid lies in the plane across the declared up axis. Its minor
+lines keep a minimum pixel spacing at the camera target, so the step
+changes with zoom, and its lines fade toward the patch edge. A dimension
+measures between points the app supplies: a length, an angle, or a radius
+or diameter. Both are sized in screen pixels, so the app rebuilds them each
+frame the camera moves:
+
+```python
+from tech_vis import (
+    CircularGroundPatch,
+    DraftingConvention,
+    RadialMeasure,
+    create_angular_dimension,
+    create_dimension,
+    create_ground_grid,
+    create_radial_dimension,
+)
+
+grid = create_ground_grid(
+    convention=z_up,
+    patch=CircularGroundPatch(radius=500),
+    display_format=DisplayFormat.METRIC,
+    world_units=UnitSystem.METRIC,
+    camera=camera,
+    target=(0.0, 0.0, 0.0),
+    vertical_fov_radians=fov,
+    viewport_height=viewport[1],
+    resolve_text=resolve_text,
+    minor_key="grid-minor",
+    major_key="grid-major",
+    label_key="grid-label",
+)
+grid.primitives  # minor lines, major lines, then coordinate labels
+
+view = {"camera": camera, "vertical_fov_radians": fov, "viewport_size": viewport}
+length = create_dimension(
+    start=(0, 0, 0),
+    end=(120, 0, 0),
+    drafting=DraftingConvention.ISO_ORIENTED,
+    display_format=DisplayFormat.METRIC,
+    world_units=UnitSystem.METRIC,
+    resolve_text=resolve_text,
+    key="dimension",
+    **view,
+)  # reads "120 mm"
+angle = create_angular_dimension(
+    vertex=(0, 0, 0),
+    first=(120, 0, 0),
+    second=(0, 80, 0),
+    drafting=DraftingConvention.ISO_ORIENTED,
+    resolve_text=resolve_text,
+    key="dimension",
+    **view,
+)  # reads "90°"
+bore = create_radial_dimension(
+    center=(60, 40, 0),
+    radius=15,
+    normal=(0, 0, 1),
+    measure=RadialMeasure.DIAMETER,
+    drafting=DraftingConvention.ISO_ORIENTED,
+    display_format=DisplayFormat.METRIC,
+    world_units=UnitSystem.METRIC,
+    resolve_text=resolve_text,
+    key="dimension",
+    **view,
+)  # reads "⌀30 mm"
+```
+
+Pass `grid.minor_step` back as the next frame's `previous_minor_step`, so
+the step holds near a step boundary instead of flickering between two
+steps. A `DraftingConvention` picks ISO or ASME and where the text sits.
+Oriented or inlined text that doesn't fit between the arrowheads moves to
+a leader, as a referencing dimension's does.
 
 ## License
 

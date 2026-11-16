@@ -30,6 +30,15 @@ from tech_vis.filled_rectangle import (
     create_rectangle_outline,
     rectangle_corners,
 )
+from tech_vis.ground_plane import (
+    CircularGroundPatch,
+    GroundGrid,
+    GroundGridStyle,
+    GroundPatch,
+    RectangularGroundPatch,
+    create_ground_grid,
+    ground_minor_step,
+)
 from tech_vis.leader_line import (
     CalloutLeaderGeometry,
     CalloutQuadrant,
@@ -47,6 +56,11 @@ from tech_vis.marker import (
     marker_sphere_mesh,
     marker_transform,
 )
+from tech_vis.navigation_cube import (
+    NavigationCube,
+    NavigationCubeFace,
+    NavigationCubeFaceView,
+)
 from tech_vis.primitives import (
     BillboardContent,
     BillboardOrientation,
@@ -63,6 +77,7 @@ from tech_vis.primitives import (
     TriangleMesh,
     ViewerFacingOrientation,
 )
+from tech_vis.scale_bar import ScaleBarLayout
 from tech_vis.screen_space import (
     CameraBasis,
     billboard_offset_position,
@@ -70,11 +85,23 @@ from tech_vis.screen_space import (
     world_to_screen,
     world_units_per_pixel_at,
 )
+from tech_vis.smart_dimension import (
+    DimensionStyle,
+    DimensionTextPlacement,
+    DraftingConvention,
+    DraftingStandard,
+    MultiAxisDimension,
+    RadialMeasure,
+    create_angular_dimension,
+    create_dimension,
+    create_radial_dimension,
+)
 from tech_vis.unit_system import (
     DecimalMarker,
     DisplayFormat,
     NumberFormatting,
     UnitSystem,
+    format_degrees_label,
 )
 from tech_vis.viewport_overlay import (
     ViewportCorner,
@@ -94,11 +121,19 @@ __all__ = [
     "CalloutLeaderGeometry",
     "CalloutQuadrant",
     "CameraBasis",
+    "CircularGroundPatch",
     "CoordinateConvention",
     "CoordinateFrameDescriptor",
     "CoplanarOrientation",
     "DecimalMarker",
+    "DimensionStyle",
+    "DimensionTextPlacement",
     "DisplayFormat",
+    "DraftingConvention",
+    "DraftingStandard",
+    "GroundGrid",
+    "GroundGridStyle",
+    "GroundPatch",
     "Handedness",
     "LabelAlignment",
     "LabelCorner",
@@ -108,10 +143,17 @@ __all__ = [
     "MarkerPrimitive",
     "Matrix4",
     "MeshPrimitive",
+    "MultiAxisDimension",
+    "NavigationCube",
+    "NavigationCubeFace",
+    "NavigationCubeFaceView",
     "NumberFormatting",
     "Primitive",
     "QuadPrimitive",
+    "RadialMeasure",
     "RectanglePlane",
+    "RectangularGroundPatch",
+    "ScaleBarLayout",
     "ScreenOffset",
     "SignedAxis",
     "SpatialAxis",
@@ -131,16 +173,22 @@ __all__ = [
     "callout_leader_direction",
     "compute_callout_leader_geometry",
     "compute_callout_opacity",
+    "create_angular_dimension",
     "create_bounding_box",
     "create_callout_label",
     "create_callout_leader_lines",
     "create_coordinate_frame",
     "create_coplanar_billboard_label",
+    "create_dimension",
     "create_edge_tab_label",
     "create_envelope_label",
     "create_filled_rectangle",
+    "create_ground_grid",
     "create_marker",
+    "create_radial_dimension",
     "create_rectangle_outline",
+    "format_degrees_label",
+    "ground_minor_step",
     "marker_sphere_mesh",
     "marker_transform",
     "project_onto_screen_plane",
