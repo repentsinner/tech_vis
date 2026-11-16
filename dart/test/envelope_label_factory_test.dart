@@ -11,53 +11,225 @@ Matcher _closeToVector(vm.Vector3 expected) => predicate<vm.Vector3>(
   'within $_tolerance of $expected',
 );
 
+const _zUpRight = CoordinateConvention(
+  up: SpatialAxis.z,
+  handedness: Handedness.right,
+);
+const _yUpRight = CoordinateConvention(
+  up: SpatialAxis.y,
+  handedness: Handedness.right,
+);
+const _zUpLeft = CoordinateConvention(
+  up: SpatialAxis.z,
+  handedness: Handedness.left,
+);
+
+/// Expected label frame of one convention: the up direction, the label's
+/// text direction, and anchors on the top face of the shared box.
+class _Case {
+  const _Case({
+    required this.convention,
+    required this.up,
+    required this.right,
+    required this.corners,
+    required this.cornerDirections,
+    required this.edgeTabs,
+  });
+
+  final CoordinateConvention convention;
+  final vm.Vector3 up;
+  final vm.Vector3 right;
+  final Map<LabelCorner, vm.Vector3> corners;
+  final Map<LabelCorner, vm.Vector3> cornerDirections;
+  final List<(LabelEdge, LabelAlignment, vm.Vector3, vm.Vector2)> edgeTabs;
+}
+
 void main() {
   final bounds = BoundingBox(
     minBounds: vm.Vector3(0, 0, 0),
     maxBounds: vm.Vector3(4, 2, 1),
   );
 
+  // Z-up right-handed: top is z = 1, text runs along +X, front is -Y.
+  // Y-up right-handed: top is y = 2, back is the fallback axis +X, and
+  // text runs along +Z, so text direction cross back gives up.
+  // Z-up left-handed: the mirrored hand rule turns text toward -X.
+  final cases = [
+    _Case(
+      convention: _zUpRight,
+      up: vm.Vector3(0, 0, 1),
+      right: vm.Vector3(1, 0, 0),
+      corners: {
+        LabelCorner.topFrontLeft: vm.Vector3(0, 0, 1),
+        LabelCorner.topFrontRight: vm.Vector3(4, 0, 1),
+        LabelCorner.topBackLeft: vm.Vector3(0, 2, 1),
+        LabelCorner.topBackRight: vm.Vector3(4, 2, 1),
+      },
+      cornerDirections: {
+        LabelCorner.topFrontLeft: vm.Vector3(-1, -1, 1),
+        LabelCorner.topFrontRight: vm.Vector3(1, -1, 1),
+        LabelCorner.topBackLeft: vm.Vector3(-1, 1, 1),
+        LabelCorner.topBackRight: vm.Vector3(1, 1, 1),
+      },
+      edgeTabs: [
+        (
+          LabelEdge.front,
+          LabelAlignment.left,
+          vm.Vector3(0, 0, 1),
+          vm.Vector2(0, 1),
+        ),
+        (
+          LabelEdge.front,
+          LabelAlignment.center,
+          vm.Vector3(2, 0, 1),
+          vm.Vector2(0.5, 1),
+        ),
+        (
+          LabelEdge.back,
+          LabelAlignment.right,
+          vm.Vector3(4, 2, 1),
+          vm.Vector2(1, 0),
+        ),
+      ],
+    ),
+    _Case(
+      convention: _yUpRight,
+      up: vm.Vector3(0, 1, 0),
+      right: vm.Vector3(0, 0, 1),
+      corners: {
+        LabelCorner.topFrontLeft: vm.Vector3(0, 2, 0),
+        LabelCorner.topFrontRight: vm.Vector3(0, 2, 1),
+        LabelCorner.topBackLeft: vm.Vector3(4, 2, 0),
+        LabelCorner.topBackRight: vm.Vector3(4, 2, 1),
+      },
+      cornerDirections: {
+        LabelCorner.topFrontLeft: vm.Vector3(-1, 1, -1),
+        LabelCorner.topFrontRight: vm.Vector3(-1, 1, 1),
+        LabelCorner.topBackLeft: vm.Vector3(1, 1, -1),
+        LabelCorner.topBackRight: vm.Vector3(1, 1, 1),
+      },
+      edgeTabs: [
+        (
+          LabelEdge.front,
+          LabelAlignment.left,
+          vm.Vector3(0, 2, 0),
+          vm.Vector2(0, 1),
+        ),
+        (
+          LabelEdge.front,
+          LabelAlignment.center,
+          vm.Vector3(0, 2, 0.5),
+          vm.Vector2(0.5, 1),
+        ),
+        (
+          LabelEdge.back,
+          LabelAlignment.right,
+          vm.Vector3(4, 2, 1),
+          vm.Vector2(1, 0),
+        ),
+      ],
+    ),
+    _Case(
+      convention: _zUpLeft,
+      up: vm.Vector3(0, 0, 1),
+      right: vm.Vector3(-1, 0, 0),
+      corners: {
+        LabelCorner.topFrontLeft: vm.Vector3(4, 0, 1),
+        LabelCorner.topFrontRight: vm.Vector3(0, 0, 1),
+        LabelCorner.topBackLeft: vm.Vector3(4, 2, 1),
+        LabelCorner.topBackRight: vm.Vector3(0, 2, 1),
+      },
+      cornerDirections: {
+        LabelCorner.topFrontLeft: vm.Vector3(1, -1, 1),
+        LabelCorner.topFrontRight: vm.Vector3(-1, -1, 1),
+        LabelCorner.topBackLeft: vm.Vector3(1, 1, 1),
+        LabelCorner.topBackRight: vm.Vector3(-1, 1, 1),
+      },
+      edgeTabs: [
+        (
+          LabelEdge.front,
+          LabelAlignment.left,
+          vm.Vector3(4, 0, 1),
+          vm.Vector2(0, 1),
+        ),
+        (
+          LabelEdge.front,
+          LabelAlignment.center,
+          vm.Vector3(2, 0, 1),
+          vm.Vector2(0.5, 1),
+        ),
+        (
+          LabelEdge.back,
+          LabelAlignment.right,
+          vm.Vector3(0, 2, 1),
+          vm.Vector2(1, 0),
+        ),
+      ],
+    ),
+  ];
+
   group('EnvelopeLabelFactory.createEnvelopeLabel', () {
-    final cases = <(LabelCorner, vm.Vector3, vm.Vector3)>[
-      (LabelCorner.topFrontLeft, vm.Vector3(0, 0, 1), vm.Vector3(-1, -1, 1)),
-      (LabelCorner.topFrontRight, vm.Vector3(4, 0, 1), vm.Vector3(1, -1, 1)),
-      (LabelCorner.topBackLeft, vm.Vector3(0, 2, 1), vm.Vector3(-1, 1, 1)),
-      (LabelCorner.topBackRight, vm.Vector3(4, 2, 1), vm.Vector3(1, 1, 1)),
-    ];
-    for (final (corner, anchor, direction) in cases) {
-      test('anchors a viewer-facing label at ${corner.name}', () {
-        final label = EnvelopeLabelFactory.createEnvelopeLabel(
-          text: 'box',
-          bounds: bounds,
-          corner: corner,
-          resolveText: fakeTextResolver,
-          key: 'envelope',
-        );
-        expect(
-          label.content.value,
-          const TextRequest(
+    for (final c in cases) {
+      for (final corner in LabelCorner.values) {
+        test('anchors a viewer-facing label at ${corner.name}, '
+            '${c.convention}', () {
+          final label = EnvelopeLabelFactory.createEnvelopeLabel(
             text: 'box',
-            heightPixels: EnvelopeLabelFactory.defaultPixelSize,
-          ),
-        );
-        expect(label.key, 'envelope');
-        expect(label.anchor, _closeToVector(anchor));
-        expect(label.orientation, isA<ViewerFacingOrientation>());
-        expect(
-          label.content.widthPixels,
-          3 * fakeCharacterAspect * EnvelopeLabelFactory.defaultPixelSize,
-        );
-        expect(label.offset!.direction, _closeToVector(direction.normalized()));
-        expect(label.offset!.pixels, EnvelopeLabelFactory.defaultOffsetPixels);
-      });
+            bounds: bounds,
+            corner: corner,
+            convention: c.convention,
+            resolveText: fakeTextResolver,
+            key: 'envelope',
+          );
+          expect(
+            label.content.value,
+            const TextRequest(
+              text: 'box',
+              heightPixels: EnvelopeLabelFactory.defaultPixelSize,
+            ),
+          );
+          expect(
+            label.content.widthPixels,
+            3 * fakeCharacterAspect * EnvelopeLabelFactory.defaultPixelSize,
+          );
+          expect(label.key, 'envelope');
+          expect(label.anchor, _closeToVector(c.corners[corner]!));
+          expect(label.orientation, isA<ViewerFacingOrientation>());
+          expect(
+            label.offset!.direction,
+            _closeToVector(c.cornerDirections[corner]!.normalized()),
+          );
+          expect(
+            label.offset!.pixels,
+            EnvelopeLabelFactory.defaultOffsetPixels,
+          );
+        });
+      }
     }
   });
 
   group('EnvelopeLabelFactory.createCoplanarBillboardLabel', () {
+    for (final c in cases) {
+      test('lies on the top face by default, ${c.convention}', () {
+        final label = EnvelopeLabelFactory.createCoplanarBillboardLabel(
+          text: 'flat',
+          position: vm.Vector3(1, 2, 3),
+          convention: c.convention,
+          resolveText: fakeTextResolver,
+          key: 'envelope',
+        );
+        final orientation = label.orientation as CoplanarOrientation;
+        expect(orientation.normal, _closeToVector(c.up));
+        expect(orientation.right, _closeToVector(c.right));
+        expect(label.alignment, vm.Vector2(0.5, 0.5));
+      });
+    }
+
     test('lies in the given plane, aligned as asked', () {
       final label = EnvelopeLabelFactory.createCoplanarBillboardLabel(
         text: 'flat',
         position: vm.Vector3(1, 2, 3),
+        convention: _zUpRight,
         resolveText: fakeTextResolver,
         key: 'envelope',
         pixelSize: 12,
@@ -76,40 +248,26 @@ void main() {
   });
 
   group('EnvelopeLabelFactory.createEdgeTabLabel', () {
-    final cases = <(LabelEdge, LabelAlignment, vm.Vector3, vm.Vector2)>[
-      (
-        LabelEdge.front,
-        LabelAlignment.left,
-        vm.Vector3(0, 0, 1),
-        vm.Vector2(0, 1),
-      ),
-      (
-        LabelEdge.front,
-        LabelAlignment.center,
-        vm.Vector3(2, 0, 1),
-        vm.Vector2(0.5, 1),
-      ),
-      (
-        LabelEdge.back,
-        LabelAlignment.right,
-        vm.Vector3(4, 2, 1),
-        vm.Vector2(1, 0),
-      ),
-    ];
-    for (final (edge, alignment, anchor, anchorAlignment) in cases) {
-      test('sets a tab on the ${edge.name} edge, ${alignment.name}', () {
-        final label = EnvelopeLabelFactory.createEdgeTabLabel(
-          text: 'tab',
-          bounds: bounds,
-          edge: edge,
-          alignment: alignment,
-          resolveText: fakeTextResolver,
-          key: 'envelope',
-        );
-        expect(label.anchor, _closeToVector(anchor));
-        expect(label.alignment, anchorAlignment);
-        expect(label.orientation, isA<CoplanarOrientation>());
-      });
+    for (final c in cases) {
+      for (final (edge, alignment, anchor, anchorAlignment) in c.edgeTabs) {
+        test('sets a tab on the ${edge.name} edge, ${alignment.name}, '
+            '${c.convention}', () {
+          final label = EnvelopeLabelFactory.createEdgeTabLabel(
+            text: 'tab',
+            bounds: bounds,
+            edge: edge,
+            alignment: alignment,
+            convention: c.convention,
+            resolveText: fakeTextResolver,
+            key: 'envelope',
+          );
+          expect(label.anchor, _closeToVector(anchor));
+          expect(label.alignment, anchorAlignment);
+          final orientation = label.orientation as CoplanarOrientation;
+          expect(orientation.normal, _closeToVector(c.up));
+          expect(orientation.right, _closeToVector(c.right));
+        });
+      }
     }
   });
 }
