@@ -26,12 +26,6 @@ Closes §spec:golden-vectors and the layout half of §spec:python-package.
 Port the leader-line functions to Python. Test them against
 `vectors/leader_line.json`.
 
-### Python unit formats §road:python-unit-formats
-
-Port the display formats, step queries, and label sets to
-`python/src/tech_vis/unit_system.py` (§spec:unit-system), tested against
-`vectors/unit_formats.json`.
-
 ### Python viewport overlays §road:python-viewport-overlays
 
 Port overlay placement to `python/src/tech_vis/viewport_overlay.py`
@@ -51,15 +45,15 @@ factories, with the callout leader's line width (§spec:scene-model,
 
 Port the scale bar and the navigation cube (§spec:scale-bar,
 §spec:navigation-cube), tested against `vectors/scale_bar.json` and
-`vectors/navigation_cube.json`. Depends on §road:python-unit-formats,
-§road:python-viewport-overlays, and §road:python-renderer-contract.
+`vectors/navigation_cube.json`. Depends on
+§road:python-viewport-overlays and §road:python-renderer-contract.
 
 ### Python world annotations §road:python-world-annotations
 
 Port the ground plane and smart dimensions (§spec:ground-plane,
 §spec:smart-dimensions), tested against `vectors/ground_plane.json` and
-`vectors/smart_dimensions.json`. Depends on §road:python-unit-formats
-and §road:python-renderer-contract.
+`vectors/smart_dimensions.json`. Depends on
+§road:python-renderer-contract.
 
 **Verify:** In `python/`, run `uv run pytest` and confirm every fixture
 family in `vectors/` has a passing Python test, with the same tolerance
