@@ -6,7 +6,13 @@ from typing import Any
 import pytest
 
 from conftest import TOLERANCE, load_vectors
-from tech_vis import DecimalMarker, DisplayFormat, NumberFormatting, tokens
+from tech_vis import (
+    DecimalMarker,
+    DisplayFormat,
+    NumberFormatting,
+    format_degrees_label,
+    tokens,
+)
 
 # Absolute tolerance on every numeric output, in the format's base unit.
 
@@ -69,3 +75,18 @@ def test_format_labels(fixture: Json) -> None:
             numbers=numbers,
         )
         assert labels == c["output"]["labels"], c["name"]
+
+
+def test_format_degrees_label(fixture: Json) -> None:
+    cases = fixture["formatDegreesLabel"]
+    assert cases, "no formatDegreesLabel cases"
+    for c in cases:
+        given = c["input"]
+        numbers = NumberFormatting(
+            decimal_marker=DecimalMarker(given["numbers"]["decimalMarker"]),
+            show_leading_zero=given["numbers"]["showLeadingZero"],
+        )
+        label = format_degrees_label(
+            float(given["degrees"]), step=float(given["step"]), numbers=numbers
+        )
+        assert label == c["output"]["label"], given

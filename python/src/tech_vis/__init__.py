@@ -81,6 +81,7 @@ from tech_vis.unit_system import (
     DisplayFormat,
     NumberFormatting,
     UnitSystem,
+    format_degrees_label,
 )
 from tech_vis.viewport_overlay import (
     ViewportCorner,
@@ -151,6 +152,7 @@ __all__ = [
     "create_filled_rectangle",
     "create_marker",
     "create_rectangle_outline",
+    "format_degrees_label",
     "marker_sphere_mesh",
     "marker_transform",
     "project_onto_screen_plane",
