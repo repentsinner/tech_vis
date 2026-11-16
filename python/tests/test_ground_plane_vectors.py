@@ -53,7 +53,6 @@ def _style(s: Json) -> GroundGridStyle:
         min_line_spacing_pixels=s["minLineSpacingPixels"],
         step_margin=s["stepMargin"],
         max_lines_per_axis=s["maxLinesPerAxis"],
-        fade_segments=s["fadeSegments"],
         minor_line_width=s["minorLineWidth"],
         major_line_width=s["majorLineWidth"],
         label_pixel_size=s["labelPixelSize"],

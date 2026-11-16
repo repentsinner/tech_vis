@@ -124,16 +124,11 @@ def _index(axis: SpatialAxis) -> int:
     return list(SpatialAxis).index(axis)
 
 
-def _mid(line: LinePrimitive) -> Vector3:
-    return scale(add(line.start, line.end), 0.5)
-
-
 def test_style_defaults_come_from_the_style_tokens() -> None:
     style = GroundGridStyle()
     assert style.min_line_spacing_pixels == tokens.GROUND_GRID_MIN_LINE_SPACING_PIXELS
     assert style.step_margin == tokens.GROUND_GRID_STEP_MARGIN
     assert style.max_lines_per_axis == int(tokens.GROUND_GRID_MAX_LINES_PER_AXIS)
-    assert style.fade_segments == int(tokens.GROUND_GRID_FADE_SEGMENTS)
     assert style.minor_line_width == tokens.GROUND_GRID_MINOR_LINE_WIDTH
     assert style.major_line_width == tokens.GROUND_GRID_MAJOR_LINE_WIDTH
     assert style.label_pixel_size == tokens.GROUND_GRID_LABEL_PIXEL_SIZE
@@ -208,7 +203,7 @@ def test_minor_lines_keep_the_minimum_spacing_at_the_target(distance: float) -> 
     grid = _grid(
         distance=distance,
         patch=RectangularGroundPatch(half_extent_u=1e4, half_extent_v=1e4),
-        style=GroundGridStyle(max_lines_per_axis=10001, fade_segments=1),
+        style=GroundGridStyle(max_lines_per_axis=10001),
     )
     per_pixel = world_units_per_pixel_at(
         ORIGIN, _camera(Z_UP, ORIGIN, distance), FOV, VIEWPORT_HEIGHT
@@ -268,39 +263,85 @@ def test_caps_the_lines_across_the_patch() -> None:
     assert grid.minor_step == pytest.approx(100, abs=TOLERANCE)
 
 
-def test_rectangular_fade_splits_each_line_into_equal_segments() -> None:
-    grid = _grid(style=GroundGridStyle(fade_segments=4))
-    center = [ln for ln in _lines(grid, MAJOR) if ln.start[0] == 0 and ln.end[0] == 0]
-    assert len(center) == 4
-    assert center[0].start[1] == pytest.approx(-300, abs=TOLERANCE)
-    assert center[-1].end[1] == pytest.approx(300, abs=TOLERANCE)
-
-
-def test_rectangular_fade_falls_linearly_to_the_edge() -> None:
-    for line in _lines(_grid(style=GroundGridStyle(fade_segments=4))):
-        x, y, _ = _mid(line)
-        expected = 1 - max(abs(x) / 500, abs(y) / 300)
-        assert line.opacity == pytest.approx(expected, abs=TOLERANCE)
-        assert line.opacity > 0
-        for point in (line.start, line.end):
-            assert abs(point[0]) <= 500 + TOLERANCE
-            assert abs(point[1]) <= 300 + TOLERANCE
-
-
-def test_circular_fade_draws_chords_that_fade_radially() -> None:
-    radius = 400.0
-    grid = _grid(
-        patch=CircularGroundPatch(radius=radius),
-        style=GroundGridStyle(fade_segments=4),
-    )
+def test_rectangular_patch_draws_each_line_whole_at_full_opacity() -> None:
+    origin = (3.0, -4.0, 0.0)
+    grid = _grid(origin=origin)
+    center = [
+        ln
+        for ln in _lines(grid, MAJOR)
+        if ln.start[0] == origin[0] and ln.end[0] == origin[0]
+    ]
+    assert len(center) == 1
+    assert center[0].start[1] == pytest.approx(origin[1] - 300, abs=TOLERANCE)
+    assert center[0].end[1] == pytest.approx(origin[1] + 300, abs=TOLERANCE)
     for line in _lines(grid):
-        if line.start[0] == line.end[0]:
-            half = math.sqrt(radius * radius - line.start[0] ** 2)
-            assert line.start[1] >= -half - TOLERANCE
-            assert line.end[1] <= half + TOLERANCE
-        x, y, _ = _mid(line)
-        expected = 1 - math.hypot(x, y) / radius
-        assert line.opacity == pytest.approx(expected, abs=TOLERANCE)
+        assert line.opacity == 1
+        along_v = line.start[0] == line.end[0]
+        length = math.dist(line.start, line.end)
+        assert length == pytest.approx(600 if along_v else 1000, abs=TOLERANCE)
+
+
+def test_circular_patch_draws_each_line_as_one_whole_chord() -> None:
+    radius = 400.0
+    grid = _grid(patch=CircularGroundPatch(radius=radius))
+    for line in _lines(grid):
+        assert line.opacity == 1
+        along_v = line.start[0] == line.end[0]
+        offset, low, high = (
+            (line.start[0], line.start[1], line.end[1])
+            if along_v
+            else (line.start[1], line.start[0], line.end[0])
+        )
+        half = math.sqrt(radius * radius - offset * offset)
+        assert low == pytest.approx(-half, abs=TOLERANCE)
+        assert high == pytest.approx(half, abs=TOLERANCE)
+
+
+def test_circular_patch_omits_the_tangent_lines() -> None:
+    # A 10 mm minor step puts lines at the radius, where the chord has no length.
+    grid = _grid(patch=CircularGroundPatch(radius=400))
+    assert grid.minor_step == pytest.approx(10, abs=TOLERANCE)
+    for line in _lines(grid):
+        assert math.dist(line.start, line.end) > 0
+
+
+@pytest.mark.parametrize(
+    ("patch", "origin"),
+    [
+        pytest.param(DEFAULT_PATCH, (3.0, -4.0, 0.0), id="rectangle"),
+        pytest.param(CircularGroundPatch(radius=400), ORIGIN, id="circle"),
+    ],
+)
+def test_grid_exposes_the_fade_center_and_patch(
+    patch: GroundPatch, origin: Vector3
+) -> None:
+    grid = _grid(patch=patch, origin=origin)
+    assert grid.origin == origin
+    assert grid.patch is patch
+
+
+@pytest.mark.parametrize(
+    ("patch", "anchor", "opacity"),
+    [
+        pytest.param(DEFAULT_PATCH, (0.0, 0.0), 1.0, id="rectangle, center"),
+        pytest.param(DEFAULT_PATCH, (200.0, 0.0), 0.648, id="rectangle, 0.4 of u"),
+        pytest.param(DEFAULT_PATCH, (-400.0, 0.0), 0.104, id="rectangle, 0.8 of u"),
+        pytest.param(DEFAULT_PATCH, (0.0, 200.0), 7 / 27, id="rectangle, 2/3 of v"),
+        pytest.param(
+            CircularGroundPatch(radius=400), (100.0, 0.0), 0.84375, id="circle, 0.25"
+        ),
+        pytest.param(
+            CircularGroundPatch(radius=400), (0.0, -300.0), 0.15625, id="circle, 0.75"
+        ),
+    ],
+)
+def test_label_opacity_is_one_minus_smoothstep_of_the_anchor_reach(
+    patch: GroundPatch, anchor: tuple[float, float], opacity: float
+) -> None:
+    (label,) = [
+        b for b in _labels(_grid(patch=patch)) if (b.anchor[0], b.anchor[1]) == anchor
+    ]
+    assert label.opacity == pytest.approx(opacity, abs=TOLERANCE)
 
 
 def test_labels_mark_each_major_line_where_it_crosses_the_origin_axes() -> None:
@@ -320,15 +361,13 @@ def test_labels_read_in_the_display_format() -> None:
     assert "200 mm" in texts
 
 
-def test_labels_face_the_viewer_and_fade() -> None:
+def test_labels_face_the_viewer() -> None:
     for label in _labels(_grid()):
         assert isinstance(label.orientation, ViewerFacingOrientation)
         assert isinstance(label.content.value, TextRequest)
         height = label.content.value.height_pixels
         assert height == tokens.GROUND_GRID_LABEL_PIXEL_SIZE
         assert label.alignment == (0.0, 0.0)
-        expected = 1 - max(abs(label.anchor[0]) / 500, abs(label.anchor[1]) / 300)
-        assert label.opacity == pytest.approx(expected, abs=TOLERANCE)
 
 
 def test_labels_promote_with_the_set() -> None:
@@ -345,7 +384,7 @@ def test_an_invisible_edge_label_stays_out_of_the_set() -> None:
     grid = _grid(
         distance=2000,
         patch=RectangularGroundPatch(half_extent_u=1e4, half_extent_v=1e4),
-        style=GroundGridStyle(max_lines_per_axis=201, fade_segments=1),
+        style=GroundGridStyle(max_lines_per_axis=201),
     )
     assert grid.major_step == pytest.approx(1000, abs=TOLERANCE)
     texts = _texts(grid)
@@ -388,7 +427,6 @@ def _create(**overrides: object) -> GroundGrid:
             {"target": _camera(Z_UP, ORIGIN, 20).position}, id="target behind"
         ),
         pytest.param({"style": GroundGridStyle(max_lines_per_axis=2)}, id="2 lines"),
-        pytest.param({"style": GroundGridStyle(fade_segments=0)}, id="0 segments"),
         pytest.param({"patch": CircularGroundPatch(radius=0)}, id="empty disc"),
         pytest.param(
             {"patch": RectangularGroundPatch(half_extent_u=1, half_extent_v=math.inf)},
