@@ -336,6 +336,25 @@ the frame, and compares the measurements with the fixture within a
 tolerance that the renderer records. A renderer's recorded tolerance
 only tightens (§req:quality-attributes).
 
+- `vectors/reference_screen_geometry.json` holds the sample scenes. Each
+  scene records its declared convention and the factory inputs that
+  build it. Each view records a camera, a vertical field of view, and a
+  viewport, then every primitive in emission order and every callout
+  leader.
+- Screen points are in the coordinates of `worldToScreen`
+  (§spec:screen-space-placement).
+- A Billboard records its placed anchor, its alignment, and its text
+  request, which hold for any typeface. It also records the content size
+  the generator's stand-in typeface gave and the box that size places. A
+  renderer substitutes its own measured size and places the box from the
+  same anchor and alignment.
+- The sample scenes cover Y-up and Z-up conventions, both handednesses,
+  off-axis cameras, and a view along the up axis.
+
+*Why record the stand-in size*: a box depends on the typeface, so no
+fixed box holds for a real one. The anchor and alignment fix where any
+content sits, and the recorded size shows the box arithmetic.
+
 *Why numbers, not reference images*: an image fixes one typeface, one
 rasterizer, and one anti-aliasing filter, so no second engine could
 match it. Screen positions and sizes hold for any engine and any
