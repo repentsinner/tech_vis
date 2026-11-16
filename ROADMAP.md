@@ -31,21 +31,13 @@ Port the leader-line functions to Python. Test them against
 Closes §spec:scene-model, §spec:scene-color, §spec:coordinate-convention,
 and §spec:renderer-contract.
 
-### Coordinate convention §road:coordinate-convention
-
-Add the declared up axis and handedness, required by `CameraBasis.lookAt`
-and by every mesh the package generates, in
-`dart/lib/src/screen_space_utils.dart` and a new convention type
-(§spec:coordinate-convention).
-
 ### Typed primitives §road:typed-primitives
 
 Replace `SceneObject`, its containers, `SceneTheme`, `SceneColor`, and
 `SceneRendererBackend` with the Line, Quad, Billboard, Marker, and Mesh
 primitives, and return them from `BoundingBoxFactory`,
 `FilledRectangleFactory`, and `CoordinateFrameFactory`
-(§spec:scene-model, §spec:scene-color). Depends on
-§road:coordinate-convention.
+(§spec:scene-model, §spec:scene-color).
 
 ### Billboard text requests §road:billboard-text-requests
 
@@ -111,4 +103,4 @@ Gradient bar for scalar-to-color mappings (§spec:color-ramp-legend).
 ### Navigation cube §road:nav-cube
 
 Passive orientation indicator whose Top face follows the declared up
-axis (§spec:navigation-cube). Depends on §road:coordinate-convention.
+axis (§spec:navigation-cube).
