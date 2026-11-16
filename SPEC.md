@@ -680,26 +680,49 @@ the corner keeps the margin.
 
 ### Ground plane §spec:ground-plane
 
-A reference surface anchored to the origin of a named coordinate frame.
-The ground plane provides spatial context. Without it, floating
-geometry has no perceptible scale or orientation (§req:user-stories).
+A reference surface anchored to the origin of a coordinate frame. The
+ground plane provides spatial context. Without it, floating geometry has
+no perceptible scale or orientation (§req:user-stories).
+`GroundPlaneFactory` emits it as Lines and Billboards.
 
-- The ground plane is a rectangular or circular patch, sized by the app,
-  lying in a plane of its coordinate frame.
+- The ground plane is a rectangular or circular patch, sized by the app
+  and centered on the origin, in the plane through the origin across the
+  up axis of §spec:coordinate-convention. The plane lies along the two
+  axes after the up axis in the cycle X, Y, Z, each pointing the positive
+  way, so a coordinate label reads the world coordinate in either
+  handedness. A rectangle takes a half extent along each.
+- The app states which base unit of §spec:unit-system one world unit is.
+  The grid converts its spacing into the display format's base unit, and
+  reports its steps in that unit.
 - It displays a grid with minor and major lines. The minor step is the
   smallest grid step of §spec:unit-system that keeps minor lines at
   least a token-set number of pixels apart at the camera target. The
   major step is the next grid step.
-- Line opacity falls with distance from the patch center, reaching zero
-  at the patch edge. The fade is radial for a circular patch and
-  rectangular for a rectangular one.
-- Major lines carry coordinate labels in the active display format,
-  billboarded so they stay readable at oblique camera angles
-  (§req:quality-attributes).
+- At most a token-set number of lines crosses the patch in each
+  direction. Where the pixel rule gives more, the minor step coarsens to
+  the smallest grid step that fits.
+- Line opacity falls linearly with distance from the patch center,
+  reaching zero at the patch edge. The fade is radial for a circular
+  patch and rectangular, by the larger fraction of either half extent,
+  for a rectangular one. Each line splits into a token-set number of
+  equal segments, each with the opacity at its midpoint, and a segment at
+  zero opacity is left out.
+- Each major line carries one coordinate label where it crosses the
+  perpendicular line through the origin, and the origin carries one
+  label for zero. The labels form one label set of §spec:unit-system in
+  the active display format. They face the viewer, with their content's
+  bottom-left corner on the crossing (§req:quality-attributes), and fade
+  like the lines at their anchors.
 - When the camera rests near a step boundary, the grid does not flicker.
   The step changes only once the spacing passes the boundary by a
   token-set margin, and changes back only once it passes back by the
-  same margin.
+  same margin. The app passes the previous frame's minor step back in,
+  so the grid stays a pure function of its inputs.
+- Minor line segments come first, then major ones, then labels. Minor and
+  major lines take token-set widths, and the app keys each kind.
+- `vectors/ground_plane.json` pins the minor-step choice and whole grids
+  under Y-up and Z-up conventions in both handednesses
+  (§spec:golden-vectors).
 
 *Why an adaptive grid*: a fixed grid spacing is too coarse when zoomed
 in and an illegible mesh when zoomed out. Snapping to the unit system's
@@ -710,9 +733,27 @@ grid steps keeps grid density perceptually constant across zoom levels
 boundary that implies a physical constraint. Fade-to-transparent
 communicates a reference surface without implying a wall.
 
+*Why segments*: a primitive carries one opacity, so a single Line cannot
+fade along its length. A per-vertex opacity was rejected because it adds
+a field to the closed set of §spec:scene-model for one annotation. A
+fixed segment count bounds the output per line at any zoom.
+
+*Why cap the line count*: the patch is a world size and the minor step
+follows the camera, so closing in on a large patch would otherwise emit
+lines without bound. Coarsening keeps every line at least the minimum
+spacing apart, so the cap thins the grid instead of crowding it.
+
+*Why the caller holds the previous step*: hysteresis needs one value of
+state. Holding it in the app keeps the factory stateless, so a fixture
+reproduces any frame from its inputs alone.
+
 *Why billboard the labels*: a label lying flat on the plane becomes
 unreadable as the view approaches edge-on, which is the view a reader
 uses to judge height above the floor.
+
+*Why label at the origin's lines*: those crossings name each major line
+once, at the coordinate it marks. Labeling every crossing repeats each
+value across the patch.
 
 ### Scale bar §spec:scale-bar
 
