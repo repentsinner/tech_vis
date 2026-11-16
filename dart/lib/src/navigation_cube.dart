@@ -177,14 +177,28 @@ class NavigationCube {
         ),
       );
     }
-    // Ties, as in a view along a cube diagonal, break by face order so
-    // both packages list the faces alike. Facings within the fixture
-    // tolerance tie, because another language's trigonometry can differ
-    // from this one in the last bits.
-    return views..sort(
-      (a, b) => (a.facing - b.facing).abs() <= _facingTieTolerance
-          ? a.face.index.compareTo(b.face.index)
-          : a.facing.compareTo(b.facing),
-    );
+    // Ties, as in a view along a cube diagonal, break by face order.
+    // Facings within the fixture tolerance tie, because another language's
+    // trigonometry can differ from this one in the last bits. Pairwise
+    // tolerance is not transitive, so the faces are grouped instead: each
+    // group holds the faces within the tolerance of its least direct one,
+    // in face order. Both packages then list the faces alike, whatever
+    // sort algorithm they run.
+    views.sort((a, b) => a.facing.compareTo(b.facing));
+    final ordered = <NavigationCubeFaceView>[];
+    var start = 0;
+    while (start < views.length) {
+      var end = start + 1;
+      while (end < views.length &&
+          views[end].facing - views[start].facing <= _facingTieTolerance) {
+        end++;
+      }
+      ordered.addAll(
+        views.sublist(start, end)
+          ..sort((a, b) => a.face.index.compareTo(b.face.index)),
+      );
+      start = end;
+    }
+    return ordered;
   }
 }

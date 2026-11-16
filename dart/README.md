@@ -134,7 +134,8 @@ A renderer handles each primitive as follows:
   fraction of the content's width and height, counted from its
   bottom-left corner. A viewer-facing billboard stays upright and faces
   the viewer. A coplanar one lies in its plane and foreshortens at
-  oblique angles. Multiply the content's own alpha by the primitive's
+  oblique angles. Its content runs along `right`, and its vertical axis
+  is `normal` cross `right` by the declared hand rule. Multiply the content's own alpha by the primitive's
   opacity.
 - **Marker**: draw the shared unit-sphere mesh at the transform that
   `MarkerFactory.transform` returns for the frame. The transform keeps
@@ -353,6 +354,165 @@ DisplayFormat.decimalInch.formatLabels(
 ); // [',125 in']
 ```
 
+An angle has no display format. `formatDegreesLabel` writes one in
+decimal degrees under the same rounding and number formatting:
+`formatDegreesLabel(37.46, step: 0.1)` returns `37.5°`.
+
+## Ground plane
+
+A ground plane gives floating geometry a sense of scale and orientation.
+`GroundPlaneFactory.create` draws a grid of minor and major lines on a
+patch centered on an origin, in the plane across the declared up axis.
+The plane lies along the two axes after the up axis in the cycle X, Y,
+Z, which `CoordinateConvention.planeAxes` names: X and Y for Z-up, Z and
+X for Y-up. A `RectangularGroundPatch` takes a half extent along each of
+those axes, and a `CircularGroundPatch` takes a radius.
+
+The grid adapts to the camera. Its minor step is the finest grid step of
+the display format whose lines sit at least
+`StyleTokens.groundGridMinLineSpacingPixels` apart at the camera target,
+and its major step is the next grid step. Pass the returned minor step
+back on the next frame, so a camera resting near a step boundary does not
+flicker between two steps:
+
+```dart
+GroundGrid? grid;
+
+void onFrame(CameraBasis camera, Vector3 target) {
+  grid = GroundPlaneFactory.create(
+    convention: convention,
+    patch: const RectangularGroundPatch(halfExtentU: 600, halfExtentV: 400),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric, // one world unit is 1 mm
+    camera: camera,
+    target: target,
+    verticalFovRadians: fov,
+    viewportHeight: viewport.y,
+    resolveText: myTextResolver,
+    minorKey: MyStyle.gridMinor,
+    majorKey: MyStyle.gridMajor,
+    labelKey: MyStyle.gridLabel,
+    previousMinorStep: grid?.minorStep,
+  );
+  scene.replaceGrid(grid!.primitives);
+}
+```
+
+Each line arrives as a run of `LinePrimitive` segments whose opacity
+falls from one at the patch center to zero at its edge, so the grid fades
+out without a hard border. The fade is rectangular on a rectangular patch
+and radial on a circular one. Each major line carries a viewer-facing
+coordinate label where it crosses the perpendicular line through the
+origin, and the origin carries one label for zero. The labels form one
+set in the display format, so they share a unit. Minor segments come
+first, then major segments, then labels, so drawing them in order puts
+major lines over minor ones.
+
+The grid never draws more than `StyleTokens.groundGridMaxLinesPerAxis`
+lines across the patch in either direction. When the camera closes in on
+a large patch, the minor step coarsens to stay within that count.
+`GroundGridStyle` overrides any of the grid's tokens.
+
+## Dimensions
+
+A dimension measures between two points the app picks.
+`SmartDimensionFactory.create` returns its witness lines, dimension line,
+open arrowheads, and value text as lines and a billboard, all sized in
+screen pixels. The size depends on the camera, so rebuild the dimension
+in every frame in which the camera moves.
+
+When the points differ along one world axis, within a small tolerance,
+the dimension measures that axis. Otherwise `multiAxis` picks one
+dimension per varying axis, or one of the direct distance. The value
+text is the measured length written by the display format, so convert
+nothing first: pass the unit system of the world coordinates.
+
+```dart
+final dimension = SmartDimensionFactory.create(
+  from: holeCenter,
+  to: edgePoint,
+  drafting: DraftingConvention.isoOriented,
+  format: DisplayFormat.metric,
+  worldUnits: UnitSystem.metric,
+  camera: camera,
+  verticalFovRadians: verticalFovRadians,
+  viewportSize: viewportSize,
+  resolveText: resolveText,
+  key: MyStyle.dimension,
+);
+```
+
+The drafting convention decides where the text sits. Pick the one the
+app's readers work to:
+
+| Convention | Text |
+|---|---|
+| `isoOriented` | Parallel to the dimension line, above it, upright |
+| `isoReferencing` | Horizontal, on a leader off the dimension line |
+| `asmeInlined` | Horizontal, in a break in the dimension line |
+| `asmeReferencing` | Horizontal, on a leader off the dimension line |
+
+A dimension shrinks on screen as the camera pulls back. When oriented
+or inlined text no longer fits between the witness lines, it moves onto
+a leader in its standard's referencing style, so the value stays
+readable at any zoom. The leader is a callout leader with the same
+style. Oriented text is a coplanar billboard facing the viewer; the
+others are viewer-facing.
+
+By default the dimension line sits toward screen up, on the
+perpendicular that faces the viewer. Pass `offsetDirection` to put it on
+a side of the app's choosing. `DimensionStyle` overrides any pixel size
+or the alignment tolerance.
+
+`SmartDimensionFactory.createAngular` measures the angle at a vertex
+between two legs, each a vector from the vertex to the leg's far end.
+The arc runs a fixed pixel radius from the vertex, the short way round,
+and draws as straight lines a few pixels long. A leg that ends short of
+the arc gets a witness line out to it. The value reads in decimal
+degrees, such as `37.5°`, with the app's number formatting.
+
+```dart
+final angle = SmartDimensionFactory.createAngular(
+  vertex: corner,
+  first: edgeEnd - corner,
+  second: otherEdgeEnd - corner,
+  drafting: DraftingConvention.isoOriented,
+  camera: camera,
+  verticalFovRadians: verticalFovRadians,
+  viewportSize: viewportSize,
+  resolveText: resolveText,
+  key: MyStyle.dimension,
+);
+```
+
+`SmartDimensionFactory.createRadial` dimensions a circle or arc from its
+center, radius, and plane normal. `RadialMeasure.radius` draws from the
+center to the rim and reads `R12 mm`; `RadialMeasure.diameter` draws
+across the circle and reads `⌀24 mm`. The line runs toward the screen's
+top-right corner unless `direction` says otherwise, so for an arc, pass a
+direction that points into it.
+
+```dart
+final hole = SmartDimensionFactory.createRadial(
+  center: holeCenter,
+  radius: holeRadius,
+  normal: faceNormal,
+  measure: RadialMeasure.diameter,
+  drafting: DraftingConvention.asmeInlined,
+  format: DisplayFormat.metric,
+  worldUnits: UnitSystem.metric,
+  camera: camera,
+  verticalFovRadians: verticalFovRadians,
+  viewportSize: viewportSize,
+  resolveText: resolveText,
+  key: MyStyle.dimension,
+);
+```
+
+Both follow the drafting convention and the referencing fallback of a
+point-to-point dimension. An angle's text fits when it clears the
+arrowheads along the arc on screen.
+
 ## Measure a frame against the reference geometry
 
 The repository's
@@ -511,6 +671,49 @@ boundary. The bar keeps that step while it fits, and moves to a longer
 step only once the longer step fits with a style-set margin to spare.
 `atTarget` returns null when the target is behind the camera, or when
 even the format's shortest step is longer than the bar's rectangle.
+
+### Color ramp legend
+
+A color ramp legend keys a color-coded value, such as a temperature or a
+speed, to its colors. The app owns the mapping from value to color and
+the value range. `ColorRampLegendLayout.forRange` lays out the bar, its
+color stops, and its ticks in viewport pixels:
+
+```dart
+final legend = ColorRampLegendLayout.forRange(
+  minValue: 0,
+  maxValue: 100,
+  stops: const [
+    ColorRampStop(position: 0, key: 'cold'),
+    ColorRampStop(position: 0.5, key: 'mild'),
+    ColorRampStop(position: 1, key: 'hot'),
+  ],
+  viewportSize: Vector2(1280, 720),
+  unit: '°C',
+);
+// Fill legend.barRect with a gradient through each stop's color, from
+// the minimum end of the bar: its bottom when vertical, its left when
+// horizontal.
+drawGradient(legend.barRect, legend.orientation, legend.stops);
+for (final tick in legend.ticks) {
+  // '0 °C', '20', '40', '60', '80', '100 °C'
+  drawText(tick.label, tick.labelAnchor, legend.labelAlignment);
+}
+```
+
+Each stop holds a position from 0 to 1 along the bar and the app's key.
+The app resolves each key to a color and blends between neighboring
+stops in the color space its renderer draws in. Two stops at one
+position make a hard edge.
+
+The bar spans the rectangle's length and sits on its edge nearer the
+corner, so the labels fall on the side toward the viewport center. A
+tick marks every whole multiple of the tick interval inside the range.
+By default the interval is the smallest of 1, 2, or 5 times a power of
+ten that keeps ticks a style-set distance apart, and `tickInterval`
+sets it instead. Labels round to the interval and follow the app's
+`NumberFormatting`, and `unit` follows the first and last labels.
+`formatNumberLabel` writes one such value on its own.
 
 ## Style tokens
 

@@ -667,6 +667,11 @@ Map<String, Object?> _convention(CoordinateConvention c) => {
   'handedness': c.handedness.name,
 };
 
+Map<String, Object?> _numbers(NumberFormatting n) => {
+  'decimalMarker': n.decimalMarker.name,
+  'showLeadingZero': n.showLeadingZero,
+};
+
 Map<String, Object?> _cubeInput(NavigationCube cube) => {
   'convention': _convention(cube.convention),
   'front': {'axis': cube.front.axis.name, 'negative': cube.front.negative},
@@ -766,6 +771,8 @@ const _stepLengths = <double>[
   59,
   130,
   6e4,
+  // Past 64-bit integers, where a power of ten has to be a double.
+  3e19,
 ];
 
 typedef _LabelSet = ({
@@ -855,10 +862,7 @@ Map<String, Object?> unitFormatsFixture() => {
           'format': c.format.name,
           'values': c.values,
           'step': c.step,
-          'numbers': {
-            'decimalMarker': c.numbers.decimalMarker.name,
-            'showLeadingZero': c.numbers.showLeadingZero,
-          },
+          'numbers': _numbers(c.numbers),
         },
         'output': {
           'labels': c.format.formatLabels(
@@ -869,7 +873,67 @@ Map<String, Object?> unitFormatsFixture() => {
         },
       },
   ],
+  'formatNumberLabel': [
+    for (final (value, step, numbers) in _numberLabels)
+      {
+        'input': {'value': value, 'step': step, 'numbers': _numbers(numbers)},
+        'output': {
+          'label': formatNumberLabel(value, step: step, numbers: numbers),
+        },
+      },
+  ],
+  'formatDegreesLabel': [
+    for (final (degrees, step, numbers) in _degreeLabels)
+      {
+        'input': {
+          'degrees': degrees,
+          'step': step,
+          'numbers': _numbers(numbers),
+        },
+        'output': {
+          'label': formatDegreesLabel(degrees, step: step, numbers: numbers),
+        },
+      },
+  ],
 };
+
+/// Angles either side of a rounding boundary, at whole, tenth, and
+/// hundredth steps, under both decimal markers.
+const _degreeLabels = <(double, double, NumberFormatting)>[
+  (45, 0.1, _defaultNumbers),
+  (30.06, 0.1, _defaultNumbers),
+  (12.345, 0.01, _defaultNumbers),
+  (89.6, 1, _defaultNumbers),
+  (179.96, 0.1, _defaultNumbers),
+  (
+    0.25,
+    0.05,
+    NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+];
+
+/// Plain values either side of a rounding boundary, a negative value that
+/// rounds to zero, steps coarser than the value's digits, and both decimal
+/// markers.
+const _numberLabels = <(double, double, NumberFormatting)>[
+  (45, 1, _defaultNumbers),
+  (12.345, 0.01, _defaultNumbers),
+  (-0.04, 0.1, _defaultNumbers),
+  (-17.5, 2.5, _defaultNumbers),
+  (7, 5, _defaultNumbers),
+  (1250000, 500000, _defaultNumbers),
+  (
+    0.5,
+    0.1,
+    NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+];
 
 typedef _ScaleBarCase = ({
   String name,
@@ -1035,10 +1099,7 @@ Map<String, Object?> scaleBarFixture() => {
                 ViewportOverlayPlacement.of(ViewportOverlayKind.scaleBar),
           ),
           'previousStep': c.previousStep,
-          'numbers': {
-            'decimalMarker': c.numbers.decimalMarker.name,
-            'showLeadingZero': c.numbers.showLeadingZero,
-          },
+          'numbers': _numbers(c.numbers),
           'minTickSpacingPixels': StyleTokens.scaleBarMinTickSpacingPixels,
           'hysteresis': StyleTokens.scaleBarStepHysteresis,
           'labelHeightPixels': StyleTokens.scaleBarLabelHeightPixels,
@@ -1057,6 +1118,894 @@ Map<String, Object?> scaleBarFixture() => {
           ),
         ),
       },
+  ],
+};
+
+typedef _LegendCase = ({
+  String name,
+  double minValue,
+  double maxValue,
+  vm.Vector2 viewport,
+  ColorRampOrientation orientation,
+  ViewportOverlayPlacement placement,
+  double? tickInterval,
+  String? unit,
+  NumberFormatting numbers,
+});
+
+/// Stops with an uneven spacing and a hard edge at the middle, where two
+/// stops share a position.
+const _legendStops = [
+  ColorRampStop(position: 0, key: 'low'),
+  ColorRampStop(position: 0.25, key: 'lowMid'),
+  ColorRampStop(position: 0.5, key: 'mid'),
+  ColorRampStop(position: 0.5, key: 'midEdge'),
+  ColorRampStop(position: 1, key: 'high'),
+];
+
+_LegendCase _legendCase(
+  String name, {
+  double minValue = 0,
+  double maxValue = 100,
+  vm.Vector2? viewport,
+  ColorRampOrientation orientation = ColorRampOrientation.vertical,
+  ViewportOverlayPlacement? placement,
+  double? tickInterval,
+  String? unit,
+  NumberFormatting numbers = _defaultNumbers,
+}) => (
+  name: name,
+  minValue: minValue,
+  maxValue: maxValue,
+  viewport: viewport ?? vm.Vector2(1280, 720),
+  orientation: orientation,
+  placement:
+      placement ??
+      ViewportOverlayPlacement.of(ViewportOverlayKind.colorRampLegend),
+  tickInterval: tickInterval,
+  unit: unit,
+  numbers: numbers,
+);
+
+List<_LegendCase> _legendCases() => [
+  _legendCase('defaults, 0 to 100', unit: '°C'),
+  _legendCase('defaults, phone viewport', viewport: vm.Vector2(390, 844)),
+  _legendCase(
+    'range off the interval',
+    minValue: -12.5,
+    maxValue: 37.5,
+    unit: 'm/s',
+  ),
+  _legendCase('fractional range', maxValue: 1),
+  _legendCase('large range', minValue: 2e5, maxValue: 1.35e6, unit: 'Pa'),
+  _legendCase('tiny range', minValue: 0.0012, maxValue: 0.0047),
+  _legendCase('negative range', minValue: -40, maxValue: -5, unit: '°F'),
+  _legendCase('app interval', tickInterval: 25),
+  _legendCase('range end inside the slack', maxValue: 0.3, tickInterval: 0.1),
+  _legendCase(
+    'interval longer than the range',
+    minValue: 0.1,
+    maxValue: 0.9,
+    tickInterval: 1,
+    unit: 'K',
+  ),
+  _legendCase(
+    'one tick carries the unit',
+    minValue: 15,
+    maxValue: 35,
+    tickInterval: 20,
+    unit: 'kPa',
+  ),
+  _legendCase(
+    'comma, no leading zero',
+    maxValue: 1,
+    numbers: const NumberFormatting(
+      decimalMarker: DecimalMarker.comma,
+      showLeadingZero: false,
+    ),
+  ),
+  for (final corner in ViewportCorner.values) ...[
+    _legendCase(
+      'vertical, ${corner.name}',
+      placement: ViewportOverlayPlacement.of(
+        ViewportOverlayKind.colorRampLegend,
+        corner: corner,
+        offsetXPixels: 12.5,
+        offsetYPixels: 30,
+      ),
+    ),
+    _legendCase(
+      'horizontal, ${corner.name}',
+      orientation: ColorRampOrientation.horizontal,
+      minValue: -3,
+      maxValue: 7,
+      unit: 'mm',
+      placement: ViewportOverlayPlacement.of(
+        ViewportOverlayKind.colorRampLegend,
+        corner: corner,
+        widthPixels: 260,
+        heightPixels: 44.5,
+      ),
+    ),
+  ],
+];
+
+List<double> _rect(ViewportRect r) => [r.left, r.top, r.right, r.bottom];
+
+Map<String, Object?> _legendLayout(ColorRampLegendLayout legend) => {
+  'rect': _rect(legend.rect),
+  'barRect': _rect(legend.barRect),
+  'orientation': legend.orientation.name,
+  'stops': [
+    for (final s in legend.stops) {'position': s.position, 'key': s.key},
+  ],
+  'tickInterval': legend.tickInterval,
+  'ticks': [
+    for (final t in legend.ticks)
+      {
+        'value': t.value,
+        'position': t.position,
+        'label': {'text': t.label.text, 'heightPixels': t.label.heightPixels},
+        'labelAnchor': _vector(t.labelAnchor),
+      },
+  ],
+  'labelAlignment': _vector(legend.labelAlignment),
+};
+
+/// The color-ramp-legend fixture: the legend that a value range, its
+/// stops, and a placement lay out, under the style's default bar
+/// thickness, tick spacing, label gap, and label height.
+Map<String, Object?> colorRampLegendFixture() => {
+  'screenCoordinates':
+      'pixels from the top-left corner of the viewport, x right, y down',
+  'units': "values and tickInterval in the app's value unit",
+  'ColorRampLegendLayout.forRange': [
+    for (final c in _legendCases())
+      {
+        'name': c.name,
+        'input': {
+          'minValue': c.minValue,
+          'maxValue': c.maxValue,
+          'stops': [
+            for (final s in _legendStops)
+              {'position': s.position, 'key': s.key},
+          ],
+          'viewport': _vector(c.viewport),
+          'orientation': c.orientation.name,
+          'placement': _placement(c.placement),
+          'tickInterval': c.tickInterval,
+          'unit': c.unit,
+          'numbers': _numbers(c.numbers),
+          'barThicknessPixels': StyleTokens.colorRampLegendBarThicknessPixels,
+          'minTickSpacingPixels':
+              StyleTokens.colorRampLegendMinTickSpacingPixels,
+          'labelGapPixels': StyleTokens.colorRampLegendLabelGapPixels,
+          'labelHeightPixels': StyleTokens.colorRampLegendLabelHeightPixels,
+        },
+        'output': _legendLayout(
+          ColorRampLegendLayout.forRange(
+            minValue: c.minValue,
+            maxValue: c.maxValue,
+            stops: _legendStops,
+            viewportSize: c.viewport,
+            orientation: c.orientation,
+            placement: c.placement,
+            tickInterval: c.tickInterval,
+            unit: c.unit,
+            numbers: c.numbers,
+          ),
+        ),
+      },
+  ],
+};
+
+typedef _GroundCase = ({
+  String name,
+  CoordinateConvention convention,
+  GroundPatch patch,
+  DisplayFormat format,
+  UnitSystem worldUnits,
+  vm.Vector3 origin,
+  _View view,
+  double? previousMinorStep,
+  GroundGridStyle style,
+});
+
+/// Few segments and lines, so each case stays short enough to review.
+const _compactGrid = GroundGridStyle(fadeSegments: 3, maxLinesPerAxis: 41);
+
+/// Ground grids under each convention and handedness, both patch shapes,
+/// each display format, a held step, and one case at the token defaults.
+List<_GroundCase> _groundCases() => [
+  (
+    name: 'rectangle, metric',
+    convention: _zUpRight,
+    patch: const RectangularGroundPatch(halfExtentU: 12, halfExtentV: 3),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3.zero(),
+    view: _view('off-axis', [20, -30, 40], [2, 1, 0], 45, [1280, 720]),
+    previousMinorStep: null,
+    style: _compactGrid,
+  ),
+  (
+    name: 'circle, decimal inch over millimeters',
+    convention: _zUpLeft,
+    patch: const CircularGroundPatch(radius: 26),
+    format: DisplayFormat.decimalInch,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3(10, -5, 2),
+    view: _view('off-axis', [-60, -50, 120], [10, -5, 2], 40, [1024, 768]),
+    previousMinorStep: null,
+    style: _compactGrid,
+  ),
+  (
+    name: 'rectangle, fractional inch',
+    convention: _yUpRight,
+    patch: const RectangularGroundPatch(halfExtentU: 1.5, halfExtentV: 3),
+    format: DisplayFormat.fractionalInch,
+    worldUnits: UnitSystem.imperial,
+    origin: vm.Vector3.zero(),
+    view: _view('off-axis', [6, 10, 8], [0, 0, 0], 50, [1920, 1080]),
+    previousMinorStep: null,
+    style: _compactGrid,
+  ),
+  (
+    name: 'circle, metric, previous step held inside the margin',
+    convention: _yUpLeft,
+    patch: const CircularGroundPatch(radius: 105),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3(0, -20, 0),
+    view: _view('off-axis', [300, 680, 300], [0, -20, 0], 45, [1280, 720]),
+    previousMinorStep: 10,
+    style: _compactGrid,
+  ),
+  (
+    name: 'rectangle, metric, style defaults',
+    convention: _zUpRight,
+    patch: const RectangularGroundPatch(halfExtentU: 80, halfExtentV: 60),
+    format: DisplayFormat.metric,
+    worldUnits: UnitSystem.metric,
+    origin: vm.Vector3.zero(),
+    view: _view('far', [2000, -3000, 4000], [0, 0, 0], 45, [1280, 720]),
+    previousMinorStep: null,
+    style: const GroundGridStyle(),
+  ),
+];
+
+Map<String, Object?> _groundStyle(GroundGridStyle s) => {
+  'minLineSpacingPixels': s.minLineSpacingPixels,
+  'stepMargin': s.stepMargin,
+  'maxLinesPerAxis': s.maxLinesPerAxis,
+  'fadeSegments': s.fadeSegments,
+  'minorLineWidth': s.minorLineWidth,
+  'majorLineWidth': s.majorLineWidth,
+  'labelPixelSize': s.labelPixelSize,
+};
+
+Map<String, Object?> _groundPatch(GroundPatch p) => switch (p) {
+  RectangularGroundPatch(:final halfExtentU, :final halfExtentV) => {
+    'shape': 'rectangle',
+    'halfExtentU': halfExtentU,
+    'halfExtentV': halfExtentV,
+  },
+  CircularGroundPatch(:final radius) => {'shape': 'circle', 'radius': radius},
+};
+
+/// A ground-grid primitive in world coordinates, with the key the case
+/// gave it.
+Map<String, Object?> _groundCase(_GroundCase c) {
+  final camera = CameraBasis.lookAt(
+    position: c.view.position,
+    target: c.view.target,
+    convention: c.convention,
+  );
+  final grid = GroundPlaneFactory.create(
+    convention: c.convention,
+    patch: c.patch,
+    format: c.format,
+    worldUnits: c.worldUnits,
+    camera: camera,
+    target: c.view.target,
+    verticalFovRadians: c.view.verticalFovDegrees * math.pi / 180,
+    viewportHeight: c.view.viewport.y,
+    resolveText: fakeTextResolver,
+    minorKey: 'minor',
+    majorKey: 'major',
+    labelKey: 'label',
+    origin: c.origin,
+    previousMinorStep: c.previousMinorStep,
+    style: c.style,
+  );
+  return {
+    'name':
+        '${c.name}, ${c.convention.up.label}-up '
+        '${c.convention.handedness.name}-handed',
+    'input': {
+      'convention': _convention(c.convention),
+      'patch': _groundPatch(c.patch),
+      'format': c.format.name,
+      'worldUnits': c.worldUnits.name,
+      'origin': _vector(c.origin),
+      'camera': {
+        'position': _vector(c.view.position),
+        'target': _vector(c.view.target),
+        'verticalFovDegrees': c.view.verticalFovDegrees,
+        'viewportHeight': c.view.viewport.y,
+      },
+      'previousMinorStep': c.previousMinorStep,
+      'style': _groundStyle(c.style),
+    },
+    'output': {
+      'minorStep': grid.minorStep,
+      'majorStep': grid.majorStep,
+      'primitives': [for (final p in grid.primitives) _worldPrimitive(p)],
+    },
+  };
+}
+
+/// Spacings either side of a step boundary, by the margin and within it,
+/// with and without a previous step.
+List<({DisplayFormat format, double spacing, double? previous})>
+_minorStepCases() => [
+  for (final (format, boundary, below, above) in [
+    (DisplayFormat.metric, 10.0, 1.0, 100.0),
+    (DisplayFormat.decimalInch, 0.1, 0.01, 1.0),
+    (DisplayFormat.fractionalInch, 1.0, 0.25, 12.0),
+  ])
+    for (final factor in [0.8, 0.95, 1.05, 1.2])
+      for (final previous in [null, below, boundary, above])
+        (format: format, spacing: boundary * factor, previous: previous),
+];
+
+/// The ground-plane fixture: minor-step choice with its margin, and whole
+/// grids in world coordinates.
+Map<String, Object?> groundPlaneFixture() => {
+  'units':
+      "steps are in the display format's base unit; points and extents "
+      'are in world units',
+  'GroundPlaneFactory.minorStep': [
+    for (final c in _minorStepCases())
+      {
+        'name':
+            '${c.format.name}, spacing ${c.spacing}, previous ${c.previous}',
+        'input': {
+          'format': c.format.name,
+          'minimumSpacing': c.spacing,
+          'previousStep': c.previous,
+          'margin': StyleTokens.groundGridStepMargin,
+        },
+        'output': {
+          'step': GroundPlaneFactory.minorStep(
+            format: c.format,
+            minimumSpacing: c.spacing,
+            previousStep: c.previous,
+          ),
+        },
+      },
+  ],
+  'GroundPlaneFactory.create': [for (final c in _groundCases()) _groundCase(c)],
+};
+
+typedef _DimensionCase = ({
+  String name,
+  vm.Vector3 from,
+  vm.Vector3 to,
+  DraftingConvention drafting,
+  DisplayFormat format,
+  UnitSystem worldUnits,
+  CoordinateConvention convention,
+  _View view,
+  MultiAxisDimension multiAxis,
+  vm.Vector3? offsetDirection,
+  NumberFormatting numbers,
+  DimensionStyle style,
+});
+
+const _customDimensionStyle = DimensionStyle(
+  lineWidth: 1.5,
+  witnessGapPixels: 3,
+  witnessExtensionPixels: 8,
+  offsetPixels: 40,
+  arrowLengthPixels: 14,
+  arrowWidthPixels: 6,
+  textPixelSize: 18,
+  textGapPixels: 5,
+  alignmentTolerance: 0.01,
+  leader: _customStyle,
+  arcRadiusPixels: 60,
+  arcSegmentPixels: 6,
+  angleResolutionDegrees: 0.01,
+);
+
+/// Dimensions under each drafting convention, with room for the text and
+/// cramped, measuring one axis, components, and the direct distance, in
+/// Z-up and Y-up right-handed and Z-up left-handed spaces.
+List<_DimensionCase> _dimensionCases() {
+  _DimensionCase c(
+    String name, {
+    required List<double> from,
+    required List<double> to,
+    required DraftingConvention drafting,
+    DisplayFormat format = DisplayFormat.metric,
+    UnitSystem worldUnits = UnitSystem.metric,
+    CoordinateConvention convention = _zUpRight,
+    _View? view,
+    MultiAxisDimension multiAxis = MultiAxisDimension.components,
+    List<double>? offsetDirection,
+    NumberFormatting numbers = _defaultNumbers,
+    DimensionStyle style = const DimensionStyle(),
+  }) => (
+    name: name,
+    from: vm.Vector3.array(from),
+    to: vm.Vector3.array(to),
+    drafting: drafting,
+    format: format,
+    worldUnits: worldUnits,
+    convention: convention,
+    view: view ?? _dimensionView,
+    multiAxis: multiAxis,
+    offsetDirection: offsetDirection == null
+        ? null
+        : vm.Vector3.array(offsetDirection),
+    numbers: numbers,
+    style: style,
+  );
+  return [
+    for (final drafting in DraftingConvention.values) ...[
+      c(
+        'one axis with room, ${drafting.name}',
+        from: [0, 0, 0],
+        to: [100, 0.05, 0],
+        drafting: drafting,
+      ),
+      c(
+        'one axis cramped, ${drafting.name}',
+        from: [10, 20, 5],
+        to: [10, 20, 13],
+        drafting: drafting,
+      ),
+    ],
+    c(
+      'three axes as components, Y-up',
+      from: [-20, 5, 10],
+      to: [40, 35, -30],
+      drafting: DraftingConvention.asmeReferencing,
+      convention: _yUpRight,
+      view: _view('front', [120, 90, 260], [10, 20, -10], 40, [1024, 768]),
+    ),
+    c(
+      'three axes direct, Z-up left-handed',
+      from: [-20, 5, 10],
+      to: [40, 35, -30],
+      drafting: DraftingConvention.isoOriented,
+      convention: _zUpLeft,
+      multiAxis: MultiAxisDimension.direct,
+    ),
+    c(
+      'vertical axis seen end-on from above',
+      from: [50, 10, 0],
+      to: [50, 10, 40],
+      drafting: DraftingConvention.asmeInlined,
+      view: _view('top', [50, 10, 300], [50, 10, 0], 30, [800, 800]),
+    ),
+    c(
+      'inches in fractional inch, app offset direction',
+      from: [0, 0, 0],
+      to: [0, 40.5, 0],
+      drafting: DraftingConvention.asmeInlined,
+      format: DisplayFormat.fractionalInch,
+      worldUnits: UnitSystem.imperial,
+      offsetDirection: [-1, 0.3, 0.2],
+      view: _view('oblique', [-40, -60, 50], [0, 20, 0], 50, [1280, 720]),
+    ),
+    c(
+      'comma and no leading zero, custom style',
+      from: [1, 1, 1],
+      to: [1.5, 1, 1.004],
+      drafting: DraftingConvention.isoOriented,
+      format: DisplayFormat.decimalInch,
+      numbers: const NumberFormatting(
+        decimalMarker: DecimalMarker.comma,
+        showLeadingZero: false,
+      ),
+      style: _customDimensionStyle,
+      view: _view('close', [1.25, -0.4, 0.6], [1.25, 1, 1], 45, [1280, 720]),
+    ),
+  ];
+}
+
+Map<String, Object?> _dimensionStyle(DimensionStyle s) => {
+  'lineWidth': s.lineWidth,
+  'witnessGapPixels': s.witnessGapPixels,
+  'witnessExtensionPixels': s.witnessExtensionPixels,
+  'offsetPixels': s.offsetPixels,
+  'arrowLengthPixels': s.arrowLengthPixels,
+  'arrowWidthPixels': s.arrowWidthPixels,
+  'textPixelSize': s.textPixelSize,
+  'textGapPixels': s.textGapPixels,
+  'alignmentTolerance': s.alignmentTolerance,
+  'leader': _style(s.leader),
+  'arcRadiusPixels': s.arcRadiusPixels,
+  'arcSegmentPixels': s.arcSegmentPixels,
+  'angleResolutionDegrees': s.angleResolutionDegrees,
+};
+
+/// A primitive as emitted, in world space.
+/// A line or billboard in world space, with its key and opacity, as the
+/// ground-plane and smart-dimension families record them.
+Map<String, Object?> _worldPrimitive(Primitive p) => switch (p) {
+  LinePrimitive() => {
+    'type': 'line',
+    'key': p.key,
+    'start': _vector(p.start),
+    'end': _vector(p.end),
+    'widthPixels': p.widthPixels,
+    'opacity': p.opacity,
+  },
+  BillboardPrimitive() => {
+    'type': 'billboard',
+    'key': p.key,
+    'anchor': _vector(p.anchor),
+    'orientation': switch (p.orientation) {
+      ViewerFacingOrientation() => {'type': 'viewerFacing'},
+      CoplanarOrientation(:final normal, :final right) => {
+        'type': 'coplanar',
+        'normal': _vector(normal),
+        'right': _vector(right),
+      },
+    },
+    'alignment': _vector(p.alignment),
+    'offset': switch (p.offset) {
+      null => null,
+      final o => {'direction': _vector(o.direction), 'pixels': o.pixels},
+    },
+    if (p.content.value case final TextRequest request)
+      'textRequest': {
+        'text': request.text,
+        'heightPixels': request.heightPixels,
+      },
+    'contentSize': [p.content.widthPixels, p.content.heightPixels],
+    'opacity': p.opacity,
+  },
+  QuadPrimitive() || MarkerPrimitive() || MeshPrimitive() =>
+    throw UnsupportedError('these families emit lines and billboards'),
+};
+
+Map<String, Object?> _dimension(_DimensionCase c) {
+  final camera = CameraBasis.lookAt(
+    position: c.view.position,
+    target: c.view.target,
+    convention: c.convention,
+  );
+  final primitives = SmartDimensionFactory.create(
+    from: c.from,
+    to: c.to,
+    drafting: c.drafting,
+    format: c.format,
+    worldUnits: c.worldUnits,
+    camera: camera,
+    verticalFovRadians: c.view.verticalFovDegrees * math.pi / 180,
+    viewportSize: c.view.viewport,
+    resolveText: fakeTextResolver,
+    key: null,
+    multiAxis: c.multiAxis,
+    offsetDirection: c.offsetDirection,
+    numbers: c.numbers,
+    style: c.style,
+  );
+  return {
+    'name': c.name,
+    'input': {
+      'from': _vector(c.from),
+      'to': _vector(c.to),
+      'drafting': c.drafting.name,
+      'format': c.format.name,
+      'worldUnits': c.worldUnits.name,
+      'convention': _convention(c.convention),
+      'camera': _camera(c.view),
+      'multiAxis': c.multiAxis.name,
+      'offsetDirection': c.offsetDirection == null
+          ? null
+          : _vector(c.offsetDirection!),
+      'numbers': _numbers(c.numbers),
+      'style': _dimensionStyle(c.style),
+    },
+    'output': {
+      'primitives': [for (final p in primitives) _worldPrimitive(p)],
+    },
+  };
+}
+
+typedef _AngularCase = ({
+  String name,
+  vm.Vector3 vertex,
+  vm.Vector3 first,
+  vm.Vector3 second,
+  DraftingConvention drafting,
+  CoordinateConvention convention,
+  _View view,
+  NumberFormatting numbers,
+  DimensionStyle style,
+});
+
+final _dimensionView = _view('oblique', [260, -320, 210], [50, 10, 0], 45, [
+  1280,
+  720,
+]);
+
+/// Angles under each drafting convention, with room for the text and
+/// cramped, with legs that end short of the arc and past it, and legs out
+/// of every world plane, in Z-up and Y-up right-handed and Z-up
+/// left-handed spaces.
+List<_AngularCase> _angularCases() {
+  _AngularCase c(
+    String name, {
+    required List<double> first,
+    required List<double> second,
+    required DraftingConvention drafting,
+    List<double> vertex = const [50, 10, 0],
+    CoordinateConvention convention = _zUpRight,
+    _View? view,
+    NumberFormatting numbers = _defaultNumbers,
+    DimensionStyle style = const DimensionStyle(),
+  }) => (
+    name: name,
+    vertex: vm.Vector3.array(vertex),
+    first: vm.Vector3.array(first),
+    second: vm.Vector3.array(second),
+    drafting: drafting,
+    convention: convention,
+    view: view ?? _dimensionView,
+    numbers: numbers,
+    style: style,
+  );
+  return [
+    for (final drafting in DraftingConvention.values) ...[
+      c(
+        'obtuse angle with room, ${drafting.name}',
+        first: [80, 0, 0],
+        second: [-70, 40, 0],
+        drafting: drafting,
+      ),
+      c(
+        'small angle cramped, ${drafting.name}',
+        first: [80, 0, 0],
+        second: [80, 4, 0],
+        drafting: drafting,
+      ),
+    ],
+    c(
+      'short legs extended to the arc',
+      first: [3, 0, 0],
+      second: [0, 0, 5],
+      drafting: DraftingConvention.asmeInlined,
+    ),
+    c(
+      'obtuse, legs out of every world plane, Y-up',
+      vertex: [-10, 20, 5],
+      first: [30, 10, -20],
+      second: [-25, 15, 30],
+      drafting: DraftingConvention.isoOriented,
+      convention: _yUpRight,
+      view: _view('front', [120, 90, 260], [10, 20, -10], 40, [1024, 768]),
+    ),
+    c(
+      'Z-up left-handed, comma and custom style',
+      first: [40, -7, 0],
+      second: [10, 40, 20],
+      drafting: DraftingConvention.isoReferencing,
+      convention: _zUpLeft,
+      numbers: const NumberFormatting(decimalMarker: DecimalMarker.comma),
+      style: _customDimensionStyle,
+    ),
+  ];
+}
+
+Map<String, Object?> _camera(_View v) => {
+  'position': _vector(v.position),
+  'target': _vector(v.target),
+  'verticalFovDegrees': v.verticalFovDegrees,
+  'viewport': _vector(v.viewport),
+};
+
+Map<String, Object?> _angular(_AngularCase c) {
+  final primitives = SmartDimensionFactory.createAngular(
+    vertex: c.vertex,
+    first: c.first,
+    second: c.second,
+    drafting: c.drafting,
+    camera: CameraBasis.lookAt(
+      position: c.view.position,
+      target: c.view.target,
+      convention: c.convention,
+    ),
+    verticalFovRadians: c.view.verticalFovDegrees * math.pi / 180,
+    viewportSize: c.view.viewport,
+    resolveText: fakeTextResolver,
+    key: null,
+    numbers: c.numbers,
+    style: c.style,
+  );
+  return {
+    'name': c.name,
+    'input': {
+      'vertex': _vector(c.vertex),
+      'first': _vector(c.first),
+      'second': _vector(c.second),
+      'drafting': c.drafting.name,
+      'convention': _convention(c.convention),
+      'camera': _camera(c.view),
+      'numbers': _numbers(c.numbers),
+      'style': _dimensionStyle(c.style),
+    },
+    'output': {
+      'primitives': [for (final p in primitives) _worldPrimitive(p)],
+    },
+  };
+}
+
+typedef _RadialCase = ({
+  String name,
+  vm.Vector3 center,
+  double radius,
+  vm.Vector3 normal,
+  RadialMeasure measure,
+  DraftingConvention drafting,
+  DisplayFormat format,
+  UnitSystem worldUnits,
+  CoordinateConvention convention,
+  _View view,
+  vm.Vector3? direction,
+  NumberFormatting numbers,
+  DimensionStyle style,
+});
+
+/// Radii and diameters under each drafting convention, with room for the
+/// text and cramped, along the default and an app direction, in a
+/// tilted plane, in inches, and in Z-up and Y-up right-handed and Z-up
+/// left-handed spaces.
+List<_RadialCase> _radialCases() {
+  _RadialCase c(
+    String name, {
+    required double radius,
+    required RadialMeasure measure,
+    required DraftingConvention drafting,
+    List<double> center = const [50, 10, 0],
+    List<double> normal = const [0, 0, 1],
+    DisplayFormat format = DisplayFormat.metric,
+    UnitSystem worldUnits = UnitSystem.metric,
+    CoordinateConvention convention = _zUpRight,
+    _View? view,
+    List<double>? direction,
+    NumberFormatting numbers = _defaultNumbers,
+    DimensionStyle style = const DimensionStyle(),
+  }) => (
+    name: name,
+    center: vm.Vector3.array(center),
+    radius: radius,
+    normal: vm.Vector3.array(normal),
+    measure: measure,
+    drafting: drafting,
+    format: format,
+    worldUnits: worldUnits,
+    convention: convention,
+    view: view ?? _dimensionView,
+    direction: direction == null ? null : vm.Vector3.array(direction),
+    numbers: numbers,
+    style: style,
+  );
+  return [
+    for (final drafting in DraftingConvention.values)
+      for (final measure in RadialMeasure.values) ...[
+        c(
+          '${measure.name} with room, ${drafting.name}',
+          radius: 60,
+          measure: measure,
+          drafting: drafting,
+        ),
+        c(
+          '${measure.name} cramped, ${drafting.name}',
+          radius: 4,
+          measure: measure,
+          drafting: drafting,
+        ),
+      ],
+    c(
+      'radius along an app direction in a tilted plane',
+      radius: 35,
+      normal: [0.2, -0.5, 1],
+      measure: RadialMeasure.radius,
+      drafting: DraftingConvention.isoOriented,
+      direction: [-1, 0.4, 0.3],
+    ),
+    c(
+      'diameter in fractional inch, Y-up',
+      center: [-10, 20, 5],
+      radius: 2.75,
+      normal: [0, 1, 0],
+      measure: RadialMeasure.diameter,
+      drafting: DraftingConvention.asmeInlined,
+      format: DisplayFormat.fractionalInch,
+      worldUnits: UnitSystem.imperial,
+      convention: _yUpRight,
+      view: _view('close', [-4, 14, 14], [-10, 20, 5], 50, [1280, 720]),
+    ),
+    c(
+      'radius in a plane seen edge-on, Z-up left-handed, custom style',
+      radius: 40,
+      normal: [0.6, -0.8, 0],
+      measure: RadialMeasure.radius,
+      drafting: DraftingConvention.asmeReferencing,
+      convention: _zUpLeft,
+      view: _view('edge', [290, 190, 0], [50, 10, 0], 45, [1280, 720]),
+      numbers: const NumberFormatting(
+        decimalMarker: DecimalMarker.comma,
+        showLeadingZero: false,
+      ),
+      style: _customDimensionStyle,
+    ),
+  ];
+}
+
+Map<String, Object?> _radial(_RadialCase c) {
+  final primitives = SmartDimensionFactory.createRadial(
+    center: c.center,
+    radius: c.radius,
+    normal: c.normal,
+    measure: c.measure,
+    drafting: c.drafting,
+    format: c.format,
+    worldUnits: c.worldUnits,
+    camera: CameraBasis.lookAt(
+      position: c.view.position,
+      target: c.view.target,
+      convention: c.convention,
+    ),
+    verticalFovRadians: c.view.verticalFovDegrees * math.pi / 180,
+    viewportSize: c.view.viewport,
+    resolveText: fakeTextResolver,
+    key: null,
+    direction: c.direction,
+    numbers: c.numbers,
+    style: c.style,
+  );
+  return {
+    'name': c.name,
+    'input': {
+      'center': _vector(c.center),
+      'radius': c.radius,
+      'normal': _vector(c.normal),
+      'measure': c.measure.name,
+      'drafting': c.drafting.name,
+      'format': c.format.name,
+      'worldUnits': c.worldUnits.name,
+      'convention': _convention(c.convention),
+      'camera': _camera(c.view),
+      'direction': c.direction == null ? null : _vector(c.direction!),
+      'numbers': _numbers(c.numbers),
+      'style': _dimensionStyle(c.style),
+    },
+    'output': {
+      'primitives': [for (final p in primitives) _worldPrimitive(p)],
+    },
+  };
+}
+
+/// The smart-dimension fixture: each case's inputs and the primitives
+/// `SmartDimensionFactory.create`, `createAngular`, and `createRadial`
+/// emit for them, in world space.
+Map<String, Object?> smartDimensionsFixture() => {
+  'textResolver': {'characterWidthPerHeight': fakeCharacterAspect},
+  'SmartDimensionFactory.create': [
+    for (final c in _dimensionCases()) _dimension(c),
+  ],
+  'SmartDimensionFactory.createAngular': [
+    for (final c in _angularCases()) _angular(c),
+  ],
+  'SmartDimensionFactory.createRadial': [
+    for (final c in _radialCases()) _radial(c),
   ],
 };
 
@@ -1082,6 +2031,9 @@ void main(List<String> args) {
     'vectors/unit_formats.json': _render(unitFormatsFixture()),
     'vectors/navigation_cube.json': _render(navigationCubeFixture()),
     'vectors/scale_bar.json': _render(scaleBarFixture()),
+    'vectors/color_ramp_legend.json': _render(colorRampLegendFixture()),
+    'vectors/ground_plane.json': _render(groundPlaneFixture()),
+    'vectors/smart_dimensions.json': _render(smartDimensionsFixture()),
   };
 
   final stale = [
