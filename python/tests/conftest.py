@@ -1,7 +1,7 @@
 """Shared test helpers."""
 
 import json
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 import pytest
@@ -174,3 +174,22 @@ def assert_world_primitive(actual: Primitive, want: dict, reason: str) -> None:
         want["contentSize"],
         f"{reason} content size",
     )
+
+
+def lines_of(primitives: Iterable[Primitive]) -> list[LinePrimitive]:
+    """Returns the lines among ``primitives``, in order."""
+    return [p for p in primitives if isinstance(p, LinePrimitive)]
+
+
+def billboards_of(primitives: Iterable[Primitive]) -> list[BillboardPrimitive]:
+    """Returns the billboards among ``primitives``, in order."""
+    return [p for p in primitives if isinstance(p, BillboardPrimitive)]
+
+
+def texts_of(primitives: Iterable[Primitive]) -> list[str]:
+    """Returns the text of each text-request billboard among ``primitives``."""
+    texts = []
+    for b in billboards_of(primitives):
+        assert isinstance(b.content.value, TextRequest)
+        texts.append(b.content.value.text)
+    return texts
