@@ -1981,14 +1981,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "0 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              24.0,
+              12.0
+            ],
             "opacity": 1.0
           },
           {
@@ -1999,14 +2007,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-10 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              36.0,
+              12.0
+            ],
             "opacity": 0.16666666666666663
           },
           {
@@ -2017,14 +2033,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "10 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              30.0,
+              12.0
+            ],
             "opacity": 0.16666666666666663
           }
         ]
@@ -4101,14 +4125,22 @@
               -5.0,
               2.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "0 in",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              24.0,
+              12.0
+            ],
             "opacity": 1.0
           },
           {
@@ -4119,14 +4151,22 @@
               -5.0,
               2.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-1 in",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              30.0,
+              12.0
+            ],
             "opacity": 0.023076923076923106
           },
           {
@@ -4137,14 +4177,22 @@
               -5.0,
               2.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "1 in",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              24.0,
+              12.0
+            ],
             "opacity": 0.023076923076923106
           },
           {
@@ -4155,14 +4203,22 @@
               -30.4,
               2.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-1 in",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              30.0,
+              12.0
+            ],
             "opacity": 0.023076923076923106
           },
           {
@@ -4173,14 +4229,22 @@
               20.4,
               2.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "1 in",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              24.0,
+              12.0
+            ],
             "opacity": 0.023076923076923106
           }
         ]
@@ -5874,14 +5938,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "0\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              12.0,
+              12.0
+            ],
             "opacity": 1.0
           },
           {
@@ -5892,14 +5964,22 @@
               0.0,
               -1.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-1\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              18.0,
+              12.0
+            ],
             "opacity": 0.33333333333333337
           },
           {
@@ -5910,14 +5990,22 @@
               0.0,
               1.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "1\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              12.0,
+              12.0
+            ],
             "opacity": 0.33333333333333337
           },
           {
@@ -5928,14 +6016,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-2\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              18.0,
+              12.0
+            ],
             "opacity": 0.33333333333333337
           },
           {
@@ -5946,14 +6042,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-1\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              18.0,
+              12.0
+            ],
             "opacity": 0.6666666666666667
           },
           {
@@ -5964,14 +6068,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "1\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              12.0,
+              12.0
+            ],
             "opacity": 0.6666666666666667
           },
           {
@@ -5982,14 +6094,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "2\"",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              12.0,
+              12.0
+            ],
             "opacity": 0.33333333333333337
           }
         ]
@@ -8066,14 +8186,22 @@
               -20.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "0 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              24.0,
+              12.0
+            ],
             "opacity": 1.0
           },
           {
@@ -8084,14 +8212,22 @@
               -20.0,
               -100.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-100 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              42.0,
+              12.0
+            ],
             "opacity": 0.04761904761904767
           },
           {
@@ -8102,14 +8238,22 @@
               -20.0,
               100.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "100 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              36.0,
+              12.0
+            ],
             "opacity": 0.04761904761904767
           },
           {
@@ -8120,14 +8264,22 @@
               -20.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "-100 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              42.0,
+              12.0
+            ],
             "opacity": 0.04761904761904767
           },
           {
@@ -8138,14 +8290,22 @@
               -20.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "100 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              36.0,
+              12.0
+            ],
             "opacity": 0.04761904761904767
           }
         ]
@@ -8719,14 +8879,22 @@
               0.0,
               0.0
             ],
+            "orientation": {
+              "type": "viewerFacing"
+            },
             "alignment": [
               0.0,
               0.0
             ],
+            "offset": null,
             "textRequest": {
               "text": "0 mm",
               "heightPixels": 12.0
             },
+            "contentSize": [
+              24.0,
+              12.0
+            ],
             "opacity": 1.0
           }
         ]

@@ -228,6 +228,49 @@ enum DisplayFormat {
   }
 }
 
+/// Returns [degrees] as a decimal-degree label: `45°` or `30.5°`.
+///
+/// The label snaps [degrees] to the nearest multiple of [step], then
+/// shows the fewest decimal places that represent [step] exactly, with no
+/// trailing zeros. [numbers] sets the decimal marker and leading zero. An angle has
+/// no display format, so the label is the same in every unit system.
+String formatDegreesLabel(
+  double degrees, {
+  required double step,
+  NumberFormatting numbers = const NumberFormatting(),
+}) => '${formatNumberLabel(degrees, step: step, numbers: numbers)}°';
+
+/// 1, 2, and 5 times every power of ten, for values with no display format.
+const _niceSteps = _StepSequence(mantissas: [1, 2, 5]);
+
+/// Returns the smallest of 1, 2, and 5 times a power of ten at least
+/// [length].
+///
+/// Use it to choose a clean interval for a value that is not a length,
+/// which has no display format. Throws an [ArgumentError] when [length] is
+/// not positive and finite.
+double niceStepAtLeast(double length) =>
+    _niceSteps.atLeast(_positive(length, 'length'));
+
+/// Returns [value] as a plain decimal label with no unit: `45` or `0.25`.
+///
+/// The label snaps [value] to the nearest multiple of [step], then shows
+/// the fewest decimal places that represent [step] exactly, with no
+/// trailing zeros. [numbers] sets the decimal marker and leading zero. Use it for a
+/// value that is not a length, which has no display format. Throws an
+/// [ArgumentError] when [step] is not positive and finite.
+String formatNumberLabel(
+  double value, {
+  required double step,
+  NumberFormatting numbers = const NumberFormatting(),
+}) {
+  final places = _decimalsFor(_positive(step, 'step'));
+  final rounded = double.parse(
+    ((value / step).roundToDouble() * step).toStringAsFixed(places),
+  );
+  return _decimal(rounded, places, numbers);
+}
+
 const _inchesPerFoot = 12;
 const _mmPerMeter = 1000;
 
@@ -324,8 +367,8 @@ final class _StepSequence {
 /// [mantissa] times 10^[exponent], dividing for negative exponents so
 /// that 10^-3 is the double nearest 0.001.
 double _decade(double mantissa, int exponent) => exponent >= 0
-    ? mantissa * math.pow(10, exponent)
-    : mantissa / math.pow(10, -exponent);
+    ? mantissa * math.pow(10.0, exponent)
+    : mantissa / math.pow(10.0, -exponent);
 
 /// Whether [x] is a whole number, within the relative slack.
 bool _isWhole(double x) =>
@@ -334,7 +377,7 @@ bool _isWhole(double x) =>
 /// The fewest decimal places that write [step] exactly.
 int _decimalsFor(double step) {
   for (var places = 0; places < _maxDecimals; places++) {
-    if (_isWhole(step * math.pow(10, places))) return places;
+    if (_isWhole(step * math.pow(10.0, places))) return places;
   }
   return _maxDecimals;
 }

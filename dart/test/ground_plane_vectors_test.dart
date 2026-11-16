@@ -59,43 +59,6 @@ GroundGrid _build(Json input) {
   );
 }
 
-void _expectPrimitive(Primitive actual, Json expected, String reason) {
-  expect(actual.key, expected['key'], reason: '$reason key');
-  expect(
-    actual.opacity,
-    closeTo(jsonNumber(expected['opacity']), vectorTolerance),
-    reason: '$reason opacity',
-  );
-  switch ((actual, expected['type'])) {
-    case (final LinePrimitive line, 'line'):
-      expectNumbers(line.start.storage, expected['start'], '$reason start');
-      expectNumbers(line.end.storage, expected['end'], '$reason end');
-      expect(
-        line.widthPixels,
-        closeTo(jsonNumber(expected['widthPixels']), vectorTolerance),
-        reason: '$reason width',
-      );
-    case (final BillboardPrimitive label, 'billboard'):
-      expectNumbers(label.anchor.storage, expected['anchor'], '$reason anchor');
-      expectNumbers(
-        label.alignment.storage,
-        expected['alignment'],
-        '$reason alignment',
-      );
-      final request = expected['textRequest'] as Json;
-      expect(
-        label.content.value,
-        TextRequest(
-          text: request['text'] as String,
-          heightPixels: jsonNumber(request['heightPixels']),
-        ),
-        reason: '$reason text',
-      );
-    default:
-      fail('$reason: expected a ${expected['type']}, got $actual');
-  }
-}
-
 void main() {
   final skip = skipUnlessPresent(_fixture);
 
@@ -151,7 +114,7 @@ void main() {
         final expected = jsonList(output['primitives']);
         expect(grid.primitives, hasLength(expected.length), reason: name);
         for (var i = 0; i < expected.length; i++) {
-          _expectPrimitive(grid.primitives[i], expected[i], '$name [$i]');
+          expectWorldPrimitive(grid.primitives[i], expected[i], '$name [$i]');
         }
       }
     });

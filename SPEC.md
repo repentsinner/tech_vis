@@ -565,7 +565,7 @@ the next.
 
 ## Annotation primitives §spec:annotation-primitives
 
-*Status: in progress*
+*Status: complete*
 
 The package provides annotation primitives for engineering 3D scenes.
 Each primitive produces data, pure geometry and labels, without
@@ -605,6 +605,27 @@ dimension's text sits and which way it reads:
 - The convention is independent of the display format and number
   formatting of §spec:unit-system. A metric scene may follow ASME, and a
   decimal-inch scene may follow ISO.
+- Text fits when its extent along the dimension line on screen, plus an
+  arrowhead length and a text gap at each end, is no longer than the
+  on-screen distance between the witness lines. Oriented text's extent is
+  its width. Horizontal text's extent is its box projected onto the
+  line's screen direction. A line seen end-on never fits.
+- Oriented text reads left to right, or bottom to top on a line that is
+  vertical on screen. It lies in the screen plane, lifted off the line
+  by the text gap along its own vertical axis.
+- Inlined text sits centered on the dimension line's midpoint. The break
+  spans the text's extent plus a text gap at each side.
+- On an angular dimension's arc, the text sits at the arc's midpoint and
+  measures against the arc's tangent there. The fit compares it with the
+  arc's length on screen, and the arc's outer side is the angle's
+  bisector. A radial dimension line's outer side is the perpendicular
+  that faces the viewer, turned toward screen up.
+- A referencing leader leaves the dimension line's midpoint as a callout
+  leader (§spec:callout-layout). Its quadrant is the one whose angled
+  segment points to the outer side, the side the dimension line was
+  offset toward, at the widest angle from the line on screen. When no
+  quadrant points to the outer side, all four compete. Ties go to the
+  earlier of top-right, top-left, bottom-right, bottom-left.
 
 These four conventions follow FreeCAD TechDraw's "Standard and style"
 setting, which drafting users already know.
@@ -627,6 +648,19 @@ without changing the standard the reader expects.
 *Why number formatting is not part of the convention*: the decimal
 marker and leading-zero rule vary by locale and shop more than by
 standard, and drafting tools set them separately.
+
+*Why count the arrowheads and gaps in the fit*: text that only just
+clears the witness lines still collides with the arrowheads. Counting
+them keeps the fallback rule one inequality, with no per-standard
+clearance.
+
+*Why bottom to top on a vertical line*: aligned dimensioning reads a
+vertical dimension from the drawing's right side, which turns the text a
+quarter turn counterclockwise.
+
+*Why the widest angle*: a leader that leaves along the dimension line
+hides it. The widest angle from the line is the simplest rule that
+keeps the two apart, and it needs no knowledge of other annotations.
 
 ### Viewport overlays §spec:viewport-overlays
 
@@ -822,52 +856,208 @@ text that keeps a constant screen size at any zoom (§req:user-stories).
 The app supplies the measured points; the package decides how the
 dimension reads.
 
-- **Linear.** When two points differ along one axis only, within an
-  alignment tolerance, the dimension measures that axis. Its witness
-  lines are perpendicular to that axis. The tolerance defaults to a
-  style token, and the app may override it.
+- **Linear.** When two points differ along one world axis only, within
+  an alignment tolerance, the dimension measures that axis. Its witness
+  lines are perpendicular to that axis. The tolerance is the largest
+  offset along any other axis, as a fraction of the distance between
+  the points. It defaults to a style token, and the app may override it.
 - **Several axes.** When the points differ along more than one axis,
-  the app chooses between per-axis component dimensions and the direct
-  distance with an angled leader.
+  the app chooses between per-axis component dimensions, in X, Y, Z
+  order, and the direct distance. A direct dimension is aligned: its
+  dimension line runs parallel to the segment between the points.
 - **Angular.** The angle between two vectors from a common vertex, drawn
-  as an arc.
+  as an arc. Each vector runs from the vertex to the far end of its leg.
+  The arc lies in the legs' plane, a token-set number of pixels from the
+  vertex, and spans the angle under 180°. Parallel or opposed legs emit
+  nothing.
 - **Radial.** The radius or diameter of a circle or arc, given its
-  center, radius, and plane.
+  center, radius, and plane. The app chooses radius or diameter. A
+  radius line runs from the center to the rim, with one arrowhead on the
+  rim; a diameter line runs rim to rim through the center, with an
+  arrowhead on each rim. The line lies in the circle's plane, along a
+  direction the app may give. By default it runs toward the screen's
+  top-right corner, or toward screen right when that corner lies along
+  the plane's normal.
 - Witness line gap and extension, arrowhead size, and text size are
   style tokens, all in pixels. The witness line gap has one token per
   standard.
 - Text orientation and placement follow §spec:drafting-convention. A
   referencing dimension's leader uses the same geometry and style tokens
   as a leader-line callout.
-- Number formatting follows §spec:unit-system.
+- Number formatting follows §spec:unit-system. The app names the unit
+  system of its world coordinates, and the label is the measured length
+  written by the display format with no step. The component dimensions of one
+  pair of points form one label set, so they share a unit.
+- A radial label prefixes the length with `R` for a radius and `⌀` for a
+  diameter, with no space: `R12 mm`, `⌀24 mm`.
+- An angular label is the angle in decimal degrees: `37.5°`. It rounds to
+  a token-set step, 0.1° by default, and shows the fewest decimals that
+  write the step, with the app's number formatting of
+  §spec:unit-system. The label is the same under every display format.
+- An angular arc draws as Lines. Its segment count is the arc's length
+  in pixels at the vertex's depth, divided by a token-set segment length
+  and rounded up. An inlined break splits the arc into two runs, each
+  counted the same way.
+- A leg that ends short of the arc gets a witness line along it, from
+  the witness gap past the leg's end to the extension past the arc. A leg
+  that reaches the arc needs none.
+- The dimension line sits a token-set number of pixels from the
+  measured points, along a direction perpendicular to the measured one.
+  The app may give the direction. By default it is the perpendicular
+  that lies in the screen plane, turned toward screen up, or toward
+  screen right when it lies level.
+- Both witness lines are perpendicular to the measured direction. The
+  second point's witness line takes up any offset between the points
+  across the measured direction, so the dimension line stays parallel
+  to it.
+- Arrowheads are open: two lines from the tip, inside the witness lines,
+  with a token-set length and width. They stay inside when text falls
+  back to referencing.
+- Each pixel size converts to world units at the depth where it is
+  drawn: the witness gap at its measured point, the extension and
+  arrowheads at the dimension line's ends, the offset at the midpoint of
+  the measured points, and the break and leader at the dimension line's
+  midpoint. An arc's radius converts at its vertex, and an angular
+  witness gap at the leg's end.
+- A dimension with any of those points, or any point of an arc, on or
+  behind the camera plane emits nothing, and so do coincident points, a
+  zero leg, and a radius that is not positive.
+- `vectors/smart_dimensions.json` pins the emitted primitives of the
+  linear, angular, and radial dimensions in world space, and
+  `vectors/unit_formats.json` pins the degree labels
+  (§spec:golden-vectors).
 
 *Why detect axis alignment*: a reader of a technical drawing thinks in
 per-axis distances, such as X travel or Z depth. Showing the single
 varying axis matches that reading. Direct distance with components
 handles the general case.
 
+*Why a relative tolerance*: world units differ between apps, so an
+absolute tolerance would mean a micron in one scene and a meter in
+another. A fraction of the measured distance holds at any scale.
+
+*Why default to the viewer-facing perpendicular*: a dimension in 3D has
+no drawing plane, and a perpendicular along the view axis collapses the
+witness lines to points on screen. The perpendicular in the screen plane
+always shows them at full length.
+
+*Why open arrowheads*: an open arrowhead is two Lines, so it needs no new
+primitive and keeps its pixel size by the Line contract. A filled
+triangle would need a Quad with a repeated corner or a per-frame Mesh,
+and neither is a clean fit for a pixel-sized shape (§spec:scene-model).
+
+*Why the arrowheads stay inside*: the fallback moves the text, which is
+what collides. Flipping the arrowheads outside as well would add a
+second layout case for little gain in readability.
+
 *Why the app supplies the points*: what is worth measuring depends on
 the app's domain. A generic toolkit that guessed would name concepts
 from one consumer (§spec:dart-package).
+
+*Why a pixel radius for the arc*: every other offset of a dimension is in
+pixels, so the arc keeps its size on screen and its text stays as likely
+to fit at any zoom. A radius taken from the legs would shrink the arc
+with the scene and send every distant angle to the referencing fallback.
+
+*Why decimal degrees*: decimal degrees read the same in every display
+format and take the app's decimal marker, with no unit system to
+choose. Degrees, minutes, and seconds were rejected because they need a
+second rounding rule and a second label layout. A step token sets the
+precision, as the display formats' default rounding does for lengths.
+
+*Why count segments at the vertex's depth*: the count then depends on the
+style and the angle alone, so it is stable from frame to frame. The
+unforeshortened length is the longest the arc can appear, so no segment
+exceeds the token-set length on screen. Counting from the projected arc
+would change the line count as the camera moves.
+
+*Why the top-right corner for a radial line*: a diagonal line keeps clear
+of the horizontal and vertical edges that dominate engineering views, and
+it points the text away from the circle's center. It is the simplest rule
+that needs nothing but the camera.
+
+*Why `R` and `⌀`*: ISO 129 and ASME Y14.5 both write a radius after `R`
+and a diameter after `⌀`, so the prefix needs no per-standard rule.
+
+*Why reuse the fit and fallback*: the same inequality and the same
+referencing leader keep every dimension shape under one drafting
+convention. An arc's fit compares the text with the arc's length on
+screen, and a radial dimension counts an arrowhead at each end, as a
+linear one does, even when a radius has one arrowhead.
 
 ### Color ramp legend §spec:color-ramp-legend
 
 A viewport overlay (§spec:viewport-overlays) that keys a color-coded
 value, such as speed, temperature, stress, or altitude, to its colors.
-The app provides the scalar-to-color mapping and the value range. The
-legend handles layout, ticks, and labels, and formats them through
-§spec:unit-system.
+The app provides the scalar-to-color mapping and the value range, in its
+own value unit. The legend handles layout, ticks, and labels.
+`ColorRampLegendLayout.forRange` describes it.
 
 Orientation (horizontal or vertical), tick intervals, and unit-labeled
-endpoints are configurable.
+endpoints are configurable. The orientation defaults to vertical, which
+the default placement's tall rectangle suits.
 
-*Open*: how the gradient itself reaches the renderer is undecided. The
-choice is between color stops that the renderer interpolates and
-pre-sampled solid bands.
+- The gradient reaches the renderer as ordered color stops: each stop
+  has a position from 0 to 1 along the bar and the app's key. The app
+  resolves each key to a color and interpolates between neighboring
+  stops, in the color space its renderer needs. The stops run from 0 to
+  1 without descending, so two stops at one position make a hard edge.
+- The legend describes the bar's rectangle in viewport pixels, its
+  stops, and its ticks, each tick with a position along the bar and a
+  label request. Position 0 is the range's minimum, at the bar's bottom
+  when vertical and its left when horizontal.
+- The bar spans the placement rectangle's full length and a token-set
+  thickness, on the rectangle's edge nearer its corner. Labels sit a
+  token-set gap off the bar's other side, toward the viewport center,
+  centered on their ticks, with one anchor alignment for the set.
+- A tick marks every whole multiple of the tick interval inside the
+  range, within a relative slack of 1e-9. The app may set the interval.
+  By default it is the smallest of 1, 2, and 5 times a power of ten that
+  keeps adjacent ticks a token-set number of pixels apart.
+- The labels form one label set of §spec:unit-system: plain decimals
+  rounded to the interval, with the app's number formatting.
+  `formatNumberLabel` writes each one. When the app names a unit, the
+  first and last labels carry it after a space; a lone tick carries it
+  once.
+- `vectors/color_ramp_legend.json` pins legends in every corner, both
+  orientations, app intervals, the range slack, and a lone tick
+  (§spec:golden-vectors).
+
+*Why stops by key*: the package holds no color and converts none
+(§spec:scene-color), so a stop names the app's color by key, as every
+primitive does. Interpolating in the renderer lets each app blend in
+the space it draws in. Pre-sampled bands were rejected: they fix the
+band count in the package and still need a color per band from the
+app.
 
 *Why an app-provided color map*: the legend is a display primitive,
 not a data interpreter. Keeping the scalar-to-color mapping outside lets
 any domain reuse the same legend.
+
+*Why plain decimals, not a display format*: a display format labels
+lengths, and most legend values, such as a temperature or a stress, are
+not lengths. The app knows its value's unit, so it names it. A
+length-valued legend names its base unit the same way and forgoes
+promotion. An app-supplied formatter was rejected, because the label
+text would then escape the fixtures that keep both packages equal.
+
+*Why ticks only on multiples*: a tick at an arbitrary range end, such as
+23.7, would need its own rounding and break the one-set rule. An app
+that wants its ends ticked picks a range on the interval.
+
+*Why 1, 2, and 5*: they are the decimal formats' scale-bar steps, so a
+legend's ticks read as clean as a scale bar's. The grid steps' powers of
+ten were rejected, because a range such as 20 to 80 holds no tick of 100
+and too few of 10 at the spacing.
+
+*Why the unit only at the ends*: every label shares the unit, and a
+narrow bar has no room to repeat it. The ends are where a reader looks
+for the range.
+
+*Why the bar spans the rectangle*: the package does not measure text, so
+it cannot inset the bar by an end label's width. An end label may
+overhang the rectangle by half its extent, which the unclipped
+rectangle of §spec:viewport-overlays allows.
 
 ### Navigation cube §spec:navigation-cube
 
@@ -894,8 +1084,9 @@ respond to input (§req:priorities).
 - It returns only the faces turned toward the viewer, least direct
   first, each as four pixel corners in label order (bottom-left,
   bottom-right, top-right, top-left) and the cosine it faces the viewer
-  by. Facings within 1e-9 tie, and ties keep face order. The app draws
-  each label onto its face with an affine map.
+  by. Faces whose facings lie within 1e-9 of the least direct face of
+  their group tie, and ties keep face order. The app draws each label
+  onto its face with an affine map.
 - `vectors/navigation_cube.json` pins face frames and visible faces in
   Y-up and Z-up, both handednesses, and an app-named front
   (§spec:golden-vectors).
@@ -939,9 +1130,16 @@ the work splits between app and package is an open question
 *Status: in progress*
 
 Pure Python, no runtime dependencies (§req:constraints). It provides
-the style tokens and, in time, every layout function and annotation
-primitive the Dart package provides (§req:user-stories).
+the style tokens, the typed primitives of §spec:scene-model with the
+factories and screen-space math of §spec:renderer-contract, the scale
+bar, color ramp legend, and navigation cube of §spec:viewport-overlays,
+the ground plane of
+§spec:ground-plane, the smart dimensions of §spec:smart-dimensions, and,
+in time, every layout function and annotation primitive the Dart package
+provides (§req:user-stories).
 
+- Points cross the API as plain tuples of floats. Mesh buffers are
+  read-only 32-bit memoryviews, matching the Dart package's buffers.
 - A Python function may trail its Dart counterpart by any number of
   releases. Where both exist, they agree on every fixture of
   §spec:golden-vectors.
@@ -951,6 +1149,11 @@ primitive the Dart package provides (§req:user-stories).
 *Why let Python trail*: the first applications are Dart apps, and the
 primitives they need first should not wait on a second port
 (§req:priorities). The fixtures keep a late port honest.
+
+*Why tuples*: a vector library would be a runtime dependency
+(§req:constraints). A tuple of floats passes unchanged into whatever
+numeric library a caller already uses. A small vector class was rejected
+because callers would convert it at every boundary.
 
 ## Versioning and release §spec:release
 

@@ -54,6 +54,53 @@ CALLOUT_OPACITY_MAX: float = 0.95
 # Callout opacity at the far distance. Unit: ratio.
 CALLOUT_OPACITY_MIN: float = 0.25
 
+# Width of a dimension's witness, dimension, and arrowhead lines. Tied to the callout
+# leader width, so a referencing dimension's leader matches its dimension line. Unit:
+# px.
+DIMENSION_LINE_WIDTH: float = CALLOUT_LEADER_LINE_WIDTH
+
+# Gap between a measured point and the start of its witness line under ISO 129. Unit:
+# px.
+DIMENSION_WITNESS_GAP_ISO_PIXELS: float = 2.0
+
+# Gap between a measured point and the start of its witness line under ASME Y14.5.
+# Unit: px.
+DIMENSION_WITNESS_GAP_ASME_PIXELS: float = 4.0
+
+# Length a witness line runs past the dimension line. Unit: px.
+DIMENSION_WITNESS_EXTENSION_PIXELS: float = 6.0
+
+# Distance from the measured points to the dimension line, along the witness lines.
+# Unit: px.
+DIMENSION_OFFSET_PIXELS: float = 24.0
+
+# Length of a dimension arrowhead, from its tip along the dimension line. Unit: px.
+DIMENSION_ARROW_LENGTH_PIXELS: float = 10.0
+
+# Width of a dimension arrowhead across its two barbs. Unit: px.
+DIMENSION_ARROW_WIDTH_PIXELS: float = 4.0
+
+# Pixel height of a dimension's value text. Unit: px.
+DIMENSION_TEXT_PIXEL_SIZE: float = 14.0
+
+# Gap between a dimension's text and its dimension line: below oriented text, and
+# either side of inlined text in the line's break. Unit: px.
+DIMENSION_TEXT_GAP_PIXELS: float = 4.0
+
+# Largest offset along any other axis, as a fraction of the distance between the
+# points, at which a dimension still measures one axis. Unit: ratio.
+DIMENSION_ALIGNMENT_TOLERANCE: float = 0.001
+
+# Radius of an angular dimension's arc, from its vertex. Unit: px.
+DIMENSION_ARC_RADIUS_PIXELS: float = 64.0
+
+# Longest segment of an angular dimension's arc, measured along the arc at the
+# vertex's depth. Sets how many lines draw the arc. Unit: px.
+DIMENSION_ARC_SEGMENT_PIXELS: float = 4.0
+
+# Step an angular dimension's value rounds to. Unit: deg.
+DIMENSION_ANGLE_RESOLUTION_DEGREES: float = 0.1
+
 # Default marker diameter in screen-space logical pixels. Unit: px.
 MARKER_DIAMETER_PIXELS: float = 8.0
 
@@ -109,6 +156,20 @@ COLOR_RAMP_LEGEND_WIDTH_PIXELS: float = 48.0
 
 # Default height of the color ramp legend overlay. Unit: px.
 COLOR_RAMP_LEGEND_HEIGHT_PIXELS: float = 200.0
+
+# Thickness of the color ramp legend's gradient bar, across its length. The bar sits
+# on the overlay rectangle's edge nearer its corner. Unit: px.
+COLOR_RAMP_LEGEND_BAR_THICKNESS_PIXELS: float = 12.0
+
+# Least distance between adjacent automatic ticks along the color ramp legend's bar.
+# Unit: px.
+COLOR_RAMP_LEGEND_MIN_TICK_SPACING_PIXELS: float = 32.0
+
+# Gap between the color ramp legend's bar and its tick labels. Unit: px.
+COLOR_RAMP_LEGEND_LABEL_GAP_PIXELS: float = 4.0
+
+# Text height of the color ramp legend's tick labels. Unit: px.
+COLOR_RAMP_LEGEND_LABEL_HEIGHT_PIXELS: float = 12.0
 
 # Default viewport corner of the navigation cube overlay. Top-right, where CAD tools
 # place their view cube. Codes: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-
@@ -172,6 +233,19 @@ ALL: dict[str, float] = {
     "calloutOpacityFarDistance": CALLOUT_OPACITY_FAR_DISTANCE,
     "calloutOpacityMax": CALLOUT_OPACITY_MAX,
     "calloutOpacityMin": CALLOUT_OPACITY_MIN,
+    "dimensionLineWidth": DIMENSION_LINE_WIDTH,
+    "dimensionWitnessGapIsoPixels": DIMENSION_WITNESS_GAP_ISO_PIXELS,
+    "dimensionWitnessGapAsmePixels": DIMENSION_WITNESS_GAP_ASME_PIXELS,
+    "dimensionWitnessExtensionPixels": DIMENSION_WITNESS_EXTENSION_PIXELS,
+    "dimensionOffsetPixels": DIMENSION_OFFSET_PIXELS,
+    "dimensionArrowLengthPixels": DIMENSION_ARROW_LENGTH_PIXELS,
+    "dimensionArrowWidthPixels": DIMENSION_ARROW_WIDTH_PIXELS,
+    "dimensionTextPixelSize": DIMENSION_TEXT_PIXEL_SIZE,
+    "dimensionTextGapPixels": DIMENSION_TEXT_GAP_PIXELS,
+    "dimensionAlignmentTolerance": DIMENSION_ALIGNMENT_TOLERANCE,
+    "dimensionArcRadiusPixels": DIMENSION_ARC_RADIUS_PIXELS,
+    "dimensionArcSegmentPixels": DIMENSION_ARC_SEGMENT_PIXELS,
+    "dimensionAngleResolutionDegrees": DIMENSION_ANGLE_RESOLUTION_DEGREES,
     "markerDiameterPixels": MARKER_DIAMETER_PIXELS,
     "markerSubdivisions": MARKER_SUBDIVISIONS,
     "scaleBarCorner": SCALE_BAR_CORNER,
@@ -187,6 +261,10 @@ ALL: dict[str, float] = {
     "colorRampLegendOffsetYPixels": COLOR_RAMP_LEGEND_OFFSET_YPIXELS,
     "colorRampLegendWidthPixels": COLOR_RAMP_LEGEND_WIDTH_PIXELS,
     "colorRampLegendHeightPixels": COLOR_RAMP_LEGEND_HEIGHT_PIXELS,
+    "colorRampLegendBarThicknessPixels": COLOR_RAMP_LEGEND_BAR_THICKNESS_PIXELS,
+    "colorRampLegendMinTickSpacingPixels": COLOR_RAMP_LEGEND_MIN_TICK_SPACING_PIXELS,
+    "colorRampLegendLabelGapPixels": COLOR_RAMP_LEGEND_LABEL_GAP_PIXELS,
+    "colorRampLegendLabelHeightPixels": COLOR_RAMP_LEGEND_LABEL_HEIGHT_PIXELS,
     "navigationCubeCorner": NAVIGATION_CUBE_CORNER,
     "navigationCubeOffsetXPixels": NAVIGATION_CUBE_OFFSET_XPIXELS,
     "navigationCubeOffsetYPixels": NAVIGATION_CUBE_OFFSET_YPIXELS,
