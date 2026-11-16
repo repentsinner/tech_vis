@@ -26,6 +26,20 @@ Closes §spec:golden-vectors and the layout half of §spec:python-package.
 Port the leader-line functions to Python. Test them against
 `vectors/leader_line.json`.
 
+## Renderer contract §road:renderer-contract
+
+Closes §spec:scene-model.
+
+### Callout leader lines §road:callout-leader-lines
+
+Emit a callout's leader as two `LinePrimitive`s at the style's line width,
+so a renderer draws its lines rather than deriving them from leader
+points, in `dart/lib/src/leader_line.dart` (§spec:scene-model).
+
+**Verify:** In `dart/`, build a callout's leader and label for a camera
+and confirm the leader comes back as two lines whose endpoints are the
+leader's gap end, elbow and label edge, at the style's pixel width.
+
 ## Annotation primitives §road:annotation-primitives
 
 Closes §spec:annotation-primitives. Every workstream here emits the
