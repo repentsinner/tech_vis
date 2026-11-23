@@ -49,7 +49,7 @@ jobs:
   dart:
     needs: classify
     if: needs.classify.outputs.derived_release_commit != 'true' && needs.classify.outputs.promotion_pr != 'true'
-    uses: repentsinner/bug-free-happiness/.github/workflows/flutter-correctness.yml@659ecd9856a48c48f886ff06e5fd86911bb8003a # v0.10.0
+    uses: repentsinner/bug-free-happiness/.github/workflows/flutter-correctness.yml@caf621e5eff329f8a0814dc8e8ead9d6e74e4c22 # v1
     with:
       packages: dart
       sdk-version: 3.14.0
